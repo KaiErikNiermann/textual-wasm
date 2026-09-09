@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Gate: lint, format, types, complexity, policy rules, tests.
+#
+# Deliberately does NOT run the Pyodide probe. That needs a network fetch for the wheels and
+# takes several seconds, which is a CI job's business rather than a push gate's; the pytest
+# suite already covers the driver natively, and `scripts/run_spike.sh` runs both halves when
+# you actually want the comparison.
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "${ROOT}"
+
+step() { printf '\n==> %s\n' "$1"; }
+
+step "ruff (lint)"
+poetry run ruff check src tests
+
+step "ruff (format)"
+poetry run ruff format --check src tests
+
+step "pyright (strict)"
+poetry run pyright
+
+step "radon (nothing above grade B)"
+# `-n C` lists grade C and worse, i.e. everything *above* B, which is the threshold the
+# convention sets. `-n B` would also list grade B, which is explicitly acceptable.
+offenders="$(poetry run radon cc -n C src)"
+if [[ -n "${offenders}" ]]; then
+  echo "${offenders}"
+  echo "error: blocks above grade B; simplify or split them" >&2
+  exit 1
+fi
+poetry run radon cc -a src | tail -2
+
+step "semgrep (conventions + core-utils)"
+# EIO_BACKEND=posix: without it semgrep-core fails intermittently on this machine with
+# `Unix_error: Cannot allocate memory io_uring_queue_init`, and returns an empty results
+# list - a crashed scan then looks exactly like a clean one.
+EIO_BACKEND=posix poetry run semgrep --config .semgrep --metrics=off --error --quiet src
+
+step "pytest"
+poetry run pytest
+
+printf '\nall gates passed\n'
