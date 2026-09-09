@@ -17,7 +17,7 @@ from textual_wasm.driver import (
     ENTER_APPLICATION_MODE,
     EXIT_APPLICATION_MODE,
     CaptureDriver,
-    active_driver,
+    active_capture,
 )
 from textual_wasm.probe import FORBIDDEN_DRIVER_MODULES, TRUECOLOR_SGR, run_probe
 from textual_wasm.report import CheckStatus, ProbeReport
@@ -38,7 +38,7 @@ async def test_report_survives_a_json_round_trip() -> None:
 async def test_driver_emits_application_mode_around_the_render() -> None:
     report = await run_probe()
     assert report.ok
-    driver = active_driver()
+    driver = active_capture()
     assert isinstance(driver, CaptureDriver)
     assert driver.output.startswith("".join(ENTER_APPLICATION_MODE))
     assert driver.output.endswith("".join(EXIT_APPLICATION_MODE))
@@ -47,7 +47,7 @@ async def test_driver_emits_application_mode_around_the_render() -> None:
 async def test_rendered_output_excludes_the_drivers_own_preamble() -> None:
     """An 'is there ANSI' assertion must not be satisfiable by the driver's own writes."""
     await run_probe()
-    driver = active_driver()
+    driver = active_capture()
     assert TRUECOLOR_SGR not in "".join(ENTER_APPLICATION_MODE)
     assert TRUECOLOR_SGR in driver.rendered_output
     assert MARKER not in "".join(ENTER_APPLICATION_MODE)

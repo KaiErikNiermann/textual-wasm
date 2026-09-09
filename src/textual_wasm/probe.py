@@ -22,7 +22,7 @@ from textual_wasm import APPLIED_POLYFILLS
 from textual_wasm.app import EXIT_CODE, MARKER, SpikeApp
 from textual_wasm.bootstrap import DRIVER_IMPORT_PATH
 from textual_wasm.capabilities import detect as detect_capabilities
-from textual_wasm.driver import DEFAULT_SIZE, CaptureDriver, active_driver
+from textual_wasm.driver import DEFAULT_SIZE, CaptureDriver, active_capture
 from textual_wasm.report import (
     CheckId,
     CheckResult,
@@ -233,14 +233,14 @@ async def run_probe(*, size: tuple[int, int] = DEFAULT_SIZE) -> ProbeReport:
         await pilot.pause()
         # Straight into the driver, not `pilot.press`: the point is to exercise the real
         # host -> XTermParser -> Driver.process_message -> App path a browser would use.
-        active_driver().feed_input("a")
+        active_capture().feed_input("a")
         await pilot.pause()
         await asyncio.sleep(_SETTLE_MARGIN)
         await pilot.pause()
         app.exit(EXIT_CODE)
 
     return_value = await app.run_async(size=size, auto_pilot=drive)
-    driver = active_driver()
+    driver = active_capture()
     observations = _Observations(
         driver_class_name=driver_class_name,
         return_value=return_value,

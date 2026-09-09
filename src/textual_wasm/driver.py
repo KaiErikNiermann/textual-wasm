@@ -86,6 +86,7 @@ class WasmDriverBase(Driver):
         self._parser = XTermParser(debug=False)
         self._tick_task: asyncio.Task[None] | None = None
         self._input_enabled = False
+        _register_active(self)
 
     @property
     def is_web(self) -> bool:
@@ -132,6 +133,13 @@ class WasmDriverBase(Driver):
         self.process_message(events.Resize(size, size))
 
     def start_application_mode(self) -> None:
+        # Before anything else: Textual prints crash output to stderr, which under Pyodide is
+        # a browser console nobody is watching. Owning the terminal includes owning what is
+        # printed when the app dies.
+        from textual_wasm.diagnostics.surface import attach  # noqa: PLC0415 - avoids a cycle
+
+        attach(self._app, self)
+
         for sequence in ENTER_APPLICATION_MODE:
             self.write(sequence)
         self._input_enabled = True
@@ -193,7 +201,6 @@ class CaptureDriver(WasmDriverBase):
         super().__init__(app, debug=debug, mouse=mouse, size=size)
         self._frames: list[str] = []
         self._app_mode_started = False
-        _register_active(self)
 
     def _emit(self, data: str) -> None:
         self._frames.append(data)
@@ -218,28 +225,43 @@ class CaptureDriver(WasmDriverBase):
         return "".join(self._frames[preamble:])
 
 
-_active: CaptureDriver | None = None
-"""The most recently constructed `CaptureDriver`.
+_active: WasmDriverBase | None = None
+"""The most recently constructed WASM driver.
 
 Textual constructs the driver itself, from a class name in an environment variable, so a
-caller has no other handle on the instance. A real browser driver needs exactly the same
-seam in order to expose `feed_input`/`on_resize` to JavaScript. Single-app by construction:
-the probe runs one `App` at a time.
+caller has no other handle on the instance - and the alternative, reaching into `App._driver`,
+is a private attribute that is the most likely thing to move between Textual releases. The
+browser needs this seam anyway, to expose `feed_input`/`on_resize` to JavaScript. Single-app
+by construction: one `App` runs at a time.
 """
 
 
-def _register_active(driver: CaptureDriver) -> None:
-    global _active  # noqa: PLW0603 - see `_active`; the alternative is reaching into App._driver
+def _register_active(driver: WasmDriverBase) -> None:
+    global _active  # noqa: PLW0603 - see `_active`; the alternative is App._driver
     _active = driver
 
 
-def active_driver() -> CaptureDriver:
-    """Return the live `CaptureDriver`.
+def active_driver() -> WasmDriverBase:
+    """Return the live WASM driver.
 
     Raises:
         RuntimeError: If no driver has been constructed yet, which means Textual never
             reached application mode.
     """
     if _active is None:
-        raise RuntimeError("no CaptureDriver has been constructed; did the app start?")
+        raise RuntimeError("no WASM driver has been constructed; did the app start?")
     return _active
+
+
+def active_capture() -> CaptureDriver:
+    """Return the live driver, asserting it is the capturing one.
+
+    Raises:
+        RuntimeError: If no driver is running.
+        TypeError: If the running driver has a different sink, which means `TEXTUAL_DRIVER`
+            selected something other than the one this caller assumed.
+    """
+    driver = active_driver()
+    if not isinstance(driver, CaptureDriver):
+        raise TypeError(f"expected a CaptureDriver, found {type(driver).__name__}")
+    return driver
