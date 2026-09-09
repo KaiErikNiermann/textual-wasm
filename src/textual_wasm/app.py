@@ -17,6 +17,9 @@ from textual.widgets import Label, Static
 MARKER: Final[str] = "TEXTUAL-WASM-SPIKE"
 """Text the probe looks for in the captured stream to prove the compositor ran."""
 
+HINT_ID: Final[str] = "hint"
+"""Widget whose text reports the key-press count, so input is visible and not just asserted."""
+
 EXIT_CODE: Final[int] = 7
 """Arbitrary non-zero, non-default value, so `run_async` returning it cannot be a coincidence."""
 
@@ -51,9 +54,10 @@ class SpikeApp(App[int]):
 
     def compose(self) -> ComposeResult:
         yield Label(MARKER, id="marker")
-        yield Static("press 'a'", id="hint")
+        yield Static(id=HINT_ID)
 
     def on_mount(self) -> None:
+        self._refresh_hint()
         self.set_timer(TIMER_DELAY, self._mark_timer_fired)
 
     def on_resize(self, event: Resize) -> None:
@@ -61,6 +65,15 @@ class SpikeApp(App[int]):
 
     def action_bump(self) -> None:
         self.bump_count += 1
+        self._refresh_hint()
+
+    def _refresh_hint(self) -> None:
+        """Put the count on screen.
+
+        The probe asserts the counter in memory, which a driver could satisfy without ever
+        having rendered anything; showing it means the browser demo fails visibly too.
+        """
+        self.query_one(f"#{HINT_ID}", Static).update(f"press 'a' - pressed {self.bump_count}")
 
     def _mark_timer_fired(self) -> None:
         self.timer_fired = True
