@@ -12,6 +12,7 @@ is what the cross-runtime comparison depends on.
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import dataclasses
 import http.server
@@ -23,6 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from textual_wasm.pins import resolve_pins
+from textual_wasm.target import AppTarget
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
@@ -58,9 +60,37 @@ ENTRY_NAME: Final[str] = "entry.py"
 _SHUTDOWN_TIMEOUT: Final[float] = 5.0
 """How long to wait for the serving thread after `shutdown()`; it should be immediate."""
 
-SOURCE_SUFFIXES: Final[tuple[str, ...]] = (".py", ".tcss", ".css")
-"""What gets copied into the browser's filesystem. Textual apps carry stylesheets next to
-their code, and a `.tcss` left behind fails at mount time rather than at build time."""
+EXCLUDED_DIRECTORIES: Final[frozenset[str]] = frozenset(
+    {
+        "__pycache__",
+        ".git",
+        ".hg",
+        ".svn",
+        ".venv",
+        "venv",
+        "node_modules",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        ".idea",
+        ".vscode",
+    }
+)
+"""Directories never copied into the browser's filesystem.
+
+An allowlist of *suffixes* was the earlier rule, and it was wrong in the way this project
+exists to catch: an app that read a `data.json` next to its code built cleanly, shipped
+without the file, and failed at runtime with a `FileNotFoundError` for a path that plainly
+exists on the developer's disk. Everything in the package now ships, so the only question
+left is what is definitely not part of it - caches, virtualenvs and version-control
+metadata, none of which an application reads at runtime.
+"""
+
+EXCLUDED_SUFFIXES: Final[frozenset[str]] = frozenset({".pyc", ".pyo", ".so", ".dylib", ".dll"})
+"""Compiled artefacts. A native extension is the wrong architecture here by construction, and
+shipping one wastes payload to produce a confusing failure rather than a clear missing-module
+one."""
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -83,6 +113,16 @@ class BuildSpec:
 
     The page is the user's, not this project's: a heading naming `textual-wasm` on someone
     else's application would be branding, and a tab labelled "spike" is worse.
+    """
+
+    verify_entry: bool = True
+    """Import the application before building, to check the entry resolves to an App.
+
+    On by default because the alternative is a build that reports success and produces a
+    site which fails on first load, in a browser, at the end of a deploy. Turn it off for an
+    application that cannot be imported on the machine doing the build - one whose module
+    body reaches for `js` or `pyodide`, which exist only inside the runtime it is being
+    built for.
     """
 
     worker: bool = False
@@ -118,6 +158,13 @@ class BuildResult:
     file_count: int
     total_bytes: int
 
+    notes: tuple[str, ...] = ()
+    """Things that were not checked, and why.
+
+    A build that could not verify its entry is weaker than one that could, and the caller
+    is the only place that can tell the user which of the two they just got.
+    """
+
     @property
     def summary(self) -> str:
         kilobytes = self.total_bytes / 1024
@@ -126,12 +173,34 @@ class BuildResult:
         )
 
 
-def _collect_sources(package: Path) -> dict[str, str]:
+def _shippable(path: Path, package: Path) -> bool:
+    """Whether one file belongs in the browser's copy of `package`."""
+    if not path.is_file() or path.suffix in EXCLUDED_SUFFIXES:
+        return False
+    relative = path.relative_to(package)
+    return not any(part in EXCLUDED_DIRECTORIES for part in relative.parts)
+
+
+def _encode(path: Path) -> dict[str, str]:
+    """Read one file into a form that survives JSON.
+
+    Text is carried as text so a build stays greppable and a diff stays readable; anything
+    that is not valid UTF-8 is base64, because a package may legitimately contain an image,
+    a font or a sqlite database and dropping those is what the previous rule did.
+    """
+    payload = path.read_bytes()
+    try:
+        return {"encoding": "utf8", "data": payload.decode("utf-8")}
+    except UnicodeDecodeError:
+        return {"encoding": "base64", "data": base64.b64encode(payload).decode("ascii")}
+
+
+def _collect_sources(package: Path) -> dict[str, dict[str, str]]:
     """Read a package's shippable files, keyed by path relative to the package root."""
     return {
-        str(path.relative_to(package)): path.read_text(encoding="utf-8")
+        str(path.relative_to(package)): _encode(path)
         for path in sorted(package.rglob("*"))
-        if path.is_file() and path.suffix in SOURCE_SUFFIXES and "__pycache__" not in path.parts
+        if _shippable(path, package)
     }
 
 
@@ -168,11 +237,17 @@ def build(spec: BuildSpec) -> BuildResult:
         FileNotFoundError: If the application package does not exist.
         NotADirectoryError: If it is not a directory - the entry names a module inside a
             package, so a single file is not enough to reconstruct the import path.
+        EntryError: If `spec.entry` does not resolve to a Textual `App` and
+            `spec.verify_entry` is set.
     """
     if not spec.package.exists():
         raise FileNotFoundError(spec.package)
     if not spec.package.is_dir():
         raise NotADirectoryError(spec.package)
+    notes = ()
+    if spec.verify_entry:
+        note = AppTarget(entry=spec.entry).verify()
+        notes = () if note is None else (note,)
 
     spec.output.mkdir(parents=True, exist_ok=True)
     _copy_assets(spec.output, spec.template)
@@ -200,6 +275,7 @@ def build(spec: BuildSpec) -> BuildResult:
     return BuildResult(
         output=spec.output,
         entry=spec.entry,
+        notes=notes,
         requirements=requirements,
         packages=tuple(sources),
         file_count=file_count,

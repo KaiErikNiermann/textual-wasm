@@ -6,6 +6,7 @@ shape of what lands on disk rather than mocking the pieces that produce it.
 
 from __future__ import annotations
 
+import base64
 import dataclasses
 import json
 from pathlib import Path
@@ -13,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from textual_wasm import bundler
+from textual_wasm.target import EntryError
 
 ENTRY = "textual_wasm.app:SpikeApp"
 PACKAGE = Path("src/textual_wasm")
@@ -68,18 +70,75 @@ def test_python_ships_as_source_for_both_packages(built: bundler.BuildResult) ->
     sources = json.loads((built.output / bundler.SOURCES_NAME).read_text())
     assert "textual_wasm" in sources
     assert "driver.py" in sources["textual_wasm"]
-    assert "def " in sources["textual_wasm"]["driver.py"]
+    assert "def " in sources["textual_wasm"]["driver.py"]["data"]
 
 
-def test_stylesheets_travel_with_their_code(built: bundler.BuildResult) -> None:
-    """A .tcss left behind fails at mount time, in a browser, rather than at build time."""
-    assert ".tcss" in bundler.SOURCE_SUFFIXES
+def test_every_file_in_the_package_travels(tmp_path: Path) -> None:
+    """Not only the source-like suffixes.
+
+    The earlier rule was an allowlist of extensions, and it failed in the way this project
+    exists to catch: an app reading a `data.json` next to its code built cleanly, shipped
+    without the file, and raised `FileNotFoundError` in the browser for a path that plainly
+    existed on disk.
+    """
+    package = tmp_path / "carrier"
+    (package / "nested").mkdir(parents=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "style.tcss").write_text("Static { color: red; }", encoding="utf-8")
+    (package / "data.json").write_text('{"k": 1}', encoding="utf-8")
+    (package / "notes.md").write_text("# notes", encoding="utf-8")
+    (package / "nested" / "table.csv").write_text("a,b\n1,2", encoding="utf-8")
+
+    shipped = bundler._collect_sources(package)  # pyright: ignore[reportPrivateUsage]
+
+    assert set(shipped) == {
+        "__init__.py",
+        "style.tcss",
+        "data.json",
+        "notes.md",
+        str(Path("nested") / "table.csv"),
+    }
+    assert shipped["data.json"] == {"encoding": "utf8", "data": '{"k": 1}'}
+
+
+def test_binary_files_survive_the_journey(tmp_path: Path) -> None:
+    """A package may legitimately carry an image, a font or a database.
+
+    JSON cannot hold arbitrary bytes, so these travel base64 - and the encoding is recorded
+    per file rather than guessed at the far end.
+    """
+    package = tmp_path / "binary"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    payload = bytes(range(256))
+    (package / "logo.png").write_bytes(payload)
+
+    shipped = bundler._collect_sources(package)  # pyright: ignore[reportPrivateUsage]
+
+    assert shipped["logo.png"]["encoding"] == "base64"
+    assert base64.b64decode(shipped["logo.png"]["data"]) == payload
 
 
 def test_compiled_and_cached_files_are_not_shipped(built: bundler.BuildResult) -> None:
     sources = json.loads((built.output / bundler.SOURCES_NAME).read_text())
     for files in sources.values():
         assert not [name for name in files if "__pycache__" in name or name.endswith(".pyc")]
+
+
+def test_caches_and_environments_are_not_shipped(tmp_path: Path) -> None:
+    """Shipping everything makes the exclusions load-bearing, so they are checked.
+
+    A virtualenv or a node_modules inside a package directory would otherwise be copied into
+    the page byte for byte.
+    """
+    package = tmp_path / "dirty"
+    for directory in (".venv", "node_modules", "__pycache__", ".ruff_cache"):
+        (package / directory).mkdir(parents=True)
+        (package / directory / "junk.py").write_text("junk", encoding="utf-8")
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "app.cpython-314.pyc").write_bytes(b"\x00")
+
+    assert set(bundler._collect_sources(package)) == {"__init__.py"}  # pyright: ignore[reportPrivateUsage]
 
 
 def test_requirements_come_from_the_projects_own_pins(built: bundler.BuildResult) -> None:
@@ -166,3 +225,29 @@ def test_the_worker_flag_reaches_the_page(tmp_path: Path) -> None:
     """The manifest is how `main.mjs` knows to start a worker at all."""
     manifest = _manifest(bundler.build(dataclasses.replace(_spec(tmp_path), worker=True)))
     assert manifest["worker"] is True
+
+
+def test_a_build_refuses_an_entry_that_cannot_resolve(tmp_path: Path) -> None:
+    """The failure this prevents is expensive: it surfaces in a browser after a deploy.
+
+    Every one of these built cleanly before, reported success, and produced a site whose
+    only symptom was a traceback on first load.
+    """
+    for entry in ("nosuchmodule:App", f"{ENTRY.split(':', maxsplit=1)[0]}:Missing"):
+        with pytest.raises((EntryError, ModuleNotFoundError)):
+            bundler.build(dataclasses.replace(_spec(tmp_path), entry=entry))
+
+
+def test_a_build_refuses_an_entry_that_is_not_an_app(tmp_path: Path) -> None:
+    """Resolving is not enough; it has to name something runnable."""
+    with pytest.raises(EntryError, match="not a Textual App"):
+        bundler.build(dataclasses.replace(_spec(tmp_path), entry="textual_wasm.bundler:BuildSpec"))
+
+
+def test_verification_can_be_turned_off(tmp_path: Path) -> None:
+    """For an app whose module body imports `js` or `pyodide`, which exist only in the
+    runtime it is being built for - the one case where importing to check is not possible."""
+    result = bundler.build(
+        dataclasses.replace(_spec(tmp_path), entry="nosuchmodule:App", verify_entry=False)
+    )
+    assert (result.output / bundler.MANIFEST_NAME).exists()

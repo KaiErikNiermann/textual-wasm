@@ -32,15 +32,30 @@ export const HOST_MODULE = "textual_wasm_host";
  * edit needs only a reload - and so the browser demonstrably runs the same files the other
  * runtimes do.
  *
+ * Every file in the package travels, not only the ones with a source-like suffix: an app is
+ * entitled to read a JSON file, a font or an image sitting next to its code, and a build that
+ * quietly left those behind produced a `FileNotFoundError` in the browser for a path that
+ * plainly existed on disk. Anything that is not valid UTF-8 arrives base64-encoded.
+ *
  * @param {object} pyodide
- * @param {Record<string, Record<string, string>>} packages package name to {path: source}
+ * @param {Record<string, Record<string, {encoding: string, data: string}>>} packages
+ *   package name to {path: {encoding, data}}
  */
 export function installPackages(pyodide, packages) {
   for (const [name, files] of Object.entries(packages)) {
-    for (const [relative, source] of Object.entries(files)) {
+    for (const [relative, file] of Object.entries(files)) {
       const target = `${SITE_PACKAGES}/${name}/${relative}`;
       pyodide.FS.mkdirTree(target.slice(0, target.lastIndexOf("/")));
-      pyodide.FS.writeFile(target, source, { encoding: "utf8" });
+      if (file.encoding === "base64") {
+        // `atob` yields one character per byte, all below U+0100, so there are no surrogate
+        // pairs and code point and code unit are the same number. Going through a
+        // TextDecoder instead would mangle the bytes by guessing an encoding they do not have.
+        const binary = atob(file.data);
+        const bytes = Uint8Array.from(binary, (character) => character.codePointAt(0));
+        pyodide.FS.writeFile(target, bytes);
+      } else {
+        pyodide.FS.writeFile(target, file.data, { encoding: "utf8" });
+      }
     }
   }
 }
