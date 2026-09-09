@@ -1,0 +1,56 @@
+# Publish the documentation site, including the live demos it embeds.
+#
+# The demos are real builds of the example applications, and GitHub Pages serves them as the
+# static files they are. That is the claim this project makes, deployed rather than described.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Read-only by default; the deploy job asks for exactly what it needs and nothing else.
+permissions:
+  contents: read
+
+# One deployment at a time, and a run already in progress is allowed to finish: cancelling
+# mid-deploy can leave the site half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - run: pipx install poetry
+      - run: poetry install
+      - name: build the site and its live demos
+        run: ./scripts/build-docs.sh
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs/_build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,65 @@
+# Weekly, and deliberately narrow.
+#
+# Every ecosystem sets a seven-day cooldown. A version published an hour ago has had an hour
+# of scrutiny, and the supply-chain attacks that matter are caught in days rather than in
+# minutes - so waiting a week costs nothing here and closes the window in which a compromised
+# release arrives as a routine-looking PR.
+#
+# The PR limit is the load-bearing setting: this project pins Pyodide, xterm.js and the whole
+# Python closure on purpose, because two runtimes are only comparable when they load the same
+# code. A flood of version bumps is not maintenance here - each one changes what the
+# cross-runtime check is checking, and has to be read rather than merged.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 4
+    groups:
+      # One PR for the linters, which move together and are never load-bearing.
+      dev-tooling:
+        patterns: ["ruff", "pyright", "radon", "semgrep", "pytest*", "types-*"]
+        update-types: [minor, patch]
+    ignore:
+      # Textual's version is pinned into the comparison itself: a release changes what the
+      # eight checks are checking, so it is upgraded deliberately with a check run, never by
+      # an automatic merge.
+      - dependency-name: textual
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    ignore:
+      # The runtime versions live in `bundler.py` and are pinned there; these entries exist so
+      # the harnesses can run, and bumping them without bumping the pins would make the
+      # harness test a different runtime than the one that ships.
+      - dependency-name: pyodide
+      - dependency-name: "@xterm/*"
+
+  - package-ecosystem: npm
+    directory: /examples/svelte-app
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3

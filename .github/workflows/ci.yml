@@ -27,8 +27,8 @@ jobs:
         # syntax this project would otherwise adopt without noticing.
         python: ["3.12", "3.14"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
       - run: pipx install poetry
@@ -54,28 +54,6 @@ jobs:
       - name: the porting matrix is a rendering of the registry
         run: poetry run textual-wasm matrix --check -o docs/porting-matrix.md
 
-  example:
-    # The example is code people copy, so it is held to the same standards as the package -
-    # in its own environment, which is also a check that it really is self-contained.
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: examples/simple-app
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-      - run: pipx install poetry
-      - run: poetry install
-      - run: poetry run ruff check .
-      - run: poetry run ruff format --check .
-      - run: poetry run pyright
-      - name: the example is portable, and says so
-        run: poetry run textual-wasm doctor simple_app.app:TaskList
-      - name: it builds to a static site
-        run: poetry run textual-wasm build simple_app.app:TaskList simple_app -o dist/
-
   check:
     # The claim this project makes, checked rather than asserted: the same app on CPython,
     # on Pyodide, in a browser and on a real pty, compared. `--strict` is what makes it a
@@ -83,14 +61,14 @@ jobs:
     # would cover fewer runtimes than the badge implies.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: pnpm
@@ -108,8 +86,68 @@ jobs:
         run: poetry run textual-wasm check --strict
       - name: the registry's claims, re-measured under Pyodide
         run: node scripts/run-substitution-check.mjs > substitutions.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: substitution-measurements
           path: substitutions.json
+
+  example:
+    # The examples are code people copy, so they are held to the same standard as the package
+    # - each in its own environment, which is also a check that it really is self-contained.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - directory: simple-app
+            package: simple_app
+            entry: simple_app.app:TaskList
+          - directory: embedded-page
+            package: dashboard_app
+            entry: dashboard_app.app:Dashboard
+          - directory: svelte-app
+            package: palette_app
+            entry: palette_app.app:Palette
+    defaults:
+      run:
+        working-directory: examples/${{ matrix.directory }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - run: pipx install poetry
+      - run: poetry install
+      - run: poetry run ruff check .
+      - run: poetry run ruff format --check .
+      - run: poetry run pyright
+      - name: the example is portable, and says so
+        run: poetry run textual-wasm doctor ${{ matrix.entry }}
+      - name: it builds to a static site
+        run: poetry run textual-wasm build ${{ matrix.entry }} ${{ matrix.package }} -o dist/
+
+  docs:
+    # Built on every push, published only from the default branch by `pages.yml`. A docs build
+    # that only runs at release time is a docs build that is broken at release time.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - run: pipx install poetry
+      - run: poetry install
+      - name: build the site and its live demos
+        run: ./scripts/build-docs.sh
+      - name: the whole site fits well inside a Pages deployment
+        run: |
+          size=$(du -sm docs/_build/html | cut -f1)
+          echo "site: ${size} MB"
+          test "${size}" -lt 200

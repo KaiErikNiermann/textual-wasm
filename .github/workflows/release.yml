@@ -1,0 +1,124 @@
+# Cut a release from a tag.
+#
+# Two halves, and the second is deliberately conditional. Building the distributions and
+# attaching them to a GitHub release needs nothing but the repository, so it always runs.
+# Publishing to PyPI needs a trusted-publisher configuration that does not exist yet - so that
+# job detects its own absence and skips, rather than failing every release until someone sets
+# it up.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # A tag is not a licence to skip the gates. This is the same suite CI runs, on the exact
+    # commit being released.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - run: pipx install poetry
+      - run: poetry install
+      - run: poetry run ruff check src tests
+      - run: poetry run pyright
+      - run: poetry run pytest
+      - name: the tag matches the version in pyproject
+        # A tag that disagrees with the metadata produces a release nobody can install by the
+        # name it advertises.
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          tagged="${GITHUB_REF_NAME#v}"
+          declared="$(poetry version --short)"
+          echo "tag ${tagged}, pyproject ${declared}"
+          test "${tagged}" = "${declared}"
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - run: pipx install poetry
+      - run: poetry build
+      - name: the wheel carries the page, the harnesses and the assets
+        # They are not Python, and without them `build` writes an empty site and `check` has
+        # no wasm or browser leg. A packaging change that drops them is silent otherwise.
+        run: |
+          python - <<'PY'
+          import zipfile, glob
+          names = zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist()
+          required = [
+              "textual_wasm/assets/index.html",
+              "textual_wasm/assets/main.mjs",
+              "textual_wasm/assets/entry.py",
+              "textual_wasm/harness/pyodide-probe.mjs",
+              "textual_wasm/harness/browser-check.mjs",
+              "textual_wasm/harness/wasm_entry.py",
+          ]
+          missing = [name for name in required if name not in names]
+          assert not missing, f"missing from the wheel: {missing}"
+          print(f"{len(names)} files, all required assets present")
+          PY
+      - uses: actions/upload-artifact@v5
+        with:
+          name: distributions
+          path: dist/
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          name: distributions
+          path: dist/
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+
+  pypi:
+    # Scaffolded, and skipped until the infrastructure exists. Trusted publishing needs a
+    # `pypi` environment on this repository and a matching publisher on PyPI; until both are
+    # configured this job reports that it was skipped and why, which is more useful than a red
+    # cross on every release.
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          name: distributions
+          path: dist/
+      - id: configured
+        name: is trusted publishing set up
+        env:
+          # Set this repository variable to "true" once the PyPI publisher exists.
+          READY: ${{ vars.PYPI_TRUSTED_PUBLISHING }}
+        run: |
+          if [ "${READY}" = "true" ]; then
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::notice::PyPI publishing is not configured yet." \
+                 "Set the repository variable PYPI_TRUSTED_PUBLISHING=true after adding a" \
+                 "trusted publisher on PyPI for this workflow. The distributions are" \
+                 "attached to the GitHub release regardless."
+          fi
+      - if: steps.configured.outputs.ready == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
