@@ -17,6 +17,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from textual_wasm.compare import Comparison
+from textual_wasm.compare import compare as compare_reports
 from textual_wasm.driver import DEFAULT_SIZE
 from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.probe import run_probe
@@ -76,6 +78,59 @@ def probe(
     else:
         _render(report, Console())
     raise typer.Exit(0 if report.ok else 1)
+
+
+def _render_comparison(result: Comparison, console: Console) -> None:
+    """Print the agreement matrix; disagreement is the only thing that matters here."""
+    table = Table(title="native vs wasm", title_justify="left")
+    table.add_column("check")
+    table.add_column("native")
+    table.add_column("wasm")
+    table.add_column("agrees")
+    for agreement in result.agreements:
+        mark = "[bold green]yes[/]" if agreement.agrees else "[bold red]NO[/]"
+        table.add_row(
+            agreement.check.value,
+            f"[{_STATUS_STYLE[agreement.native]}]{agreement.native.value}[/]",
+            f"[{_STATUS_STYLE[agreement.wasm]}]{agreement.wasm.value}[/]",
+            mark,
+        )
+    console.print(table)
+
+    differences = Table(title="runtime differences", title_justify="left")
+    differences.add_column("field")
+    differences.add_column("native")
+    differences.add_column("wasm")
+    differences.add_column("expected")
+    for difference in result.runtime_differences:
+        differences.add_row(
+            difference.field,
+            difference.native,
+            difference.wasm,
+            "yes" if difference.expected else "[bold red]NO[/]",
+        )
+    console.print(differences)
+
+
+@app.command()
+def compare(
+    native: Annotated[Path, typer.Argument(help="JSON report from the native run.")],
+    wasm: Annotated[Path, typer.Argument(help="JSON report from the Pyodide run.")],
+) -> None:
+    """Diff two probe reports and exit non-zero unless the runtimes are equivalent."""
+    result = compare_reports(
+        ProbeReport.from_json(native.read_text(encoding="utf-8")),
+        ProbeReport.from_json(wasm.read_text(encoding="utf-8")),
+    )
+    console = Console()
+    _render_comparison(result, console)
+    verdict = (
+        "[bold green]equivalent[/]: every check passed on both runtimes"
+        if result.equivalent
+        else "[bold red]not equivalent[/]"
+    )
+    console.print(verdict)
+    raise typer.Exit(0 if result.equivalent else 1)
 
 
 @app.command()

@@ -9,7 +9,8 @@ from __future__ import annotations
 import dataclasses
 import enum
 import json
-from typing import Final
+from collections.abc import Mapping
+from typing import Final, cast
 
 
 class CheckId(enum.StrEnum):
@@ -102,6 +103,83 @@ class ProbeReport:
     def to_json(self, *, indent: int | None = 2) -> str:
         """Serialise to stable JSON so the two runtimes' reports can be diffed."""
         return json.dumps(dataclasses.asdict(self), indent=indent, default=str, sort_keys=True)
+
+    @classmethod
+    def from_json(cls, payload: str) -> ProbeReport:
+        """Rebuild a report written by another runtime.
+
+        The WASM run happens in a separate process under a separate interpreter, so its
+        report reaches the comparison as text and has to be revalidated at that boundary
+        rather than trusted.
+
+        Raises:
+            TypeError: If any field is present with the wrong JSON type.
+            ValueError: If a check id or status is not one this build knows.
+        """
+        decoded: object = json.loads(payload)
+        if not isinstance(decoded, dict):
+            raise _wrong_type("report", "an object", decoded)
+        report = cast("dict[str, object]", decoded)
+        return cls(
+            runtime=_runtime_from(_as_object(report, "runtime")),
+            checks=tuple(_check_from(entry) for entry in _as_array(report, "checks")),
+        )
+
+
+def _wrong_type(label: str, expected: str, value: object) -> TypeError:
+    """Build the one error message every boundary check in this module raises."""
+    return TypeError(f"{label} must be {expected}, got {type(value).__name__}")
+
+
+def _as_object(source: Mapping[str, object], key: str) -> Mapping[str, object]:
+    value = source.get(key)
+    if not isinstance(value, dict):
+        raise _wrong_type(repr(key), "an object", value)
+    return cast("dict[str, object]", value)
+
+
+def _as_array(source: Mapping[str, object], key: str) -> list[object]:
+    value = source.get(key)
+    if not isinstance(value, list):
+        raise _wrong_type(repr(key), "an array", value)
+    return cast("list[object]", value)
+
+
+def _as_str(source: Mapping[str, object], key: str) -> str:
+    value = source.get(key)
+    if not isinstance(value, str):
+        raise _wrong_type(repr(key), "a string", value)
+    return value
+
+
+def _as_bool(source: Mapping[str, object], key: str) -> bool:
+    value = source.get(key)
+    if not isinstance(value, bool):
+        raise _wrong_type(repr(key), "a boolean", value)
+    return value
+
+
+def _runtime_from(source: Mapping[str, object]) -> RuntimeFacts:
+    return RuntimeFacts(
+        platform=_as_str(source, "platform"),
+        python_version=_as_str(source, "python_version"),
+        textual_version=_as_str(source, "textual_version"),
+        event_loop=_as_str(source, "event_loop"),
+        threads_available=_as_bool(source, "threads_available"),
+        eager_task_factory_accepted=_as_bool(source, "eager_task_factory_accepted"),
+        polyfills_applied=tuple(str(item) for item in _as_array(source, "polyfills_applied")),
+    )
+
+
+def _check_from(entry: object) -> CheckResult:
+    if not isinstance(entry, dict):
+        raise _wrong_type("each check", "an object", entry)
+    mapping = cast("dict[str, object]", entry)
+    return CheckResult(
+        check=CheckId(_as_str(mapping, "check")),
+        status=CheckStatus(_as_str(mapping, "status")),
+        detail=_as_str(mapping, "detail"),
+    )
 
 
 REPORT_SENTINEL: Final[str] = "TEXTUAL_WASM_PROBE_JSON"
