@@ -26,7 +26,18 @@ poetry run textual-wasm-spike compare \
   "${ARTIFACTS}/native-report.json" \
   "${ARTIFACTS}/wasm-report.json"
 
-echo "==> comparison: pyte replay vs xterm.js render"
-poetry run textual-wasm-spike compare-screens \
-  "${ARTIFACTS}/wasm-report.json" \
-  "${ARTIFACTS}/browser-report.json"
+# The render reference is a real terminal, not the pyte replay. pyte still gives the two
+# Python runtimes a comparable grid - they share its blind spots, so equality between them
+# is still meaningful - but it discards the rest of a line after a zero-width joiner or a
+# variation selector, which is exactly where the interesting question was.
+if command -v tmux >/dev/null 2>&1; then
+  echo "==> terminal (tmux + Textual's own driver on a real pty)"
+  poetry run textual-wasm-spike capture-terminal >"${ARTIFACTS}/terminal-report.json"
+
+  echo "==> comparison: real terminal vs xterm.js render"
+  poetry run textual-wasm-spike compare-screens \
+    "${ARTIFACTS}/terminal-report.json" \
+    "${ARTIFACTS}/browser-report.json"
+else
+  echo "==> terminal: SKIPPED (tmux not installed; the render reference is unavailable)"
+fi

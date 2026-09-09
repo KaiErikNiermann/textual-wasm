@@ -28,6 +28,8 @@ WIDTH_SAMPLES: Final[tuple[tuple[str, str], ...]] = (
     ("cjk", "\u4e16\u754c\u65e5\u672c\u8a9e"),
     ("combining", "e\u0301a\u0300"),
     ("astral", "\U0001f680\U0001f4bb"),
+    ("vs16", "\u2705\u26a0\ufe0f"),
+    ("zwj", "\U0001f469\u200d\U0001f4bb"),
 )
 """Character classes whose cell width three different tables have to agree on.
 

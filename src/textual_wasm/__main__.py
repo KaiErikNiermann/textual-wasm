@@ -8,6 +8,7 @@ so that nothing runtime-specific can leak into what is being measured.
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 import logging
 from pathlib import Path
@@ -25,6 +26,8 @@ from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.probe import run_probe
 from textual_wasm.report import CheckId, CheckStatus, ProbeReport, screen_from
 from textual_wasm.screen import RenderedScreen
+from textual_wasm.terminal import TMUX, capture_spike
+from textual_wasm.terminal import version as tmux_version
 
 app = typer.Typer(add_completion=False, help=__doc__)
 
@@ -182,6 +185,29 @@ def compare_screens(
     console.print(table)
     console.print(f"[bold red]{len(diffs)} row(s) differ[/]")
     raise typer.Exit(1)
+
+
+@app.command()
+def capture_terminal(
+    width: Annotated[int, typer.Option(help="Pane width.")] = DEFAULT_SIZE[0],
+    height: Annotated[int, typer.Option(help="Pane height.")] = DEFAULT_SIZE[1],
+) -> None:
+    """Render the app in a real terminal via tmux and emit the grid as JSON.
+
+    The reference the other runtimes are checked against: Textual's own platform driver on a
+    real pty, with nothing from this project in the path. Emits the same `{runtime, screen}`
+    shape the browser harness does, so `compare-screens` reads either.
+    """
+    if TMUX is None:
+        typer.echo("tmux is not installed; cannot capture a real terminal", err=True)
+        raise typer.Exit(2)
+
+    grid = capture_spike(columns=width, rows=height)
+    payload = {
+        "runtime": {"terminal": tmux_version(), "driver": "textual.drivers.linux_driver"},
+        "screen": dataclasses.asdict(grid),
+    }
+    typer.echo(json.dumps(payload, indent=2))
 
 
 @app.command()

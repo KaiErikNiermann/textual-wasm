@@ -55,11 +55,15 @@ def test_grids_of_different_sizes_are_rejected() -> None:
     ],
 )
 def test_pyte_still_truncates_after_a_joiner_or_variation_selector(name: str, text: str) -> None:
-    """Characterisation test pinning why emoji are absent from the width samples.
+    """Characterisation test pinning why pyte is not the render reference.
 
-    pyte 0.8.2 discards the remainder of the line after U+200D or U+FE0F, while xterm.js
-    preserves it - so on these sequences the oracle is wrong and the browser is right, and
-    pyte cannot adjudicate them. If this ever starts failing, pyte has been fixed and the
-    emoji samples should go back into `app.WIDTH_SAMPLES`.
+    pyte 0.8.2 discards the remainder of the line after U+200D or U+FE0F, while both
+    xterm.js and tmux preserve it. That is why `scripts/run-spike.sh` compares the browser
+    against a real terminal rather than against this replay: on emoji sequences the replay
+    is the thing that is wrong.
+
+    pyte is still used to give the two Python runtimes a comparable grid - they share its
+    blind spots exactly, so equality between them stays meaningful. If this ever starts
+    failing, pyte has been fixed and it could serve as a reference again.
     """
     assert not replay(text, columns=20, rows=1).lines[0].endswith("|"), name
