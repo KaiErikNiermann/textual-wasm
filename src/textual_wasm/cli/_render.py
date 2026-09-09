@@ -17,8 +17,10 @@ if TYPE_CHECKING:
     from rich.console import Console
 
     from textual_wasm import doctor as doctor_module
+    from textual_wasm.check import CheckReport
     from textual_wasm.compare import Comparison
     from textual_wasm.report import ProbeReport
+    from textual_wasm.screen import LineDiff
 
 STATUS_STYLE: dict[CheckStatus, str] = {
     CheckStatus.PASS: "bold green",
@@ -98,6 +100,62 @@ def render_comparison(result: Comparison, console: Console) -> None:
             "yes" if difference.expected else "[bold red]NO[/]",
         )
     console.print(differences)
+
+
+LEG_STYLE: dict[str, str] = {
+    "ran": "bold green",
+    "skipped": "yellow",
+    "failed": "bold red",
+}
+
+
+def render_check(report: CheckReport, console: Console) -> None:
+    """Print what each runtime did, then what the ones that ran disagreed about."""
+    legs = Table(
+        title=f"{report.target} at {report.size[0]}x{report.size[1]}", title_justify="left"
+    )
+    legs.add_column("runtime")
+    legs.add_column("status")
+    # Folding, not truncating: for a skipped leg this column holds the command that would
+    # enable it, and a shortened install hint is worse than none.
+    legs.add_column("detail", overflow="fold")
+    for leg in report.legs:
+        legs.add_row(
+            leg.leg.value,
+            f"[{LEG_STYLE[leg.status.value]}]{leg.status.value}[/]",
+            leg.detail,
+        )
+    console.print(legs)
+
+    if report.runtimes is not None:
+        render_comparison(report.runtimes, console)
+    if report.render_diffs is not None:
+        render_screen_diffs(report.render_diffs, console, left="terminal", right="browser")
+
+
+def render_screen_diffs(
+    diffs: tuple[LineDiff, ...], console: Console, *, left: str, right: str
+) -> None:
+    """Print rows on which two grids disagree, and the column where they stop matching.
+
+    The column is the actionable half: a character-width disagreement moves everything after
+    it, so the first divergent column names the character that was measured differently.
+    """
+    if not diffs:
+        console.print(f"[bold green]identical[/]: {left} and {right} render the same")
+        return
+    table = Table(title="rows that differ", title_justify="left")
+    for column in ("row", "col", left, right):
+        table.add_column(column)
+    for diff in diffs:
+        table.add_row(
+            str(diff.row),
+            str(diff.first_divergent_column),
+            repr(diff.left),
+            repr(diff.right),
+        )
+    console.print(table)
+    console.print(f"[bold red]{len(diffs)} row(s) differ[/]")
 
 
 def render_findings(report: doctor_module.DoctorReport, console: Console) -> None:

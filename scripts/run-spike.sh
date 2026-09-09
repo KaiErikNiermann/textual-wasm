@@ -1,43 +1,25 @@
 #!/usr/bin/env bash
-# Run the whole experiment: the probe on both Python runtimes, then the app in a real
-# browser, then the two comparisons.
+# Run the whole experiment, then re-measure the claims the registry makes about Pyodide.
 #
-# The comparisons are the experiment. "It runs under WASM" is a weaker claim than "it runs
-# the same under WASM", and that in turn is weaker than "a browser renders it the same" -
-# identical bytes are only a rendering instruction, and the emulator that executes them in
-# a page does not share a character-width table with the one that produced them.
+# The first half is now one command: `textual-wasm check` runs the app on every runtime this
+# machine offers and compares them. `--strict` is what makes this a CI gate rather than a
+# demonstration - without it a machine missing Node or tmux would still print a verdict, and
+# the verdict would be about fewer runtimes than anyone reading it assumes.
+#
+# The substitution check is separate on purpose: `check` answers "does this app work the
+# same over there", and this answers "is what we tell people about that runtime still true".
+# They fail for different reasons and should be readable apart.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARTIFACTS="${ROOT}/artifacts"
 mkdir -p "${ARTIFACTS}"
 
-echo "==> native (CPython)"
-poetry run textual-wasm-spike probe --json >"${ARTIFACTS}/native-report.json"
+STRICT="${STRICT:---strict}"
 
-echo "==> wasm (Pyodide)"
-node "${ROOT}/scripts/run-pyodide-node.mjs" >"${ARTIFACTS}/wasm-report.json"
+echo "==> check: every runtime, one app"
+poetry run textual-wasm check ${STRICT} "$@"
 
-echo "==> browser (Chrome + xterm.js)"
-node "${ROOT}/scripts/run-browser-check.mjs" >"${ARTIFACTS}/browser-report.json"
-
-echo "==> comparison: native vs wasm"
-poetry run textual-wasm-spike compare \
-  "${ARTIFACTS}/native-report.json" \
-  "${ARTIFACTS}/wasm-report.json"
-
-# The render reference is a real terminal, not the pyte replay. pyte still gives the two
-# Python runtimes a comparable grid - they share its blind spots, so equality between them
-# is still meaningful - but it discards the rest of a line after a zero-width joiner or a
-# variation selector, which is exactly where the interesting question was.
-if command -v tmux >/dev/null 2>&1; then
-  echo "==> terminal (tmux + Textual's own driver on a real pty)"
-  poetry run textual-wasm-spike capture-terminal >"${ARTIFACTS}/terminal-report.json"
-
-  echo "==> comparison: real terminal vs xterm.js render"
-  poetry run textual-wasm-spike compare-screens \
-    "${ARTIFACTS}/terminal-report.json" \
-    "${ARTIFACTS}/browser-report.json"
-else
-  echo "==> terminal: SKIPPED (tmux not installed; the render reference is unavailable)"
-fi
+echo "==> substitutions: the registry's claims, re-measured under Pyodide"
+node "${ROOT}/scripts/run-substitution-check.mjs" >"${ARTIFACTS}/substitutions.json"
+echo "wrote ${ARTIFACTS}/substitutions.json"

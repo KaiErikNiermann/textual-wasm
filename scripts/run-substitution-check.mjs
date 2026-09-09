@@ -1,8 +1,8 @@
 /**
  * Re-measure the substitution registry's claims under Pyodide and print them as JSON.
  *
- * Sibling of `run-pyodide-node.mjs`, and deliberately separate: the probe answers "does
- * Textual work here", this answers "is what we tell people about this runtime still true".
+ * Deliberately separate from the packaged probe harness: that answers "does Textual work
+ * here", and this answers "is what we tell people about this runtime still true".
  * They fail for different reasons and should be readable apart.
  */
 

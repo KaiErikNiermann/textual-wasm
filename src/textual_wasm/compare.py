@@ -50,6 +50,10 @@ class CheckAgreement:
     def passes_both(self) -> bool:
         return self.native is CheckStatus.PASS and self.wasm is CheckStatus.PASS
 
+    @property
+    def failed_somewhere(self) -> bool:
+        return CheckStatus.FAIL in (self.native, self.wasm)
+
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class RuntimeDifference:
@@ -91,10 +95,16 @@ class Comparison:
 
     @property
     def equivalent(self) -> bool:
-        """True when every check passed on both hosts and nothing unexplained differs."""
+        """True when the two hosts agreed, nothing failed, and nothing unexplained differs.
+
+        A check skipped on *both* hosts is agreement, not a shortfall: an app that declares
+        no keystroke does not exercise the input path anywhere, and calling that
+        non-equivalent would report the app's shape as a runtime difference. At least one
+        check must have passed, so an all-skipped run cannot be vacuously equivalent.
+        """
         return (
-            bool(self.agreements)
-            and all(a.passes_both for a in self.agreements)
+            any(a.passes_both for a in self.agreements)
+            and all(a.agrees and not a.failed_somewhere for a in self.agreements)
             and not self.unexpected_differences
             and not self.screen_diffs
         )

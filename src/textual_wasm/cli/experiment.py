@@ -15,10 +15,9 @@ from typing import Annotated, cast
 
 import typer
 from rich.console import Console
-from rich.table import Table
 
 from textual_wasm.cli._app import app
-from textual_wasm.cli._render import render_comparison, render_report
+from textual_wasm.cli._render import render_comparison, render_report, render_screen_diffs
 from textual_wasm.cli._target import (
     EntryOption,
     KeysOption,
@@ -112,25 +111,8 @@ def compare_screens(
     """
     console = Console()
     diffs = diff_screens(_load_screen(left), _load_screen(right))
-    if not diffs:
-        console.print(f"[bold green]identical[/]: {left.name} and {right.name} render the same")
-        raise typer.Exit(0)
-
-    table = Table(title="rows that differ", title_justify="left")
-    table.add_column("row")
-    table.add_column("col")
-    table.add_column(left.name)
-    table.add_column(right.name)
-    for diff in diffs:
-        table.add_row(
-            str(diff.row),
-            str(diff.first_divergent_column),
-            repr(diff.left),
-            repr(diff.right),
-        )
-    console.print(table)
-    console.print(f"[bold red]{len(diffs)} row(s) differ[/]")
-    raise typer.Exit(1)
+    render_screen_diffs(diffs, console, left=left.name, right=right.name)
+    raise typer.Exit(1 if diffs else 0)
 
 
 @app.command()

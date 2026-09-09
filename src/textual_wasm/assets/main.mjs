@@ -25,10 +25,10 @@ const MANIFEST_URL = "./app.json";
 const HOST_MODULE = "textual_wasm_host";
 
 /*
- * The automation surface is published as `globalThis.textualWasmSpike`, deliberately and not
- * as a debug hook: the browser half of the experiment is only worth anything if a machine
- * can run it, and a machine needs a fixed grid and a way to read the buffer back.
- * `scripts/run-browser-check.mjs` is its only consumer.
+ * The automation surface is published as `globalThis.textualWasm`, deliberately and not as a
+ * debug hook: the browser half of the experiment is only worth anything if a machine can run
+ * it, and a machine needs a fixed grid and a way to read the buffer back. The packaged
+ * `browser-check.mjs` harness is its consumer, and `textual-wasm check` is what runs that.
  */
 
 /**
@@ -240,10 +240,10 @@ async function main() {
   // Published only once the app is actually driving the terminal, so a harness that waits
   // for it cannot read a half-booted screen.
   // Publishing on the global object is the point here, not an accident: this is the
-  // documented surface `scripts/run-browser-check.mjs` drives, and a harness in another
-  // realm cannot reach a module-scoped binding.
+  // documented surface the browser harness drives, and a harness in another realm cannot
+  // reach a module-scoped binding.
   // eslint-disable-next-line unicorn/no-global-object-property-assignment
-  globalThis.textualWasmSpike = {
+  globalThis.textualWasm = {
     columns: host.cols,
     rows: host.rows,
     screen: () => readScreen(terminal),

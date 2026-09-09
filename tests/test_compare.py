@@ -109,3 +109,20 @@ def test_reports_of_different_applications_are_rejected() -> None:
     other = dataclasses.replace(_report(_WASM_RUNTIME, *_ALL_PASS), target="other:App")
     with pytest.raises(ValueError, match="different applications"):
         compare(_report(_NATIVE_RUNTIME, *_ALL_PASS), other)
+
+
+def test_a_check_skipped_on_both_hosts_is_agreement() -> None:
+    """An app that declares no keystroke does not exercise input on *either* runtime.
+
+    Reporting that as non-equivalent would make the verdict a statement about the app's
+    shape rather than about the runtimes.
+    """
+    statuses = (*(CheckStatus.PASS,) * (len(CheckId) - 1), CheckStatus.SKIP)
+    result = compare(_report(_NATIVE_RUNTIME, *statuses), _report(_WASM_RUNTIME, *statuses))
+    assert result.equivalent
+
+
+def test_an_all_skipped_run_is_not_vacuously_equivalent() -> None:
+    skipped = (CheckStatus.SKIP,) * len(CheckId)
+    result = compare(_report(_NATIVE_RUNTIME, *skipped), _report(_WASM_RUNTIME, *skipped))
+    assert not result.equivalent

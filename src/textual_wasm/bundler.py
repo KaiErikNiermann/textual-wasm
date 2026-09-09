@@ -12,16 +12,20 @@ is what the cross-runtime comparison depends on.
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
+import http.server
 import json
+import mimetypes
 import shutil
+import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from textual_wasm.pins import resolve_pins
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Generator, Sequence
 
 ASSETS: Final[Path] = Path(__file__).parent / "assets"
 """The page, its stylesheet and the entry script, shipped with the package."""
@@ -50,6 +54,9 @@ the drift this project keeps finding elsewhere."""
 MANIFEST_NAME: Final[str] = "app.json"
 SOURCES_NAME: Final[str] = "sources.json"
 ENTRY_NAME: Final[str] = "entry.py"
+
+_SHUTDOWN_TIMEOUT: Final[float] = 5.0
+"""How long to wait for the serving thread after `shutdown()`; it should be immediate."""
 
 SOURCE_SUFFIXES: Final[tuple[str, ...]] = (".py", ".tcss", ".css")
 """What gets copied into the browser's filesystem. Textual apps carry stylesheets next to
@@ -173,26 +180,61 @@ def serve(directory: Path, *, port: int, host: str = "127.0.0.1") -> None:
         host: Interface to bind. Loopback by default - a development server is not a
             deployment target.
     """
-    import http.server  # noqa: PLC0415 - only needed by this command
-    import mimetypes  # noqa: PLC0415 - only needed by this command
+    with _server(directory, port=port, host=host, quiet=False) as server:
+        server.serve_forever()
 
+
+@contextlib.contextmanager
+def background_server(directory: Path, *, port: int = 0, host: str = "127.0.0.1") -> Generator[str]:
+    """Serve a built directory on a thread, yielding the URL it is reachable at.
+
+    The browser leg of a check drives a real `build` through a real `dev`, because checking
+    something other than what ships is how a harness comes to pass while the product is
+    broken. Port 0 by default so two checks running at once cannot collide.
+
+    Args:
+        directory: A directory produced by `build`.
+        port: Port to listen on, or 0 to let the OS choose.
+        host: Interface to bind.
+
+    Yields:
+        The base URL, with the port actually bound.
+    """
+    with _server(directory, port=port, host=host, quiet=True) as server:
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield f"http://{host}:{server.server_address[1]}/"
+        finally:
+            server.shutdown()
+            thread.join(timeout=_SHUTDOWN_TIMEOUT)
+
+
+def _server(
+    directory: Path, *, port: int, host: str, quiet: bool
+) -> http.server.ThreadingHTTPServer:
+    """Bind a static file server for `directory`.
+
+    `quiet` silences the access log, which a developer watching `dev` wants and a check
+    running four runtimes does not - there it would bury the report in request lines.
+    """
     # Neither type is in every platform's registry, and a wasm module served as
     # application/octet-stream fails instantiation with a message about the MIME type.
     mimetypes.add_type("application/wasm", ".wasm")
     mimetypes.add_type("text/javascript", ".mjs")
-
-    handler = _handler_for(directory)
-    with http.server.ThreadingHTTPServer((host, port), handler) as server:
-        server.serve_forever()
+    return http.server.ThreadingHTTPServer((host, port), _handler_for(directory, quiet=quiet))
 
 
-def _handler_for(directory: Path) -> type:
+def _handler_for(directory: Path, *, quiet: bool) -> type[http.server.SimpleHTTPRequestHandler]:
     """Build a request handler rooted at `directory`, with caching off."""
-    import http.server  # noqa: PLC0415 - only needed by serve()
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *args: object, **kwargs: object) -> None:
             super().__init__(*args, directory=str(directory), **kwargs)  # type: ignore[arg-type]
+
+        def log_message(self, format: str, *args: object) -> None:  # noqa: A002 - stdlib name
+            if not quiet:
+                super().log_message(format, *args)
 
         def end_headers(self) -> None:
             # A development server that caches is a development server people restart for no

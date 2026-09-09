@@ -17,6 +17,8 @@ import dataclasses
 from typing import TYPE_CHECKING, Final, cast
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from textual.app import App
 
 SPIKE_ENTRY: Final[str] = "textual_wasm.app:SpikeApp"
@@ -74,6 +76,24 @@ class AppTarget:
         """Whether this target can settle the key-input question."""
         return bool(self.keys) and self.settled_marker is not None
 
+    @classmethod
+    def from_mapping(cls, source: Mapping[str, object]) -> AppTarget:
+        """Rebuild a target that crossed a process or FFI boundary as JSON.
+
+        Validated here rather than trusted: the Pyodide harness marshals this through
+        JavaScript, and a marker that arrives as the wrong type would otherwise surface as a
+        harness that waits out its timeout.
+
+        Raises:
+            TypeError: If a field is present with the wrong JSON type.
+        """
+        return cls(
+            entry=_as_str(source, "entry"),
+            ready_marker=_as_optional_str(source, "ready_marker"),
+            keys=_as_optional_str(source, "keys") or "",
+            settled_marker=_as_optional_str(source, "settled_marker"),
+        )
+
     def load(self) -> type[App[object]]:
         """Import the application class.
 
@@ -96,6 +116,20 @@ class AppTarget:
         # anything but an object, so this narrows a genuinely unknown parameter rather than
         # papering over one that could be inferred.
         return cast("type[App[object]]", attribute)
+
+
+def _as_str(source: Mapping[str, object], key: str) -> str:
+    value = source.get(key)
+    if not isinstance(value, str):
+        raise TypeError(f"{key!r} must be a string, got {type(value).__name__}")
+    return value
+
+
+def _as_optional_str(source: Mapping[str, object], key: str) -> str | None:
+    value = source.get(key)
+    if value is not None and not isinstance(value, str):
+        raise TypeError(f"{key!r} must be a string or null, got {type(value).__name__}")
+    return value
 
 
 SPIKE_TARGET: Final[AppTarget] = AppTarget(
