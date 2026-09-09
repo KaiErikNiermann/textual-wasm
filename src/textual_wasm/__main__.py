@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -17,6 +18,7 @@ from rich.console import Console
 from rich.table import Table
 
 from textual_wasm.driver import DEFAULT_SIZE
+from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.probe import run_probe
 from textual_wasm.report import CheckId, CheckStatus, ProbeReport
 
@@ -39,6 +41,7 @@ def _render(report: ProbeReport, console: Console) -> None:
         ("event loop", report.runtime.event_loop),
         ("threads available", str(report.runtime.threads_available)),
         ("eager task factory", str(report.runtime.eager_task_factory_accepted)),
+        ("polyfills applied", ", ".join(report.runtime.polyfills_applied) or "none"),
     ):
         facts.add_row(field, value)
     console.print(facts)
@@ -73,6 +76,19 @@ def probe(
     else:
         _render(report, Console())
     raise typer.Exit(0 if report.ok else 1)
+
+
+@app.command()
+def pins(
+    output: Annotated[
+        Path | None,
+        typer.Option(help=f"Where to write the pins (default: ./{REQUIREMENTS_FILENAME})."),
+    ] = None,
+) -> None:
+    """Regenerate the WASM requirements file from the installed native environment."""
+    destination = output or Path(REQUIREMENTS_FILENAME)
+    for pin in write_pins(destination):
+        typer.echo(pin)
 
 
 @app.command()
