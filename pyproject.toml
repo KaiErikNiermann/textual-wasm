@@ -52,7 +52,7 @@ include = [
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"
 pytest-asyncio = "^0.25"
-ruff = "^0.15"
+ruff = "^0.16"
 pyright = "^1.1"
 radon = "^6.0"
 semgrep = "^1.100"
