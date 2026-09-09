@@ -3,7 +3,7 @@
 #
 # Deliberately does NOT run the Pyodide probe. That needs a network fetch for the wheels and
 # takes several seconds, which is a CI job's business rather than a push gate's; the pytest
-# suite already covers the driver natively, and `scripts/run_spike.sh` runs both halves when
+# suite already covers the driver natively, and `scripts/run-spike.sh` runs both halves when
 # you actually want the comparison.
 set -euo pipefail
 

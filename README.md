@@ -19,7 +19,7 @@ places:
 | native | `poetry run textual-wasm-spike probe` | CPython on Linux |
 | WASM | `node scripts/run-pyodide-node.mjs` | Pyodide (CPython on wasm32-emscripten) |
 
-`./scripts/run_spike.sh` runs both and diffs the reports. Eight checks, both runtimes, all
+`./scripts/run-spike.sh` runs both and diffs the reports. Eight checks, both runtimes, all
 passing; the compositor emits a byte-identical 7311 characters either way.
 
 Nothing in the probe, the driver or the app may branch on `sys.platform` — a semgrep rule

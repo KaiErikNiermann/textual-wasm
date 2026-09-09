@@ -13,7 +13,7 @@ echo "==> native (CPython)"
 poetry run textual-wasm-spike probe --json >"${ARTIFACTS}/native-report.json"
 
 echo "==> wasm (Pyodide)"
-node "${ROOT}/scripts/run_pyodide_node.mjs" >"${ARTIFACTS}/wasm-report.json"
+node "${ROOT}/scripts/run-pyodide-node.mjs" >"${ARTIFACTS}/wasm-report.json"
 
 echo "==> comparison"
 poetry run textual-wasm-spike compare \

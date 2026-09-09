@@ -5,7 +5,7 @@
   "type": "module",
   "description": "WASM harness for the Textual feasibility spike.",
   "scripts": {
-    "probe:wasm": "node scripts/run_pyodide_node.mjs",
+    "probe:wasm": "node scripts/run-pyodide-node.mjs",
     "serve": "node scripts/serve.mjs",
     "lint:css": "eslint \"web/**/*.css\" && stylelint \"web/**/*.css\"",
     "lint:style": "EIO_BACKEND=posix poetry run semgrep --config ~/.claude/skills/principled-css/rules/principled-css.yml --metrics=off --error --quiet web",
