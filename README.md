@@ -42,7 +42,7 @@ Four runtimes, and two comparisons that mean something:
 |---|---|---|
 | native | CPython | The baseline. |
 | wasm | Pyodide under Node | Everything on the Python side, in CI, with no browser. |
-| browser | a real Chrome over a real `build` | Rendering and font metrics. |
+| browser | Chromium, Firefox **and** WebKit over a real `build` | Rendering, and whether the engines agree. |
 | terminal | a real pty via tmux, on Textual's own driver | What a user would actually see. |
 
 `native` against `wasm` is compared check-by-check, fact-by-fact and grid-by-grid.
@@ -104,6 +104,8 @@ static files by GitHub Pages.
   and Textual inside Svelte, Vue or plain HTML.
 - [Limitations](https://kaierikniermann.github.io/textual-wasm/limitations.html) — what does
   not work, organised by *whose* constraint each one is.
+- [Browser support](https://kaierikniermann.github.io/textual-wasm/browsers.html) — measured
+  across three engines, and what that measurement does not cover.
 - [Feasibility study](./textual-wasm-feasability-study.md) — the architecture audit, what the
   spike measured, and the claims it corrected.
 
