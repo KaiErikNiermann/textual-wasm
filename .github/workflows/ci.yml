@@ -170,6 +170,20 @@ jobs:
         run: poetry run textual-wasm doctor ${{ matrix.entry }}
       - name: it builds to a static site
         run: poetry run textual-wasm build ${{ matrix.entry }} ${{ matrix.package }} -o dist/
+      # Only svelte-app has a JavaScript build. Without this its devDependencies are
+      # declared and never compiled, so a dependency bump there is unverifiable - the
+      # `terminal` script above builds the Python side and says nothing about the wrapper.
+      - uses: pnpm/action-setup@v4
+        if: matrix.directory == 'svelte-app'
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        if: matrix.directory == 'svelte-app'
+        with:
+          node-version: "22"
+      - name: the framework wrapper compiles against its pinned plugin
+        if: matrix.directory == 'svelte-app'
+        run: pnpm install --frozen-lockfile && pnpm build
 
   docs:
     # Built on every push, published only from the default branch by `pages.yml`. A docs build
