@@ -65,7 +65,10 @@ jobs:
         # only ever run by hand.
         run: pnpm lint:all
       - name: pytest
-        run: poetry run pytest
+        # Browser-driving tests are deselected here and required in the `check` matrix,
+        # which is the job that installs engines. Naming them rather than letting them skip
+        # keeps "this machine has no browser" from looking like "these tests passed".
+        run: poetry run pytest -m "not browser"
       - name: the porting matrix is a rendering of the registry
         run: poetry run textual-wasm matrix --check -o docs/porting-matrix.md
 
@@ -126,6 +129,19 @@ jobs:
           pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - name: check every runtime
         run: poetry run textual-wasm check --strict --browser ${{ matrix.browser }}
+      - name: check every runtime again, with Python in a Web Worker
+        # A worker build has to render identically - that is the whole claim - so this is
+        # the same comparison, not a lesser one. Run on every engine because the worker is
+        # the part most likely to differ between them: it is the only mode whose output
+        # crosses a thread boundary.
+        run: poetry run textual-wasm check --strict --worker --browser ${{ matrix.browser }}
+      - name: a worker keeps the page responsive, and the main thread does not
+        # The measurement worker mode exists for, and the one thing the render comparison
+        # above cannot see. Chromium only: this is a fact about where the interpreter runs,
+        # not about how an engine paints, and running it three times measures it three
+        # times rather than measuring three things.
+        if: matrix.browser == 'chromium'
+        run: poetry run pytest tests/test_responsiveness.py -v
       - name: the registry's claims, re-measured under Pyodide
         # Pyodide is the same build in every leg of this matrix, so this is measured once.
         if: matrix.browser == 'chromium'
