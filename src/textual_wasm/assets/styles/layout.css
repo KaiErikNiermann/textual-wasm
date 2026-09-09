@@ -62,6 +62,7 @@
      this one, so every rule here would apply twice - which showed up as a doubled
      border before the name was changed. */
   .terminal-frame {
+    display: grid;
     background: var(--color-terminal-bg);
     border: var(--space-1) solid var(--color-edge);
     border-radius: var(--radius-2);
@@ -69,5 +70,15 @@
     min-block-size: 0;
     overflow: hidden;
     padding: var(--space-3);
+  }
+
+  /* Deliberately undecorated, and the only element xterm.js is opened into. FitAddon
+     chooses a row count from `getComputedStyle(parent).height`, which for a `border-box`
+     element is the *border* box - so padding and a border on this element would be counted
+     as room for text, and the last two rows of every app would be drawn outside the frame
+     and clipped. Those rows are where Textual puts its footer. Decoration lives on the
+     frame, measurement happens here, and the two cannot drift into each other. */
+  .terminal-mount {
+    min-block-size: 0;
   }
 }

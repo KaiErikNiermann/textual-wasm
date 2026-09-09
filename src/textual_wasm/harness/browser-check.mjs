@@ -153,6 +153,36 @@ function watchForFailures(page) {
   return failures;
 }
 
+/**
+ * Check that the grid the page chose for itself fits inside its frame.
+ *
+ * A separate page load, without the forced-grid query parameters, because forcing a grid is
+ * exactly what bypasses `FitAddon` - so every other assertion here runs on the one
+ * configuration in which a sizing bug cannot appear. It did appear: the frame's padding and
+ * border were counted as room for text, and the last two rows of every app - where Textual
+ * draws its footer - were rendered outside the visible box.
+ *
+ * Pyodide is not waited for. The page sizes the terminal before it boots one.
+ *
+ * @param {import("puppeteer-core").Browser} browser
+ * @param {string} url
+ * @returns {Promise<number>} pixels by which the grid overflows its frame; <= 0 is correct.
+ */
+async function measureFit(browser, url) {
+  const page = await browser.newPage();
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("#terminal[data-fitted]", { timeout: READY_TIMEOUT_MS });
+    return await page.evaluate(() => {
+      const frame = document.querySelector(".terminal-frame").getBoundingClientRect();
+      const grid = document.querySelector("#terminal .xterm").getBoundingClientRect();
+      return Math.round(Math.max(grid.bottom - frame.bottom, grid.right - frame.right));
+    });
+  } finally {
+    await page.close();
+  }
+}
+
 async function main() {
   const config = readConfig();
   const puppeteer = loadFrom(config.resolveFrom, "puppeteer-core");
@@ -169,6 +199,11 @@ async function main() {
       waitUntil: "domcontentloaded",
     });
     const result = await collect(page, config);
+
+    const overflow = await measureFit(browser, config.url);
+    if (overflow > 0) {
+      failures.push(`the terminal overflows its frame by ${overflow}px when it sizes itself`);
+    }
 
     if (failures.length > 0) {
       process.stderr.write(`page reported ${failures.length} error(s):\n`);

@@ -140,6 +140,10 @@ function createTerminal({ Terminal, FitAddon }) {
     } else {
       terminal.resize(forced.cols, forced.rows);
     }
+    // Part of the automation contract, not a debug aid: a harness checking that the grid
+    // fits inside its frame has to know the sizing has happened, and the only alternative
+    // signal - the terminal existing - is true a frame earlier, when it is still 80x24.
+    container.dataset.fitted = "true";
   };
 
   return { terminal, host, fit };

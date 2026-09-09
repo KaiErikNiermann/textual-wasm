@@ -21,7 +21,13 @@
       <p id="status" class="status" data-state="booting">booting Pyodide&hellip;</p>
     </header>
     <main class="stage">
-      <div id="terminal" class="terminal-frame"></div>
+      <!-- Two elements, not one, and the nesting is load-bearing: the frame is decorated
+           and the mount is bare. FitAddon divides the mount's *parent* box by the cell size
+           to choose a row count, so any padding or border on the element xterm opens into is
+           counted as usable space and the last rows are drawn outside the visible box. -->
+      <div class="terminal-frame">
+        <div id="terminal" class="terminal-mount"></div>
+      </div>
     </main>
     <script type="module" src="./main.mjs"></script>
   </body>
