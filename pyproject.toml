@@ -77,8 +77,13 @@ ban-relative-imports = "all"
 
 # --- Pyright ----------------------------------------------------------------
 [tool.pyright]
-include = ["src", "tests"]
+include = ["src", "tests", "scripts"]
 exclude = ["tests/semgrep/positive"]
+# Hand-written stubs for the Pyodide `js` module, which exists only inside the runtime.
+stubPath = "typings"
+# `js` is stub-only by nature: the module exists only inside the Pyodide runtime, so a
+# missing source is the expected state rather than a finding.
+reportMissingModuleSource = "none"
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
