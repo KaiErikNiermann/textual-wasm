@@ -37,7 +37,7 @@ jobs:
       - run: poetry install
       - name: build the site and its live demos
         run: ./scripts/build-docs.sh
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/_build/html
