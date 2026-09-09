@@ -58,6 +58,10 @@ jobs:
           fi
       - name: semgrep (conventions + core-utils)
         run: poetry run semgrep --config .semgrep --metrics=off --error --quiet src
+      - name: eslint + stylelint + principled-css
+        # A stylesheet in an example shipped unlayered because these gates existed but were
+        # only ever run by hand.
+        run: pnpm lint:all
       - name: pytest
         run: poetry run pytest
       - name: the porting matrix is a rendering of the registry
@@ -68,6 +72,15 @@ jobs:
     # on Pyodide, in a browser and on a real pty, compared. `--strict` is what makes it a
     # gate - without it a runner missing tmux would still print a verdict, and the verdict
     # would cover fewer runtimes than the badge implies.
+    #
+    # Once per browser engine, and that is the whole engine space: Edge, Brave and Opera are
+    # Chromium with the same xterm.js on top, so running them would measure the same
+    # renderer twice. Real Safari is not here either - Playwright's WebKit is a different
+    # port with a different font stack - and is covered weekly by `safari.yml` instead.
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -105,16 +118,18 @@ jobs:
           make -j"$(nproc)" --silent
           sudo make install
           tmux -V
-      - name: install the Pyodide runtime and the browser driver
-        # Chrome is preinstalled on this image; the harness drives the installed browser
-        # rather than downloading one.
-        run: pnpm install --frozen-lockfile
+      - name: install the Pyodide runtime and the browser engine
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - name: check every runtime
-        run: poetry run textual-wasm check --strict
+        run: poetry run textual-wasm check --strict --browser ${{ matrix.browser }}
       - name: the registry's claims, re-measured under Pyodide
+        # Pyodide is the same build in every leg of this matrix, so this is measured once.
+        if: matrix.browser == 'chromium'
         run: node scripts/run-substitution-check.mjs > substitutions.json
       - uses: actions/upload-artifact@v5
-        if: always()
+        if: always() && matrix.browser == 'chromium'
         with:
           name: substitution-measurements
           path: substitutions.json

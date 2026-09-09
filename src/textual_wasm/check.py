@@ -23,11 +23,12 @@ import dataclasses
 import enum
 import json
 import logging
+import re
 import subprocess  # textual-wasm: allow subprocess.run - runs the native leg, native-only
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, cast
 
 from textual_wasm import node
 from textual_wasm.bundler import BuildSpec, background_server
@@ -45,6 +46,33 @@ if TYPE_CHECKING:
     from textual_wasm.target import AppTarget
 
 _log: Final = logging.getLogger(__name__)
+
+DEFAULT_BROWSER: Final[str] = "chromium"
+"""Engine used when none is named.
+
+Playwright's own build rather than an installed Chrome, so that a check produces the same
+answer on a developer's machine as in CI. `chrome` and `msedge` drive the installed browsers
+when what you want is the one your users actually have.
+"""
+
+BROWSERS: Final[tuple[str, ...]] = (
+    "chromium",
+    "firefox",
+    "webkit",
+    "chrome",
+    "msedge",
+    "safari",
+)
+"""What `--browser` accepts.
+
+The three engines, two channels for installed browsers, and Safari. `msedge` is Chromium with
+the same `xterm.js` on top - accepted for completeness, and not part of the matrix, because
+running it measures the same renderer twice.
+"""
+
+_SAFARI: Final[str] = "safari"
+"""Driven through WebDriver rather than Playwright, which has no channel for it. Needs macOS
+and a one-time `sudo safaridriver --enable`."""
 
 MOUNT_ROOT: Final[str] = "/mnt/src"
 """Where the harness mounts each package inside Pyodide's filesystem.
@@ -204,40 +232,88 @@ def _wasm_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, Pro
 
 
 def _browser_leg(
-    target: AppTarget, size: tuple[int, int]
+    target: AppTarget, size: tuple[int, int], browser: str
 ) -> tuple[LegOutcome, RenderedScreen | None]:
-    """Build the app, serve it, and read the grid a real Chrome renders."""
-    available = node.availability([node.PUPPETEER_PACKAGE])
+    """Build the app, serve it, and read the grid a real browser engine renders."""
+    driver_package = node.SELENIUM_PACKAGE if browser == _SAFARI else node.PLAYWRIGHT_PACKAGE
+    script = "safari-check.mjs" if browser == _SAFARI else "browser-check.mjs"
+    available = node.availability([driver_package])
     if not available.available or available.node is None or available.resolve_from is None:
-        return LegOutcome(Leg.BROWSER, LegStatus.SKIPPED, available.reason), None
-
-    with tempfile.TemporaryDirectory(prefix="textual-wasm-site-") as directory:
-        built = build_site(
-            BuildSpec(
-                entry=target.entry,
-                package=target.package_directory(),
-                output=Path(directory),
-            )
+        return (
+            LegOutcome(Leg.BROWSER, LegStatus.SKIPPED, f"{available.reason} {node.BROWSER_HINT}"),
+            None,
         )
-        _log.debug("built %s for the browser leg", built.summary)
-        with background_server(Path(directory)) as url:
-            result = node.run_harness(
-                "browser-check.mjs",
-                {
-                    "resolveFrom": str(available.resolve_from),
-                    "url": url,
-                    "columns": size[0],
-                    "rows": size[1],
-                    "target": dataclasses.asdict(target),
-                },
-                node=available.node,
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="textual-wasm-site-") as directory:
+            built = build_site(
+                BuildSpec(
+                    entry=target.entry,
+                    package=target.package_directory(),
+                    output=Path(directory),
+                )
             )
+            _log.debug("built %s for the browser leg", built.summary)
+            with background_server(Path(directory)) as url:
+                result = node.run_harness(
+                    script,
+                    {
+                        "resolveFrom": str(available.resolve_from),
+                        "url": url,
+                        "columns": size[0],
+                        "rows": size[1],
+                        "browser": browser,
+                        "target": dataclasses.asdict(target),
+                    },
+                    node=available.node,
+                )
+    except node.HarnessError as error:
+        # A driver that will not start - an engine that was never downloaded, a missing system
+        # library - is a fact about this machine, and reporting it as a traceback buries the
+        # one line that says which. Every other unavailable runtime here names its own fix.
+        return LegOutcome(Leg.BROWSER, LegStatus.FAILED, _first_lines(str(error))), None
+
     screen = screen_from(_screen_object(result.payload))
     if not result.ok:
         # The page rendered, but it also logged errors - which is a failure of the claim
         # being made, since nobody watching a browser console is the normal case.
         return LegOutcome(Leg.BROWSER, LegStatus.FAILED, result.stderr.strip()[-400:]), screen
-    return LegOutcome(Leg.BROWSER, LegStatus.RAN, f"{len(screen.lines)} rows rendered"), screen
+    detail = f"{_engine_description(result.payload)}, {len(screen.lines)} rows rendered"
+    return LegOutcome(Leg.BROWSER, LegStatus.RAN, detail), screen
+
+
+_NOISE: Final[re.Pattern[str]] = re.compile(
+    r"^(node:internal|\s*at\s|\s*\^|Node\.js v|\s*throw\b|\s*\}|\s*\{)"
+)
+"""Lines that are the runtime talking about itself rather than about the failure."""
+
+_BOX: Final[str] = "╔╗╚╝║═│┌┐└┘─"
+"""Drivers print their advice inside a drawn box, which survives into a table cell as noise."""
+
+
+def _first_lines(message: str, limit: int = 4) -> str:
+    """The informative lines of a harness failure.
+
+    A driver that cannot start says why - "Host system is missing dependencies", and the
+    command that fixes it - but says it inside a drawn box, under a Node stack trace. Dropping
+    the frames and the box art is the difference between a cell someone can act on and a cell
+    they skim past.
+    """
+    lines: list[str] = []
+    for raw in message.splitlines():
+        line = raw.strip().strip(_BOX).strip()
+        if line and not _NOISE.match(raw.strip()):
+            lines.append(line)
+    return " ".join(lines[:limit])[:400]
+
+
+def _engine_description(payload: dict[str, object]) -> str:
+    """Name the engine a capture came from, so a report says which browser it is about."""
+    runtime = payload.get("runtime")
+    if not isinstance(runtime, dict):
+        return "unknown browser"
+    facts = cast("dict[str, object]", runtime)
+    return f"{facts.get('browser', '?')} {facts.get('browser_version', '')}".strip()
 
 
 def _screen_object(payload: dict[str, object]) -> dict[str, object]:
@@ -280,24 +356,30 @@ def _render_comparison(
     return None if terminal is None or browser is None else compare_screens(terminal, browser)
 
 
-def run_check(target: AppTarget, *, size: tuple[int, int] = DEFAULT_SIZE) -> CheckReport:
+def run_check(
+    target: AppTarget,
+    *,
+    size: tuple[int, int] = DEFAULT_SIZE,
+    browser: str = DEFAULT_BROWSER,
+) -> CheckReport:
     """Run `target` on every runtime this machine offers and compare the results.
 
     Args:
         target: The application, and the text that says it is ready and settled.
         size: The grid every leg is forced to, so the renders are comparable at all.
+        browser: Which engine the browser leg uses. One of :data:`BROWSERS`.
 
     Returns:
         What each leg did, and the two comparisons that can be made from what ran.
     """
     native_outcome, native = _native_leg(target, size)
     wasm_outcome, wasm = _wasm_leg(target, size)
-    browser_outcome, browser = _browser_leg(target, size)
+    browser_outcome, browser_screen = _browser_leg(target, size, browser)
     terminal_outcome, terminal = _terminal_leg(target, size)
     return CheckReport(
         target=target.entry,
         size=size,
         legs=(native_outcome, wasm_outcome, browser_outcome, terminal_outcome),
         runtimes=_runtime_comparison(native, wasm),
-        render_diffs=_render_comparison(terminal, browser),
+        render_diffs=_render_comparison(terminal, browser_screen),
     )

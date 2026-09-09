@@ -33,9 +33,18 @@ HARNESS_DIR: Final[Path] = Path(__file__).parent / "harness"
 """The `.mjs` harnesses, shipped with the package so a user needs no checkout."""
 
 PYODIDE_PACKAGE: Final[str] = "pyodide"
-PUPPETEER_PACKAGE: Final[str] = "puppeteer-core"
+PLAYWRIGHT_PACKAGE: Final[str] = "playwright"
+SELENIUM_PACKAGE: Final[str] = "selenium-webdriver"
+"""Only for the Safari leg. Playwright has no channel for Safari, and its WebKit is a
+different port of the engine - so the browser people actually use needs a second driver."""
 
 INSTALL_HINT: Final[str] = "install them where you run this: `pnpm add -D {packages}`"
+
+BROWSER_HINT: Final[str] = (
+    "and fetch the engines with `pnpm exec playwright install chromium firefox webkit`"
+)
+"""Playwright downloads its browsers separately from its package, and the failure when they
+are missing names a path in a cache directory rather than the command that fills it."""
 
 DEFAULT_TIMEOUT: Final[float] = 600.0
 """A cold Pyodide boot plus a dependency install is a minute; a browser leg is more."""

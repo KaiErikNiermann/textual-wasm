@@ -23,10 +23,10 @@ def test_a_package_is_found_by_walking_up_like_node_does(tmp_path: Path) -> None
 
 def test_a_missing_package_reports_the_command_that_would_fix_it(tmp_path: Path) -> None:
     """A skipped leg is only acceptable if it says how to stop being skipped."""
-    missing = node.availability(["puppeteer-core"], start=tmp_path)
+    missing = node.availability([node.PLAYWRIGHT_PACKAGE], start=tmp_path)
 
-    assert missing.missing == ("puppeteer-core",)
-    assert "pnpm add -D puppeteer-core" in missing.reason
+    assert missing.missing == ("playwright",)
+    assert "pnpm add -D playwright" in missing.reason
 
 
 def test_no_node_is_reported_before_missing_packages(tmp_path: Path) -> None:

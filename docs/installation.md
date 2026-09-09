@@ -39,10 +39,14 @@ would enable it — never as a failure.
 |---|---|---|
 | `tmux` | The **real-terminal reference**: your app on a real pty through Textual's own driver, which is what the browser render is judged against. | `apt install tmux` / `pacman -S tmux` / `brew install tmux` |
 | Node + `pyodide` | The **WASM leg**: the same probe under Pyodide, headless and CI-able. | `pnpm add -D pyodide` |
-| Node + `puppeteer-core` + Chrome | The **browser leg**: a real build, served by a real dev server, rendered by a real browser. | `pnpm add -D puppeteer-core` |
+| Node + `playwright` | The **browser leg**: a real build, served by a real dev server, rendered by a real browser engine. | `pnpm add -D playwright` then `pnpm exec playwright install chromium firefox webkit` |
 
 The npm packages are resolved by walking up from your working directory the way Node itself
 would, so a single `node_modules` at the root of a monorepo serves every project in it.
+
+Playwright's engines are downloaded separately from the package, which is why there are two
+commands. `--browser chrome` and `--browser msedge` drive the browsers already installed on
+your machine instead, and need no download at all — see {doc}`browsers`.
 
 :::{admonition} Why tmux, specifically
 :class: dropdown

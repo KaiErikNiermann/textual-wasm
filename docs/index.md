@@ -67,6 +67,13 @@ Custom pages, and Textual inside Svelte, Vue or plain HTML.
 
 What does not work, and whose constraint each one is.
 :::
+
+:::{grid-item-card} {octicon}`device-desktop` Browser support
+:link: browsers
+:link-type: doc
+
+Measured across Chromium, Firefox and WebKit — and what that measurement does not cover.
+:::
 ::::
 
 ## What the tool actually does
@@ -106,6 +113,7 @@ examples
 :caption: Reference
 
 limitations
+browsers
 matrix
 cli
 study

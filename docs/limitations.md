@@ -100,6 +100,11 @@ the WebAssembly side changes that. `check` refuses to use a tmux older than 3.5 
 reference rather than reporting a disagreement about tmux as though it were one about the
 browser.
 
+**The cross-browser check reads xterm.js's buffer, not pixels.** Chromium, Firefox and WebKit
+render the demo identically cell for cell — but xterm.js's width logic is the same JavaScript
+in all three, so cell assignment is engine-independent by construction. Glyph-level rendering
+is not covered. See {doc}`browsers`.
+
 **Nerd Font and Powerline glyphs are unmeasured.** They are private-use codepoints whose width
 is a property of the font file rather than of the emulator, so the render equivalence result —
 which covers box drawing, CJK, combining marks, astral characters, variation selectors and ZWJ

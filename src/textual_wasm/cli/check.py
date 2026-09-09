@@ -11,7 +11,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
-from textual_wasm.check import LegStatus, run_check
+from textual_wasm.check import BROWSERS, DEFAULT_BROWSER, LegStatus, run_check
 from textual_wasm.cli._app import app
 from textual_wasm.cli._render import render_check
 from textual_wasm.cli._target import (
@@ -36,6 +36,16 @@ def check(
     height: Annotated[int, typer.Option(help="Grid height every runtime is forced to.")] = (
         DEFAULT_SIZE[1]
     ),
+    browser: Annotated[
+        str,
+        typer.Option(
+            "--browser",
+            help=(
+                "Engine for the browser leg: chromium, firefox or webkit for Playwright's "
+                "own builds, chrome or msedge for the ones installed here."
+            ),
+        ),
+    ] = DEFAULT_BROWSER,
     strict: Annotated[
         bool,
         typer.Option("--strict", help="Also fail if a runtime could not be checked at all."),
@@ -49,10 +59,13 @@ def check(
     silently narrower check is the thing you are trying to prevent.
     """
     logging.basicConfig(level=logging.DEBUG if verbose else logging.WARNING)
+    if browser not in BROWSERS:
+        raise typer.BadParameter(f"expected one of {', '.join(BROWSERS)}", param_hint="--browser")
     console = Console()
     report = run_check(
         resolve_target(entry, ready_marker=ready_marker, keys=keys, settled_marker=settled_marker),
         size=(width, height),
+        browser=browser,
     )
     render_check(report, console)
 

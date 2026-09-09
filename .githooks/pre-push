@@ -38,6 +38,15 @@ step "semgrep (conventions + core-utils)"
 # list - a crashed scan then looks exactly like a clean one.
 EIO_BACKEND=posix poetry run semgrep --config .semgrep --metrics=off --error --quiet src
 
+step "eslint + stylelint + principled-css"
+# Added after a stylesheet in an example shipped unlayered: the JavaScript and CSS gates
+# existed but were only ever run by hand, so a rule nobody invoked caught nothing.
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm lint:all
+else
+  echo "pnpm not installed; skipping the JavaScript and CSS gates" >&2
+fi
+
 step "pytest"
 poetry run pytest
 

@@ -1,0 +1,64 @@
+# Real Safari, weekly.
+#
+# Playwright's WebKit - which the per-PR matrix runs - is not Safari. It is a different port
+# of the same engine, built against GTK on Linux, with a different font stack and none of
+# Apple's platform limits. It catches engine-level API differences, which is most of what
+# matters, and it cannot catch the two things that are specifically Safari's: the font
+# fallback that decides how a glyph is drawn, and the WebAssembly memory ceiling that a ~10 MB
+# interpreter has to fit inside.
+#
+# Weekly rather than per-PR, deliberately. macOS runners are slow and `safaridriver` is the
+# flakiest link in this whole matrix - and a gate people learn to re-run is worse than no gate.
+# A failure here is a signal to investigate, not a blocked merge.
+name: safari
+
+on:
+  schedule:
+    # Mondays, after the dependabot window, so a week's updates are covered by one run.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safari:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - run: pipx install poetry
+      - run: poetry install
+      - run: pnpm install --frozen-lockfile
+      - name: enable safaridriver
+        # Automation is off by default on a fresh macOS image and there is no way to ask
+        # Safari itself; this is the documented switch.
+        run: sudo safaridriver --enable
+      - name: install tmux
+        # Homebrew's tmux is well past the 3.5 floor the render reference requires, so unlike
+        # the Linux job this needs no build from source.
+        run: |
+          brew install tmux
+          tmux -V
+      - name: check every runtime, rendering in Safari
+        # Not `--strict`: this job is a signal rather than a gate, and a weekly report that a
+        # runtime was unavailable is more useful than a red cross with no detail.
+        run: poetry run textual-wasm check --browser safari
+      - name: capture what Safari reported
+        if: always()
+        run: |
+          poetry run textual-wasm capture-terminal > terminal.json || true
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: safari-capture
+          path: terminal.json
+          if-no-files-found: ignore

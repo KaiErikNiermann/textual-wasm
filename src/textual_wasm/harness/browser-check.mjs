@@ -10,157 +10,34 @@
  * Emits `{ runtime, screen }` on stdout, the same `screen` shape a probe report carries, so
  * `textual-wasm compare-screens` can diff it against the terminal reference.
  *
- * Drives an already-installed Chrome through puppeteer-core rather than downloading one:
- * this runs against the browser the result is being claimed for.
+ * Playwright rather than a single-browser driver, because there are three engines and the
+ * interesting question is whether they agree. `chrome` and `msedge` drive the browsers
+ * *installed on this machine* through Playwright's channels, so the "runs against the
+ * browser the result is being claimed for" property is kept rather than traded away.
  *
  * The page it visits was produced by a real `textual-wasm build` and is served by a real
  * `textual-wasm dev`, both started by the Python side. Checking something other than what
  * ships is how a harness comes to pass while the product is broken.
  */
 
-import { access } from "node:fs/promises";
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import path from "node:path";
 import process from "node:process";
 
-/**
- * Pyodide boot plus a Textual startup is seconds, not milliseconds.
- */
-const READY_TIMEOUT_MS = 120_000;
+import { READY_TIMEOUT_MS, collect, loadFrom, readConfig } from "./_collect.mjs";
 
 /**
- * How long to keep waiting for the grid to stop changing, and how long a gap counts as
- * stopped. Two frames at Textual's default 60fps is ~33ms; 250 is generous enough that a
- * slow engine is not mistaken for a settled one.
- */
-const SETTLE_TIMEOUT_MS = 15_000;
-const SETTLE_INTERVAL_MS = 250;
-
-const CHROME_CANDIDATES = [
-  process.env.CHROME_PATH,
-  "/usr/bin/google-chrome-stable",
-  "/usr/bin/google-chrome",
-  "/usr/bin/chromium",
-  "/usr/bin/chromium-browser",
-];
-
-/**
- * @returns {object} the run configuration, named by argv[2].
- */
-function readConfig() {
-  const file = process.argv[2];
-  if (file === undefined) {
-    throw new Error("usage: node browser-check.mjs <config.json>");
-  }
-  return JSON.parse(readFileSync(file, "utf8"));
-}
-
-/**
- * Load a Node package from wherever the caller's `node_modules` lives. See the sibling
- * harness for why a bare specifier cannot work from inside an installed Python package.
+ * How a browser name maps onto Playwright: which engine to launch, and whether to ask for an
+ * installed build rather than Playwright's own.
  *
- * @param {string} resolveFrom directory containing `node_modules`
- * @param {string} name package to load
+ * `msedge` is here for completeness and is not part of the matrix: it is Chromium with the
+ * same `xterm.js` on top, so running it measures the same renderer twice.
  */
-function loadFrom(resolveFrom, name) {
-  return createRequire(path.join(resolveFrom, "noop.cjs"))(name);
-}
-
-/**
- * @param {string | undefined} configured
- * @returns {Promise<string>} path to an installed Chrome.
- */
-async function findChrome(configured) {
-  const candidates = [configured, ...CHROME_CANDIDATES].filter(Boolean);
-  for (const candidate of candidates) {
-    try {
-      await access(candidate);
-      return candidate;
-    } catch {
-      continue;
-    }
-  }
-  throw new Error(`no Chrome found; tried ${candidates.join(", ")}`);
-}
-
-/**
- * Wait until the app's own text is on the grid.
- *
- * The same marker the terminal capture polls a tmux pane for, so "ready" means one thing
- * across every leg of the check rather than one thing per harness.
- *
- * @param {import("puppeteer-core").Page} page
- * @param {string} marker
- */
-async function waitForMarker(page, marker) {
-  await page.waitForFunction(
-    (wanted) => globalThis.textualWasm.screen().lines.some((line) => line.includes(wanted)),
-    { timeout: READY_TIMEOUT_MS },
-    marker,
-  );
-}
-
-/**
- * Wait until the grid stops changing.
- *
- * A marker says the app *reached* a state, not that it has finished drawing it. Textual
- * composes in frames, and on a slower engine a later frame can still be in flight when the
- * marker's frame has landed - measured: WebKit had not yet painted the footer at the moment
- * Chromium had, and the row diff reported that as a rendering divergence between browsers.
- * It was a divergence in how fast they got there.
- *
- * Quiescence is the honest signal, and it degrades gracefully: an app that never settles
- * (a clock, an animation) simply uses the last reading, which is the same screen the
- * comparison would have taken anyway.
- *
- * @param {import("puppeteer-core").Page} page
- */
-async function waitForStableGrid(page) {
-  let previous = null;
-  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
-  while (Date.now() < deadline) {
-    const current = await page.evaluate(() => globalThis.textualWasm.screen().lines.join("\n"));
-    if (current === previous) {
-      return;
-    }
-    previous = current;
-    await new Promise((resolve) => setTimeout(resolve, SETTLE_INTERVAL_MS));
-  }
-}
-
-/**
- * @param {import("puppeteer-core").Page} page
- * @param {object} config
- * @returns {Promise<{runtime: object, screen: object}>}
- */
-async function collect(page, config) {
-  await page.waitForFunction("globalThis.textualWasm !== undefined", {
-    timeout: READY_TIMEOUT_MS,
-  });
-  if (config.target.ready_marker) {
-    await waitForMarker(page, config.target.ready_marker);
-  }
-
-  if (config.target.keys) {
-    // Through xterm's own "as if it came from the user" entry point, so this exercises the
-    // same onData path a keystroke does rather than bypassing it.
-    await page.evaluate((keys) => globalThis.textualWasm.input(keys), config.target.keys);
-    await waitForMarker(page, config.target.settled_marker);
-  }
-  await waitForStableGrid(page);
-
-  return page.evaluate(() => ({
-    runtime: {
-      user_agent: navigator.userAgent,
-      device_pixel_ratio: devicePixelRatio,
-      font_family: getComputedStyle(document.documentElement)
-        .getPropertyValue("--font-terminal")
-        .trim(),
-    },
-    screen: globalThis.textualWasm.screen(),
-  }));
-}
+const BROWSERS = Object.freeze({
+  chromium: { type: "chromium" },
+  firefox: { type: "firefox" },
+  webkit: { type: "webkit" },
+  chrome: { type: "chromium", channel: "chrome" },
+  msedge: { type: "chromium", channel: "msedge" },
+});
 
 /**
  * Watch every channel a browser reports failure on.
@@ -169,13 +46,13 @@ async function collect(page, config) {
  * a console message for a failed request says only "404", with the URL on the response, so
  * without this the report names a problem nobody can act on.
  *
- * @param {import("puppeteer-core").Page} page
+ * @param {import("playwright").Page} page
  * @returns {string[]} the accumulating failure list
  */
 function watchForFailures(page) {
   const failures = [];
   page.on("pageerror", (error) => {
-    failures.push(String(error));
+    failures.push(String(error).split("\n", 1)[0]);
   });
   page.on("console", (message) => {
     if (message.type() === "error") {
@@ -201,7 +78,7 @@ function watchForFailures(page) {
  *
  * Pyodide is not waited for. The page sizes the terminal before it boots one.
  *
- * @param {import("puppeteer-core").Browser} browser
+ * @param {import("playwright").Browser} browser
  * @param {string} url
  * @returns {Promise<number>} pixels by which the grid overflows its frame; <= 0 is correct.
  */
@@ -224,21 +101,27 @@ async function measureFit(browser, url) {
 }
 
 async function main() {
-  const config = readConfig();
-  const puppeteer = loadFrom(config.resolveFrom, "puppeteer-core");
-  const browser = await puppeteer.launch({
-    executablePath: await findChrome(config.chromePath),
-    headless: true,
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
-  });
+  const config = readConfig("browser-check.mjs");
+  const requested = config.browser ?? "chromium";
+  if (!Object.hasOwn(BROWSERS, requested)) {
+    throw new Error(
+      `unknown browser ${requested}; expected one of ${Object.keys(BROWSERS).join(", ")}`,
+    );
+  }
+  const selection = Object.entries(BROWSERS).find(([name]) => name === requested)[1];
+  const playwright = loadFrom(config.resolveFrom, "playwright");
+  const browser = await playwright[selection.type].launch(
+    selection.channel === undefined ? {} : { channel: selection.channel },
+  );
 
   try {
-    const page = await browser.newPage();
+    const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
     const failures = watchForFailures(page);
     await page.goto(`${config.url}?cols=${config.columns}&rows=${config.rows}`, {
       waitUntil: "domcontentloaded",
     });
-    const result = await collect(page, config);
+    // Playwright takes an expression string directly and returns its value.
+    const result = await collect((source) => page.evaluate(source), config);
 
     const overflow = await measureFit(browser, config.url);
     if (overflow > 0) {
@@ -252,6 +135,8 @@ async function main() {
       }
       process.exitCode = 1;
     }
+    result.runtime.browser = requested;
+    result.runtime.browser_version = browser.version();
     process.stdout.write(`${JSON.stringify({ target: config.target.entry, ...result }, null, 2)}\n`);
   } finally {
     await browser.close();
