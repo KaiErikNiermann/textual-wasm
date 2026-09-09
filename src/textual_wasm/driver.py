@@ -45,7 +45,9 @@ keypress from the start of a CSI sequence. The native drivers get this from a `s
 timeout; without a blocking read there has to be a timer instead.
 """
 
-_ENTER_APPLICATION_MODE: Final[tuple[str, ...]] = (
+ENTER_APPLICATION_MODE: Final[tuple[str, ...]] = (
+    # Public because they are the protocol a host terminal emulator has to support, not an
+    # implementation detail: anyone writing a second sink needs to know exactly this set.
     "\x1b[?1049h",  # alternate screen buffer
     "\x1b[?1000h",  # SET_VT200_MOUSE
     "\x1b[?1003h",  # SET_ANY_EVENT_MOUSE
@@ -55,7 +57,7 @@ _ENTER_APPLICATION_MODE: Final[tuple[str, ...]] = (
     "\x1b[?2004h",  # bracketed paste
 )
 
-_EXIT_APPLICATION_MODE: Final[tuple[str, ...]] = (
+EXIT_APPLICATION_MODE: Final[tuple[str, ...]] = (
     "\x1b[?2004l",
     "\x1b[?1006l",
     "\x1b[?1015l",
@@ -129,7 +131,7 @@ class WasmDriverBase(Driver):
         self.process_message(events.Resize(size, size))
 
     def start_application_mode(self) -> None:
-        for sequence in _ENTER_APPLICATION_MODE:
+        for sequence in ENTER_APPLICATION_MODE:
             self.write(sequence)
         self._input_enabled = True
         self._tick_task = asyncio.get_running_loop().create_task(self._pump_parser_timeouts())
@@ -147,7 +149,7 @@ class WasmDriverBase(Driver):
 
     def stop_application_mode(self) -> None:
         self.disable_input()
-        for sequence in _EXIT_APPLICATION_MODE:
+        for sequence in EXIT_APPLICATION_MODE:
             self.write(sequence)
 
     def open_url(self, url: str, new_tab: bool = True) -> None:
@@ -209,7 +211,7 @@ class CaptureDriver(WasmDriverBase):
         Assertions about "did the compositor actually render" must not be satisfiable by the
         escape sequences the driver itself wrote, or the check proves nothing.
         """
-        preamble = len(_ENTER_APPLICATION_MODE) if self._app_mode_started else 0
+        preamble = len(ENTER_APPLICATION_MODE) if self._app_mode_started else 0
         return "".join(self._frames[preamble:])
 
 

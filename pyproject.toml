@@ -85,3 +85,9 @@ venv = ".venv"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-q --strict-markers"
+filterwarnings = [
+    "error",
+    # pytest-asyncio 0.25 still uses the event-loop policy APIs CPython 3.16 will remove.
+    # Third-party noise, and turning it into an error would fail every async test here.
+    "ignore:'asyncio\\.(get|set)_event_loop_policy' is deprecated:DeprecationWarning",
+]
