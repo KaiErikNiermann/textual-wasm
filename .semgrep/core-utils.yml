@@ -62,6 +62,11 @@ rules:
     paths:
       exclude:
         - "src/textual_wasm/bootstrap.py"
+        # Host entry points are the sanctioned exception, and the reason `apply_environment`
+        # uses `setdefault`: a host that wants a different driver has to write the variable
+        # BEFORE importing the package at all, since the package `__init__` is what applies
+        # the defaults. There is no import it could call first.
+        - "scripts/*_entry.py"
     # The key has to be matched with a metavariable-regex: semgrep does not bind
     # metavariables inside a string literal, so `os.environ["TEXTUAL_$NAME"]` matches nothing.
     patterns:

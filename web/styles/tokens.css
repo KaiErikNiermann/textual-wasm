@@ -1,0 +1,63 @@
+/* The entire arbitrariness budget of this page (PC-1). Nothing below the token layer
+   invents a number, colour or duration.
+
+   Dark values are rebound through prefers-color-scheme rather than light-dark(): the
+   function is Baseline *newly* available (2024-05) and does not degrade gracefully when
+   absent, whereas the media query is a device fact and has been widely available for
+   years (PC-9). */
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* Fonts. Global convention: Inter for UI, IBM Plex Sans for body text. */
+    --font-display: inter, system-ui, -apple-system, sans-serif;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+
+    /* The terminal font is load-bearing, not decoration. Python computes cell widths from
+       rich's Unicode tables while the browser renders whatever glyphs the font provides, so
+       the two only agree if the font is a real fixed-pitch face with the coverage the app
+       uses. This is the single most likely source of visual drift under WASM. */
+    --font-terminal: "IBM Plex Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+
+    /* One brand anchor in OKLCH; everything else derived, so a hue change is one edit
+       (PC-10). */
+    --color-brand: oklch(62% 0.15 250deg);
+    --color-ok: oklch(62% 0.15 150deg);
+    --color-warn: oklch(68% 0.16 70deg);
+    --color-ink: oklch(24% 0.02 260deg);
+    --color-surface: oklch(98% 0.004 260deg);
+    --color-terminal-bg: oklch(17% 0.012 260deg);
+    --color-ink-dim: color-mix(in oklch, var(--color-ink) 62%, var(--color-surface));
+    --color-edge: color-mix(in oklch, var(--color-ink) 16%, transparent);
+
+    /* Spacing: one step, everything else a multiple of it. No free parameters. */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 1rem;
+    --space-4: 1.5rem;
+    --space-5: 2rem;
+    --radius-1: 0.375rem;
+    --radius-2: 0.75rem;
+    --text-1: 0.875rem;
+    --text-2: 1rem;
+
+    /* Fluid rather than a breakpoint ladder (PC-7). */
+    --text-3: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+    --measure: 68rem;
+    --line-tight: 1.25;
+    --line-body: 1.5;
+
+    /* Not zero: a 1ms duration still fires transitionend, so listeners keep working when
+     motion is reduced. */
+  --duration-0: 1ms;
+  --duration-1: 160ms;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-ink: oklch(93% 0.01 260deg);
+      --color-surface: oklch(19% 0.012 260deg);
+    }
+  }
+}

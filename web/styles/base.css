@@ -1,0 +1,45 @@
+/* Element defaults. Margins are zeroed here so that containers can own separation with
+   gap and no rule ever exists to undo spacing (PC-2). */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body,
+  h1,
+  p {
+    margin: 0;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-2);
+    line-height: var(--line-body);
+    min-block-size: 100dvb;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-3);
+    line-height: var(--line-tight);
+  }
+
+  :focus-visible {
+    outline: var(--space-1) solid var(--color-brand);
+    outline-offset: var(--space-1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: var(--duration-0);
+      transition-duration: var(--duration-0);
+    }
+  }
+}

@@ -1,0 +1,21 @@
+/* The only stylesheet the page links. Layer order is declared here so precedence is
+   explicit rather than emergent from selector arithmetic (PC-5). A manifest, not a
+   stylesheet.
+
+   Plain CSS rather than Tailwind: this page is served as static files by a ~40-line node
+   script with no build step, and a utility framework without a compiler would mean either
+   shipping the play-CDN runtime or hand-writing the utilities it generates. The laws are
+   the same either way. */
+
+@layer reset, tokens, base, layout, overrides;
+
+/* Each partial ALSO wraps itself in a matching @layer block. Redundant on its own, but a
+   linter reads one file at a time: without the in-file block every declaration in a
+   partial reports as unlayered, and without the layer() here the import does. The nested
+   result (tokens.tokens, base.base, ...) preserves exactly the order declared above. */
+@import url("./tokens.css") layer(tokens);
+@import url("./base.css") layer(base);
+@import url("./layout.css") layer(layout);
+
+/* @layer overrides is declared above and left empty. Anything landing there is
+   acknowledged debt, visible in review. */

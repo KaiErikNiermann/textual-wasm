@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>textual-wasm spike</title>
+    <link rel="stylesheet" href="/vendor/xterm/css/xterm.css" />
+    <link rel="stylesheet" href="/styles/index.css" />
+  </head>
+  <body class="page">
+    <header class="masthead">
+      <h1>Textual under WebAssembly</h1>
+      <p id="status" class="status" data-state="booting">booting Pyodide&hellip;</p>
+    </header>
+    <main class="stage">
+      <div id="terminal" class="terminal-frame"></div>
+    </main>
+    <script type="module" src="/main.mjs"></script>
+  </body>
+</html>
