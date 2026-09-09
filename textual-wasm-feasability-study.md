@@ -256,11 +256,12 @@ provides. Three ways to disagree:
 - **Emoji / ZWJ sequences** — Python's table vs the browser's font fallback.
 - **Powerline / Nerd Font glyphs** — only agree if the *exact* patched font is loaded.
 
-> **[spike] Measured, and largely not observed.** §12 diffs a `pyte` replay of the emitted
-> stream against the `xterm.js` buffer at the same forced grid. Box drawing, arrows, braille,
-> **CJK** and astral-plane characters land in identical cells — the wide/ambiguous CJK drift
-> predicted just above did not occur. Emoji remain unsettled, but for a different reason than
-> assumed: the divergence found there was in the *oracle*, not the browser.
+> **[spike] Measured, and not observed.** §12 diffs the browser against a real terminal —
+> `tmux` running the app on a pty through Textual's own driver. Box drawing, arrows, braille,
+> **CJK**, astral-plane characters, variation selectors and **ZWJ sequences** all land in
+> identical cells. Every specific failure predicted in this section — CJK drift, emoji
+> divergence — did not occur. Only Nerd Font glyphs remain unmeasured, and those are
+> private-use codepoints whose width is a property of the font file, not of the emulator.
 
 Mitigations, in order of effort:
 1. Ship a pinned, subsetted **Nerd Font** as a WOFF2 and set it on xterm.js. Removes the
@@ -408,7 +409,7 @@ headless Chrome on every Textual/Pyodide bump, and a deliberately boring scope.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| ~~Font/cell-width drift looks broken~~ **[spike]** not observed for BMP, CJK or astral; emoji unverified for want of an oracle | ~~high~~ **low–medium** | medium | pinned font stack; a real-terminal reference for emoji |
+| ~~Font/cell-width drift looks broken~~ **[spike]** not observed at all: BMP, CJK, astral, variation selectors and ZWJ all render identically in a real terminal and in the browser. Only private-use (Nerd Font) glyphs remain unmeasured | ~~high~~ **low** | medium | pinned font stack; the tmux reference in §12.3 |
 | `_xterm_parser` private-API break | medium | medium | pin range, CI on Textual releases |
 | Payload too heavy for target users | medium | medium | drop pygments, brotli, precompiled bundle |
 | App uses `@work(thread=True)` | medium | **high** for that app | fail loudly + document; Worker+SAB later |
@@ -563,16 +564,19 @@ A third runtime was added: **headless Chrome driving the real page**, and a way 
 what it draws against what a terminal would.
 
 ```
-Textual (rich cell_len)  ──emits──▶  ANSI stream
-                                        │
-                        ┌───────────────┴───────────────┐
-                        ▼                               ▼
-              pyte replay (wcwidth)            xterm.js render (own table)
-                        │                               │
-                        └──────────► diff ◄─────────────┘
+                    ┌── WasmDriver ──▶ ANSI stream ──┬──▶ pyte replay (wcwidth)
+Textual             │                                │            │
+(rich cell_len) ────┤                                └──▶ xterm.js render (own table)
+                    │                                             │
+                    └── LinuxDriver ─▶ real pty ──▶ tmux 3.7c ────┤
+                                                                  ▼
+                                                                diff
 ```
 
-Three character-width tables, none sharing code. `pyte` is a terminal emulator in pure
+Three character-width tables, none sharing code, and — after §12.3 — two references rather
+than one. The upper path is this project's driver; the lower is Textual's own on a real pty,
+with nothing from the WASM work in it. That lower path is the reference that matters: a
+browser render matching it is a browser render matching what a user would see. `pyte` is a terminal emulator in pure
 Python, so it installs under Pyodide and both Python runtimes now carry a **rendered grid**
 in their report, not just a byte count. `scripts/run-browser-check.mjs` boots the page in
 Chrome at a forced grid (`?cols=80&rows=24` — a browser window's size is not a number anyone
@@ -586,7 +590,8 @@ a representation difference, not a rendering one.
 
 ### 12.2 Result
 
-**Identical, cell for cell**, at 80×24:
+**Identical, cell for cell**, at 80×24 — across the pyte replay, the browser, *and* a real
+terminal:
 
 ```
 ascii     abcdef|
@@ -596,6 +601,8 @@ braille   ⠁⠂⠃⠄⠅|
 cjk       世界日本語|
 combining éà|
 astral    🚀💻|
+vs16      ✅⚠️|
+zwj       👩‍💻|
 ```
 
 Each sample carries a terminator, so a width disagreement would move that character and the
@@ -618,20 +625,35 @@ a variation selector (U+FE0F). Reduced to a one-liner:
 | `👩‍💻\|` | `👩` | `👩‍💻\|` |
 
 CJK and astral-plane characters are fine; a joiner or a variation selector eats the rest of
-the row. So on emoji sequences the oracle is wrong and the browser is right, which means
-`pyte` **cannot adjudicate emoji at all** — including them would only measure the measuring
-instrument. Those samples were removed, with the reason recorded next to them and pinned by a
-characterisation test: if `pyte` is ever fixed, that test fails and the samples go back.
+the row. So on emoji sequences the oracle was wrong and the browser was right, which meant
+`pyte` **could not adjudicate emoji at all** — including them measured the measuring
+instrument.
 
 This is the shape of finding a spike exists to produce. The study assumed the browser would be
 the unreliable side. Where a disagreement was actually found, it was the reference
 implementation that was wrong.
 
+**The fix was a better reference, not a smaller question.** `textual_wasm.terminal` runs the
+app under `tmux` on a real pty through **Textual's own `LinuxDriver`**, and reads the pane
+back with `capture-pane`. Reproducibility comes from refusing the ambient environment:
+`-f /dev/null` ignores the user's tmux config, `-u` forces UTF-8, and the status bar is
+turned off because it would otherwise consume one of the rows being compared. The capture
+waits for a *settled* marker rather than a ready one — without that it races the app and
+intermittently reads `pressed 0`.
+
+With that reference the emoji samples are answerable, and the answer is agreement: `vs16` and
+`zwj` render identically in tmux 3.7c and `xterm.js` 6, terminator and all. They are back in
+the sample set.
+
+`pyte` keeps a narrower job — giving the two Python runtimes a comparable grid. They share
+its blind spots exactly, so equality between *them* stays meaningful. The characterisation
+test now pins that reasoning. tmux is optional throughout: the tests skip and
+`run-spike.sh` says so, the same way the semgrep suite skips without semgrep.
+
 ### 12.4 What remains open on rendering
 
-- **Emoji and ZWJ sequences.** Not shown correct, not shown incorrect — untestable with this
-  reference. Settling them needs a real terminal as the oracle, e.g. captured through
-  `tmux capture-pane` and diffed the same way. That is a small extension of the same harness.
+- ~~**Emoji and ZWJ sequences.**~~ **Settled — see §12.3.** They render identically in a real
+  terminal and in the browser.
 - **Nerd Font / Powerline glyphs.** Private-use codepoints whose width depends entirely on the
   loaded font. Not exercised; the page pins a plain monospace stack.
 - **Non-default fonts generally.** One font stack was measured (`IBM Plex Mono`, `DejaVu Sans
