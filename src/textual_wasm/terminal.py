@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import dataclasses
 import shutil
-import subprocess
+import subprocess  # textual-wasm: allow subprocess.run - drives tmux, native-only
 import sys
 import time
 import uuid
@@ -76,6 +76,7 @@ def _wait_for(session: str, marker: str, timeout: float) -> str:
         pane = _tmux("capture-pane", "-p", "-t", session)
         if marker in pane:
             return pane
+        # textual-wasm: allow time.sleep - native-only reference capture, no event loop
         time.sleep(POLL_INTERVAL)
     raise CaptureTimeoutError(f"{marker!r} never appeared within {timeout}s; last screen:\n{pane}")
 

@@ -18,6 +18,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from textual_wasm import doctor as doctor_module
 from textual_wasm.compare import Comparison
 from textual_wasm.compare import compare as compare_reports
 from textual_wasm.compare import compare_screens as diff_screens
@@ -212,6 +213,85 @@ def capture_terminal(
         "screen": dataclasses.asdict(grid),
     }
     typer.echo(json.dumps(payload, indent=2))
+
+
+_SEVERITY_STYLE: dict[str, str] = {
+    "silent_wrong": "bold red",
+    "fatal": "bold red",
+    "unsupported": "bold red",
+    "loud_unclear": "yellow",
+    "loud_clear": "dim",
+}
+
+
+def _render_findings(report: doctor_module.DoctorReport, console: Console) -> None:
+    """Print source findings, worst first."""
+    if not report.findings:
+        console.print("[bold green]no source findings[/]")
+        return
+    table = Table(title="source", title_justify="left")
+    # The location is the actionable half; folding rather than truncating keeps it
+    # clickable in a terminal, which a middle-elided path is not.
+    table.add_column("location", overflow="fold")
+    for column in ("severity", "issue", "code"):
+        table.add_column(column)
+    for finding in report.findings:
+        severity = finding.substitution.severity.value
+        table.add_row(
+            finding.location,
+            f"[{_SEVERITY_STYLE.get(severity, 'default')}]{severity}[/]",
+            finding.substitution.id,
+            finding.source,
+        )
+    console.print(table)
+    for finding in report.blocking_findings[:1]:
+        # One expansion, not all of them: the point is to show what the guidance looks like
+        # without turning the report into a wall the reader skims.
+        console.print(finding.substitution.guidance, style="dim", highlight=False)
+
+
+def _render_dependencies(report: doctor_module.DoctorReport, console: Console) -> None:
+    """Print dependency classifications, if any were requested."""
+    if not report.dependencies:
+        return
+    table = Table(title="dependencies", title_justify="left")
+    for column in ("package", "state", "notes"):
+        table.add_column(column)
+    for dependency in report.dependencies:
+        style = "bold red" if dependency.blocks else "default"
+        table.add_row(
+            dependency.name,
+            f"[{style}]{dependency.state.value}[/]",
+            dependency.guidance,
+        )
+    console.print(table)
+
+
+@app.command()
+def doctor(
+    source: Annotated[Path, typer.Argument(help="Application file or package directory.")],
+    requirement: Annotated[
+        list[str] | None,
+        typer.Option("--requirement", "-r", help="Distribution to classify. Repeatable."),
+    ] = None,
+) -> None:
+    """Report what will behave differently under Pyodide, before you run it there.
+
+    Exits non-zero on anything blocking: a silent failure, a fatal call, an absent module, or
+    a dependency with no wasm build. Things that raise honestly are reported but do not fail
+    the run - the app will tell you about those itself.
+    """
+    console = Console()
+    report = doctor_module.run(source, requirements=requirement or ())
+    _render_findings(report, console)
+    _render_dependencies(report, console)
+
+    if report.ok:
+        console.print("[bold green]no blocking issues[/]")
+        raise typer.Exit(0)
+    blocking = len(report.blocking_findings) + len(report.blocking_dependencies)
+    console.print(f"[bold red]{blocking} blocking issue(s)[/]")
+    raise typer.Exit(1)
 
 
 @app.command()

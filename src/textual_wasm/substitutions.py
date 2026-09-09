@@ -401,6 +401,15 @@ def with_severity(severity: Severity) -> tuple[Substitution, ...]:
     return tuple(s for s in SUBSTITUTIONS if s.severity is severity)
 
 
+HARMLESS_ZERO_CALLS: Final[frozenset[str]] = frozenset({"time.sleep"})
+"""Calls whose zero-valued form is the "yield to the event loop" idiom and costs nothing.
+
+Consulted by both halves of the toolchain so they cannot disagree: the guard checks the value
+at runtime, the scanner checks the literal. A static analyser that flags what the runtime
+deliberately ignores is one people learn to skim, and `time.sleep(0)` is common enough to
+poison a report on its own.
+"""
+
 PROBEABLE: Final[tuple[Substitution, ...]] = tuple(s for s in SUBSTITUTIONS if s.probe)
 """Substitutions whose claim can be re-checked automatically.
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import sys
-import threading
+import threading  # textual-wasm: allow threading.thread - measures whether threads exist
 from typing import Final
 
 from rich.text import Text
@@ -181,6 +181,7 @@ def _threads_available() -> bool:
     fact that decides whether that decorator is usable on a host.
     """
     try:
+        # textual-wasm: allow threading.thread - measuring whether threads exist here
         thread = threading.Thread(target=lambda: None)
         thread.start()
         thread.join()
