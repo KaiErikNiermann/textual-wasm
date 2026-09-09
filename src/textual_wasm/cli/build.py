@@ -12,11 +12,13 @@ from typing import Annotated
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 
 from textual_wasm.bundler import PYODIDE_VERSION, BuildSpec
 from textual_wasm.bundler import build as build_site
 from textual_wasm.bundler import serve as serve_site
 from textual_wasm.cli._app import app
+from textual_wasm.target import EntryError
 
 DEFAULT_PORT: int = 8000
 
@@ -42,6 +44,14 @@ def build(
         bool,
         typer.Option("--worker/--main-thread", help="Run Python in a Web Worker."),
     ] = False,
+    verify_entry: Annotated[
+        bool,
+        typer.Option(
+            "--verify-entry/--no-verify-entry",
+            help="Import the app first, to check the entry resolves. Off for apps that only "
+            "import inside Pyodide.",
+        ),
+    ] = True,
 ) -> None:
     """Build a Textual app into a static site.
 
@@ -58,17 +68,46 @@ def build(
     threads available: Pyodide has none in either mode.
     """
     console = Console()
-    result = build_site(
-        BuildSpec(
-            entry=entry,
-            package=package,
-            output=output,
-            requirements=tuple(requirement or ()),
-            title=title,
-            template=template,
-            worker=worker,
+    try:
+        result = build_site(
+            BuildSpec(
+                entry=entry,
+                package=package,
+                output=output,
+                requirements=tuple(requirement or ()),
+                title=title,
+                template=template,
+                worker=worker,
+                verify_entry=verify_entry,
+            )
         )
-    )
+    except (EntryError, ModuleNotFoundError) as error:
+        # A mistake in what the user typed, not a fault in this program, and a sixty-line
+        # traceback through our own frames buries the one line naming the wrong word.
+        # Anything unexpected still propagates and still gets its traceback.
+        #
+        # Both halves are user input, and Rich rewrites two different things in it. `escape`
+        # handles square brackets; emoji shortcodes are a separate pass that it does not
+        # touch, so an entry of `pkg.mod:X` prints as `pkg.mod❌` unless emoji is off here.
+        console.print(
+            f"[bold red]cannot build[/] {escape(entry)}: {escape(str(error))}", emoji=False
+        )
+        if isinstance(error, ModuleNotFoundError):
+            console.print(
+                "[dim]the app is imported to check the entry resolves; pass "
+                "--no-verify-entry if it can only be imported inside Pyodide[/]"
+            )
+        raise typer.Exit(2) from error
+    except (FileNotFoundError, NotADirectoryError) as error:
+        # The exception carries only the path, so the message has to supply what it was.
+        problem = (
+            "is not a directory" if isinstance(error, NotADirectoryError) else "does not exist"
+        )
+        console.print(f"[bold red]cannot build[/]: the package directory {package} {problem}")
+        console.print("[dim]name the directory holding the app's Python package[/]")
+        raise typer.Exit(2) from error
+    for note in result.notes:
+        console.print(f"[bold yellow]warning[/] {escape(note)}", emoji=False)
     console.print(f"[bold green]built[/] {result.output} - {result.summary}")
     console.print(f"[dim]packages: {', '.join(result.packages)}[/]")
     console.print(f"[dim]pyodide {PYODIDE_VERSION} from CDN[/]")
