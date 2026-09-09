@@ -20,6 +20,7 @@ is driven synchronously and no thread exists to synchronise with.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Final
@@ -161,14 +162,16 @@ class WasmDriverBase(Driver):
         _log.info("open_url requested url=%s new_tab=%s", url, new_tab)
 
     async def _pump_parser_timeouts(self) -> None:
-        """Drive `XTermParser.tick()` so a lone `Escape` resolves without a following byte."""
-        try:
+        """Drive `XTermParser.tick()` so a lone `Escape` resolves without a following byte.
+
+        Cancellation is the normal way this ends - `disable_input` cancels it and never
+        awaits it - so suppressing it is the intent rather than a swallowed error.
+        """
+        with contextlib.suppress(asyncio.CancelledError):
             while True:
                 await asyncio.sleep(_TICK_INTERVAL)
                 for message in self._parser.tick():
                     self.process_message(message)
-        except asyncio.CancelledError:
-            pass
 
 
 class CaptureDriver(WasmDriverBase):

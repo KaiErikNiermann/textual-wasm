@@ -24,6 +24,8 @@ ruff = "^0.15"
 pyright = "^1.1"
 radon = "^6.0"
 semgrep = "^1.100"
+pyyaml = "^6.0.3"
+types-pyyaml = "^6.0.12.20260906"
 
 [build-system]
 requires = ["poetry-core>=2.0"]
@@ -32,6 +34,8 @@ build-backend = "poetry.core.masonry.api"
 # --- Ruff -------------------------------------------------------------------
 [tool.ruff]
 src = ["src", "tests"]
+# Deliberately non-compliant code that exists to prove the semgrep rules still fire.
+extend-exclude = ["tests/semgrep/positive"]
 line-length = 100
 target-version = "py312"
 
@@ -74,6 +78,7 @@ ban-relative-imports = "all"
 # --- Pyright ----------------------------------------------------------------
 [tool.pyright]
 include = ["src", "tests"]
+exclude = ["tests/semgrep/positive"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false

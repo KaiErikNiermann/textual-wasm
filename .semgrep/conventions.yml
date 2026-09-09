@@ -1,0 +1,85 @@
+# Global Python conventions, restricted to the ones a matcher can judge.
+#
+# Same doctrine as the ruleset this is modelled on: a rule earns its place only if the
+# detection is unambiguous AND the replacement is right almost every time. The nuanced parts
+# of the global guidelines - walrus vs plain control flow, `match` vs if/elif, tuple vs list,
+# when a dataclass beats a TypedDict - are judgement calls whose right answer depends on what
+# the code means, and a rule that fires on them trains people to ignore the linter.
+#
+# Deliberately absent, and why:
+#   * the bare-NDArray rule, because there is no numpy in this tree and a rule that cannot
+#     fire is indistinguishable from a clean codebase;
+#   * anything about `dict[str, object]`, because this project's JSON boundary
+#     (`report.ProbeReport.from_json`) is written in exactly that type on purpose.
+rules:
+  - id: naive-datetime-now
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `datetime.now()` with no tzinfo returns a naive local-time value. Use
+      `datetime.now(UTC)`.
+    pattern: datetime.now()
+
+  - id: utcnow-is-deprecated-and-naive
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `datetime.utcnow()` returns a NAIVE datetime holding UTC - the worst combination,
+      because it compares equal to nothing and subtracts wrongly from anything aware.
+      Deprecated since 3.12. Use `datetime.now(UTC)`.
+    pattern-either:
+      - pattern: datetime.utcnow()
+      - pattern: datetime.utcfromtimestamp(...)
+
+  - id: print-instead-of-logging
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Diagnostics go through `logging`, and user-facing CLI output goes through
+      `typer.echo`/`rich.Console`. A bare `print` is neither, and in this project it would
+      also corrupt the probe's output contract: the Pyodide harness parses stdout for a
+      sentinel-delimited JSON report, so anything else written there breaks the run.
+    pattern: print(...)
+
+  - id: append-only-loop-should-be-a-comprehension
+    languages: [python]
+    severity: INFO
+    message: >-
+      A loop whose entire body is one `.append()` is a comprehension. The convention reserves
+      explicit loops for bodies with side effects, branching, or multiple statements - this
+      has none of them.
+    # `...` matches zero or more statements, so the obvious "append plus anything else"
+    # exclusions match the single-statement loop too and cancel the rule entirely. Matching
+    # the exact one-statement body is the form that actually fires.
+    pattern: |
+      for $X in $IT:
+          $OUT.append($E)
+
+  - id: swallowed-exception
+    languages: [python]
+    severity: INFO
+    message: >-
+      `except: pass` discards the evidence that something went wrong. If abstaining is right,
+      log it. One legitimate use exists here - probing a runtime for a capability that may be
+      absent - so add a `# nosemgrep: swallowed-exception - <reason>` and move on.
+    pattern-either:
+      - pattern: |
+          try:
+              ...
+          except:
+              pass
+      - pattern: |
+          try:
+              ...
+          except $E:
+              pass
+
+  - id: unparameterised-container-annotation
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Parametrise the container: `dict[str, int]`, not bare `dict`. The element type is the
+      part that constrains callers, and pyright's strict mode will not infer it for you.
+    pattern-either:
+      - pattern-regex: '->\s*(dict|list|set|frozenset|tuple)\s*:'
+      - pattern-regex: ':\s*(dict|list|set|frozenset)\s*[,)=]'

@@ -1,0 +1,113 @@
+# Reuse this project's shared codepaths instead of growing a second copy.
+#
+# Every rule here guards a seam that has already caused, or would directly cause, a wrong
+# result in this repository - not a stylistic preference. Each message records the incident
+# or the concrete failure it prevents, because a rule whose cost is unexplained is a rule
+# people will suppress.
+#
+# AST-matched rather than text-matched wherever the shape matters.
+rules:
+  - id: probe-core-must-not-branch-on-platform
+    languages: [python]
+    severity: ERROR
+    message: >-
+      The probe compares two runtimes, and that comparison is only valid because both run the
+      SAME code. A `sys.platform` test inside the probe, the driver, the app or the report
+      silently makes them two different experiments and the equivalence verdict becomes
+      meaningless while still printing green. Runtime branching belongs in
+      `textual_wasm.polyfills`, which is quarantined for exactly this reason and whose
+      effects are recorded in `RuntimeFacts.polyfills_applied` so a WASM run can never look
+      accidentally native.
+    paths:
+      include:
+        - "src/textual_wasm/probe.py"
+        - "src/textual_wasm/driver.py"
+        - "src/textual_wasm/app.py"
+        - "src/textual_wasm/report.py"
+        - "src/textual_wasm/compare.py"
+    # Comparisons only. Reading `sys.platform` to *report* it is required - the probe puts
+    # it in `RuntimeFacts` - and a rule that cannot tell reporting from branching would have
+    # to be suppressed in the one file it most needs to watch.
+    pattern-either:
+      - pattern: sys.platform == ...
+      - pattern: sys.platform != ...
+      - pattern: sys.platform in ...
+      - pattern: sys.platform.startswith(...)
+      - pattern: platform.system() == ...
+      - pattern: os.name == ...
+      - pattern: IS_EMSCRIPTEN
+
+  - id: use-bootstrap-driver-import-path
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Import `textual_wasm.bootstrap.DRIVER_IMPORT_PATH` rather than retyping the
+      `module:Symbol` string. Textual resolves it by import at App construction
+      (`textual/app.py:1585`), so a second copy that drifts does not raise - it selects a
+      different class, or falls through to the platform driver and dies on `termios` with no
+      hint that a string was wrong.
+    paths:
+      exclude:
+        - "src/textual_wasm/bootstrap.py"
+    pattern-regex: '["'']textual_wasm\.driver:\w+["'']'
+
+  - id: set-textual-env-through-bootstrap
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Go through `textual_wasm.bootstrap.apply_environment()`. `textual.constants` reads every
+      TEXTUAL_* variable into module-level Finals at import time, so an assignment made after
+      anything has imported textual has no effect whatsoever and fails silently. Keeping the
+      writes in one module is what makes the ordering auditable.
+    paths:
+      exclude:
+        - "src/textual_wasm/bootstrap.py"
+    # The key has to be matched with a metavariable-regex: semgrep does not bind
+    # metavariables inside a string literal, so `os.environ["TEXTUAL_$NAME"]` matches nothing.
+    patterns:
+      - pattern-either:
+          - pattern: os.environ[$KEY] = ...
+          - pattern: os.environ.setdefault($KEY, ...)
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: '^["'']TEXTUAL_'
+
+  - id: use-active-driver-not-app-private
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Use `textual_wasm.driver.active_driver()`. Textual constructs the driver itself from a
+      class name in an environment variable, so `App._driver` is the only other handle - and
+      it is private, undocumented, and the single most likely thing to move between Textual
+      releases. The registry exists so the version-pin risk stays in one function.
+    pattern-either:
+      - pattern: $APP._driver
+      - pattern: $APP._loop
+
+  - id: version-pins-belong-in-pins-module
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Pinned versions are generated from the native environment by `textual_wasm.pins`, never
+      written by hand. This exact duplication already broke a run: a hand-written list in the
+      Pyodide harness let micropip resolve `rich` from Pyodide's bundled package set instead
+      of PyPI, and that older `rich` imports `getpass`, hence `termios`, which failed the
+      import-purity check for a reason unrelated to Textual or to WASM.
+    paths:
+      exclude:
+        - "src/textual_wasm/pins.py"
+    pattern-regex: '["''](?:textual|rich|pygments|platformdirs|markdown-it-py|mdit-py-plugins|typing-extensions)==[0-9]'
+
+  - id: capture-sink-must-go-through-emit
+    languages: [python]
+    severity: WARNING
+    message: >-
+      Write through `self.write(...)`/`_emit(...)` rather than touching the frame list.
+      `CaptureDriver.rendered_output` slices off exactly `len(ENTER_APPLICATION_MODE)` leading
+      frames so that "did the compositor emit ANSI" cannot be satisfied by the driver's own
+      preamble. An out-of-band append shifts that boundary and the assertion starts passing
+      vacuously.
+    paths:
+      exclude:
+        - "src/textual_wasm/driver.py"
+    pattern: $SELF._frames.append(...)

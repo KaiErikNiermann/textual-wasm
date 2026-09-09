@@ -1,0 +1,11 @@
+# Semgrep's built-in ignore list excludes tests/ entirely, which silently skipped the
+# fixtures that exist to prove the rules still fire - the scan reported zero findings and
+# zero scanned files, which reads exactly like a clean tree. Defining this file replaces
+# that built-in list, so everything not named here is scanned.
+.git/
+.venv/
+node_modules/
+dist/
+artifacts/
+web/vendor/
+*.min.js
