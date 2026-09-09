@@ -12,6 +12,10 @@
  *
  * Drives an already-installed Chrome through puppeteer-core rather than downloading one:
  * this runs against the browser the result is being claimed for.
+ *
+ * Runs against a real `textual-wasm build`, served by `textual-wasm dev`, rather than a
+ * bespoke harness server. Checking something other than what ships is how a harness comes to
+ * pass while the product is broken.
  */
 
 import { spawn } from "node:child_process";
@@ -59,19 +63,56 @@ async function findChrome() {
   throw new Error(`no Chrome found; tried ${CHROME_CANDIDATES.join(", ")}`);
 }
 
+const SITE = path.join(PROJECT_ROOT, "artifacts", "browser-check-site");
+const ENTRY = "textual_wasm.app:SpikeApp";
+
 /**
- * Start the project's static server and resolve once it announces its port.
+ * Run a project command to completion.
+ *
+ * @param {string[]} command
+ * @returns {Promise<void>}
+ */
+async function run(command) {
+  // A developer harness invoking this project's own tooling from the developer's own PATH.
+  // eslint-disable-next-line sonarjs/no-os-command-from-path
+  const child = spawn("poetry", ["run", ...command], {
+    cwd: PROJECT_ROOT,
+    stdio: ["ignore", "ignore", "inherit"],
+  });
+  const [code] = await once(child, "exit");
+  if (code !== 0) {
+    throw new Error(`${command.join(" ")} exited ${code}`);
+  }
+}
+
+/**
+ * Build the site and serve it, resolving once it answers.
  *
  * @returns {Promise<import("node:child_process").ChildProcess>}
  */
 async function startServer() {
-  const server = spawn(process.execPath, [path.join(HERE, "serve.mjs")], {
+  await run(["textual-wasm", "build", ENTRY, "src/textual_wasm", "-o", SITE]);
+  // Same as above: the project's own CLI, from the developer's own PATH.
+  // eslint-disable-next-line sonarjs/no-os-command-from-path
+  const server = spawn("poetry", ["run", "textual-wasm", "dev", SITE, "-p", String(PORT)], {
     cwd: PROJECT_ROOT,
-    env: { ...process.env, PORT: String(PORT) },
-    stdio: ["ignore", "pipe", "inherit"],
+    stdio: ["ignore", "ignore", "inherit"],
   });
-  await once(server.stdout, "data");
-  return server;
+  // The server prints through rich, so its output is not a reliable readiness signal;
+  // asking it for the manifest is.
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try {
+      const response = await fetch(`http://localhost:${PORT}/app.json`);
+      if (response.ok) {
+        return server;
+      }
+    } catch {
+      // not listening yet
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  server.kill();
+  throw new Error(`build server never answered on port ${PORT}`);
 }
 
 /**

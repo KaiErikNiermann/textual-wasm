@@ -36,6 +36,13 @@ export default defineConfig([
     },
   },
   {
+    // The page assets live inside the Python package so they ship with it, and a Python
+    // package name is snake_case by language rule. The directory naming convention has to
+    // yield to the one that is not negotiable.
+    files: ["src/textual_wasm/**"],
+    rules: { "unicorn/filename-case": "off" },
+  },
+  {
     files: ["**/*.css"],
     language: "css/css",
     plugins: { css },

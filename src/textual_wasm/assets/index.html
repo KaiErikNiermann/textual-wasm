@@ -11,8 +11,9 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='14' font-family='monospace'%3E%26gt;_%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="/vendor/xterm/css/xterm.css" />
-    <link rel="stylesheet" href="/styles/index.css" />
+    <!-- xterm's stylesheet is injected at boot from the build manifest, so its version
+         lives in exactly one place. -->
+    <link rel="stylesheet" href="./styles/index.css" />
   </head>
   <body class="page">
     <header class="masthead">
@@ -22,6 +23,6 @@
     <main class="stage">
       <div id="terminal" class="terminal-frame"></div>
     </main>
-    <script type="module" src="/main.mjs"></script>
+    <script type="module" src="./main.mjs"></script>
   </body>
 </html>

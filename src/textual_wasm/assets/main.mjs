@@ -9,11 +9,19 @@
  * `textual_wasm.browser.TerminalHost` declares.
  */
 
-import { FitAddon } from "/vendor/addon-fit/lib/addon-fit.mjs";
-import { Terminal } from "/vendor/xterm/lib/xterm.mjs";
-import { loadPyodide } from "/vendor/pyodide/pyodide.mjs";
 
-const PACKAGE_DIR = "/lib/python3.14/site-packages/textual_wasm";
+/**
+ * Where Python packages are written into Pyodide's filesystem. A build writes both this
+ * project and the application here, so neither has to be a wheel.
+ */
+const SITE_PACKAGES = "/lib/python3.14/site-packages";
+
+/**
+ * Everything the page needs to know about the app it is hosting, written by
+ * `textual-wasm build`. Keeping it in a file rather than in this script means one page
+ * serves every application, and a rebuild is a data change.
+ */
+const MANIFEST_URL = "./app.json";
 const HOST_MODULE = "textual_wasm_host";
 
 /*
@@ -45,7 +53,7 @@ function forcedGrid() {
  * draws into. Trailing blanks are trimmed here and again on the Python side, because
  * emulators disagree about whether an untouched cell is a space or nothing.
  *
- * @param {Terminal} terminal
+ * @param {object} terminal
  * @returns {{ columns: number, rows: number, lines: string[] }}
  */
 function readScreen(terminal) {
@@ -87,9 +95,10 @@ async function layoutSettled() {
 /**
  * Build the terminal and the object Python drives it through.
  *
- * @returns {{ terminal: Terminal, host: object, fit: () => void }}
+ * @param {{Terminal: Function, FitAddon: Function}} deps the pinned runtime modules
+ * @returns {{ terminal: object, host: object, fit: () => void }}
  */
-function createTerminal() {
+function createTerminal({ Terminal, FitAddon }) {
   const styles = getComputedStyle(document.documentElement);
   const terminal = new Terminal({
     // Taken from the token table rather than restated, so the font that decides cell
@@ -137,60 +146,96 @@ function createTerminal() {
 }
 
 /**
- * Write the project's own package into Pyodide's filesystem.
+ * Write Python sources into Pyodide's filesystem.
  *
- * Served straight from `src/` rather than installed as a wheel, so the browser
- * demonstrably runs the same files as the Node probe and an edit needs only a reload.
+ * Sources rather than wheels, so a development server can serve straight from disk and an
+ * edit needs only a reload - and so the browser demonstrably runs the same files the other
+ * runtimes do.
  *
- * @param {import("/vendor/pyodide/pyodide.mjs").PyodideInterface} pyodide
+ * @param {object} pyodide
+ * @param {Record<string, Record<string, string>>} packages package name to {path: source}
  */
-async function installProjectPackage(pyodide) {
-  const response = await fetch("/api/package");
-  const sources = await response.json();
-  pyodide.FS.mkdirTree(PACKAGE_DIR);
-  for (const [name, source] of Object.entries(sources)) {
-    pyodide.FS.writeFile(`${PACKAGE_DIR}/${name}`, source, { encoding: "utf8" });
+function installPackages(pyodide, packages) {
+  for (const [name, files] of Object.entries(packages)) {
+    for (const [relative, source] of Object.entries(files)) {
+      const target = `${SITE_PACKAGES}/${name}/${relative}`;
+      pyodide.FS.mkdirTree(target.slice(0, target.lastIndexOf("/")));
+      pyodide.FS.writeFile(target, source, { encoding: "utf8" });
+    }
   }
 }
 
 /**
- * @returns {Promise<string[]>} the pinned requirements, from the generated file.
+ * Import the runtime dependencies at the versions the build pinned.
+ *
+ * Dynamic rather than static imports because the URLs come from the manifest: a static
+ * import would mean a second copy of every version number living in this file, and a copy
+ * is a thing that drifts.
+ *
+ * @param {object} manifest
  */
-async function readRequirements() {
-  const response = await fetch("/wasm-requirements.txt");
-  const text = await response.text();
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith("#"));
+async function loadDependencies(manifest) {
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = manifest.xtermCssUrl;
+  document.head.append(stylesheet);
+
+  const [xterm, fit, pyodide] = await Promise.all([
+    import(manifest.xtermUrl),
+    import(manifest.fitAddonUrl),
+    import(`${manifest.pyodideIndexUrl}pyodide.mjs`),
+  ]);
+  return { Terminal: xterm.Terminal, FitAddon: fit.FitAddon, loadPyodide: pyodide.loadPyodide };
+}
+
+/**
+ * @returns {Promise<object>} the build manifest.
+ */
+async function readManifest() {
+  const response = await fetch(MANIFEST_URL);
+  if (!response.ok) {
+    throw new Error(`no ${MANIFEST_URL}; run \`textual-wasm build\` to produce one`);
+  }
+  return response.json();
 }
 
 async function main() {
-  const { terminal, host, fit } = createTerminal();
+  const manifest = await readManifest();
+  const dependencies = await loadDependencies(manifest);
+
+  const { terminal, host, fit } = createTerminal(dependencies);
   await layoutSettled();
   fit();
 
   setStatus("booting", "booting Pyodide…");
-  const pyodide = await loadPyodide({ indexURL: "/vendor/pyodide/" });
+  const pyodide = await dependencies.loadPyodide({
+    indexURL: manifest.pyodideIndexUrl,
+    // COLUMNS and LINES because os.get_terminal_size() raises here and
+    // shutil.get_terminal_size() falls back to 80x24 - a TUI would lay out for the wrong
+    // grid without them. isatty likewise: a terminal app that believes it has no terminal
+    // disables colour and line editing before it draws anything.
+    env: { COLUMNS: String(host.cols), LINES: String(host.rows), TERM: "xterm-256color" },
+  });
+  pyodide.setStdin({ stdin: () => null, isatty: true });
 
-  setStatus("booting", "installing Textual…");
+  setStatus("booting", `installing ${manifest.requirements.length} package(s)…`);
   await pyodide.loadPackage("micropip");
-  const micropip = pyodide.pyimport("micropip");
-  await micropip.install(await readRequirements());
-  await installProjectPackage(pyodide);
+  await pyodide.pyimport("micropip").install(manifest.requirements);
+  const sources = await fetch(manifest.sourcesUrl);
+  installPackages(pyodide, await sources.json());
 
   // Registered before the driver is imported: `textual_wasm.browser` resolves the host at
   // import time and says so explicitly if the page skipped this.
   pyodide.registerJsModule(HOST_MODULE, host);
 
   setStatus("booting", "starting the app…");
-  const entry = await fetch("/entry/browser_entry.py");
+  const entry = await fetch(manifest.entryUrl);
   await pyodide.runPythonAsync(await entry.text());
 
-  setStatus("ready", `running ${host.cols}x${host.rows} — press 'a', then ctrl+q to quit`);
+  setStatus("ready", `running ${manifest.entry} at ${host.cols}x${host.rows}`);
 
   const start = pyodide.globals.get("start");
-  const finished = start();
+  const finished = start(manifest.entry);
 
   // Published only once the app is actually driving the terminal, so a harness that waits
   // for it cannot read a half-booted screen.
