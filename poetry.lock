@@ -1365,6 +1365,21 @@ dev = ["twine (>=3.4.1)"]
 nodejs = ["nodejs-wheel-binaries"]
 
 [[package]]
+name = "pyte"
+version = "0.8.2"
+description = "Simple VTXXX-compatible terminal emulator."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "pyte-0.8.2-py3-none-any.whl", hash = "sha256:85db42a35798a5aafa96ac4d8da78b090b2c933248819157fc0e6f78876a0135"},
+    {file = "pyte-0.8.2.tar.gz", hash = "sha256:5af970e843fa96a97149d64e170c984721f20e52227a2f57f0a54207f08f083f"},
+]
+
+[package.dependencies]
+wcwidth = "*"
+
+[[package]]
 name = "pytest"
 version = "8.4.2"
 description = "pytest: simple powerful testing with Python"
@@ -2186,6 +2201,18 @@ files = [
 bracex = ">=2.1.1"
 
 [[package]]
+name = "wcwidth"
+version = "0.8.3"
+description = "Measures the displayed width of unicode strings in a terminal"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "wcwidth-0.8.3-py3-none-any.whl", hash = "sha256:d5b73dba6158a595ec9370350e7f2637bcac8d6c5e4fde34f30fcffb6103a5e4"},
+    {file = "wcwidth-0.8.3.tar.gz", hash = "sha256:d128512515fbf4612e0ff21fd6380399210318b7b54a9af59dff8454cf9730eb"},
+]
+
+[[package]]
 name = "wrapt"
 version = "1.17.3"
 description = "Module for decorators, wrappers and monkey patching."
@@ -2299,4 +2326,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "d8f56bfcfbfd6c607bff97ae07758468a80ce4775d942844c22ab0378063beb5"
+content-hash = "fc03ffb2eeff0dbcecc5ab453b6c4e6e9e670fc3b6e5d774d4d96b4ce3621ff9"

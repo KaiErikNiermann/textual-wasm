@@ -29,6 +29,7 @@ from textual_wasm.report import (
     ProbeReport,
     RuntimeFacts,
 )
+from textual_wasm.screen import replay
 
 FORBIDDEN_TTY_MODULES: Final[tuple[str, ...]] = ("termios", "tty", "pty", "curses")
 """Modules that only a tty driver needs.
@@ -242,4 +243,8 @@ async def run_probe(*, size: tuple[int, int] = DEFAULT_SIZE) -> ProbeReport:
         timer_fired=app.timer_fired,
         rendered_output=driver.rendered_output,
     )
-    return ProbeReport(runtime=facts[0], checks=_evaluate(observations, size))
+    return ProbeReport(
+        runtime=facts[0],
+        checks=_evaluate(observations, size),
+        screen=replay(observations.rendered_output, columns=size[0], rows=size[1]),
+    )

@@ -25,9 +25,13 @@ PINNED_DISTRIBUTIONS: Final[tuple[str, ...]] = (
     "platformdirs",
     "pygments",
     "typing-extensions",
+    # pyte replays the emitted stream into a grid so the runtimes can be compared on what
+    # they render, not only on the bytes they emit. Pure Python, as is its own dependency.
+    "pyte",
+    "wcwidth",
 )
-"""Textual and its complete dependency closure. All pure Python - nothing to cross-compile,
-which is why this list can be installed under Pyodide at all."""
+"""This package's complete runtime closure. All pure Python - nothing to cross-compile,
+which is why the list can be installed under Pyodide at all."""
 
 REQUIREMENTS_FILENAME: Final[str] = "wasm-requirements.txt"
 """Committed artifact read by `scripts/run_pyodide_node.mjs`."""

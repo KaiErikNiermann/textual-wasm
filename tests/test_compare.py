@@ -8,6 +8,7 @@ import pytest
 
 from textual_wasm.compare import compare
 from textual_wasm.report import CheckId, CheckResult, CheckStatus, ProbeReport, RuntimeFacts
+from textual_wasm.screen import RenderedScreen
 
 _NATIVE_RUNTIME = RuntimeFacts(
     platform="linux",
@@ -29,12 +30,16 @@ _WASM_RUNTIME = dataclasses.replace(
 )
 
 
+_SCREEN = RenderedScreen(columns=80, rows=24, lines=("hello",))
+
+
 def _report(runtime: RuntimeFacts, *statuses: CheckStatus) -> ProbeReport:
     return ProbeReport(
         runtime=runtime,
         checks=tuple(
             CheckResult(check, status, "") for check, status in zip(CheckId, statuses, strict=True)
         ),
+        screen=_SCREEN,
     )
 
 
@@ -78,6 +83,7 @@ def test_reports_covering_different_checks_are_rejected() -> None:
     partial = ProbeReport(
         runtime=_WASM_RUNTIME,
         checks=(CheckResult(CheckId.TIMER, CheckStatus.PASS, ""),),
+        screen=_SCREEN,
     )
     with pytest.raises(ValueError, match="different checks"):
         compare(_report(_NATIVE_RUNTIME, *_ALL_PASS), partial)

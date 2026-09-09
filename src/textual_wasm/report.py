@@ -12,6 +12,8 @@ import json
 from collections.abc import Mapping
 from typing import Final, cast
 
+from textual_wasm.screen import RenderedScreen, normalise
+
 
 class CheckId(enum.StrEnum):
     """The individual claims the feasibility study makes, one per check."""
@@ -89,6 +91,9 @@ class ProbeReport:
 
     runtime: RuntimeFacts
     checks: tuple[CheckResult, ...]
+    screen: RenderedScreen
+    """The grid the emitted stream leaves behind, so runtimes can be compared on what they
+    *render* and not only on the bytes they produce."""
 
     @property
     def ok(self) -> bool:
@@ -123,7 +128,21 @@ class ProbeReport:
         return cls(
             runtime=_runtime_from(_as_object(report, "runtime")),
             checks=tuple(_check_from(entry) for entry in _as_array(report, "checks")),
+            screen=screen_from(_as_object(report, "screen")),
         )
+
+
+def screen_from(source: Mapping[str, object]) -> RenderedScreen:
+    """Rebuild a grid written by another runtime, or by the browser harness.
+
+    Public because the browser report carries a screen and nothing else - it cannot run the
+    Python checks - so the screen comparison has to be able to read one on its own.
+    """
+    return RenderedScreen(
+        columns=_as_int(source, "columns"),
+        rows=_as_int(source, "rows"),
+        lines=normalise(tuple(str(line) for line in _as_array(source, "lines"))),
+    )
 
 
 def _wrong_type(label: str, expected: str, value: object) -> TypeError:
@@ -149,6 +168,14 @@ def _as_str(source: Mapping[str, object], key: str) -> str:
     value = source.get(key)
     if not isinstance(value, str):
         raise _wrong_type(repr(key), "a string", value)
+    return value
+
+
+def _as_int(source: Mapping[str, object], key: str) -> int:
+    value = source.get(key)
+    # bool is an int subclass; a JSON true here means the payload is wrong, not that it is 1.
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise _wrong_type(repr(key), "an integer", value)
     return value
 
 

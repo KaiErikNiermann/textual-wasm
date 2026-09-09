@@ -11,6 +11,7 @@ import dataclasses
 from typing import Final
 
 from textual_wasm.report import CheckId, CheckStatus, ProbeReport, RuntimeFacts
+from textual_wasm.screen import LineDiff, RenderedScreen
 
 EXPECTED_RUNTIME_DIVERGENCE: Final[frozenset[str]] = frozenset(
     {
@@ -66,6 +67,14 @@ class Comparison:
 
     agreements: tuple[CheckAgreement, ...]
     runtime_differences: tuple[RuntimeDifference, ...]
+    screen_diffs: tuple[LineDiff, ...]
+    """Rows where the two runtimes' replayed grids disagree.
+
+    Expected to be empty and cheap to check: both runtimes replay the same bytes through the
+    same emulator, so a difference here means the bytes were not the same after all - which
+    the `ansi_output` check alone would not catch, since it only asserts that *some*
+    truecolor SGR was emitted.
+    """
 
     @property
     def disagreements(self) -> tuple[CheckAgreement, ...]:
@@ -83,6 +92,7 @@ class Comparison:
             bool(self.agreements)
             and all(a.passes_both for a in self.agreements)
             and not self.unexpected_differences
+            and not self.screen_diffs
         )
 
 
@@ -116,4 +126,23 @@ def compare(native: ProbeReport, wasm: ProbeReport) -> Comparison:
             if check in native_by_id
         ),
         runtime_differences=_runtime_differences(native.runtime, wasm.runtime),
+        screen_diffs=native.screen.diff(wasm.screen),
     )
+
+
+def compare_screens(left: RenderedScreen, right: RenderedScreen) -> tuple[LineDiff, ...]:
+    """Diff two grids that may come from different emulators.
+
+    Separate from `compare` because the browser produces a grid and nothing else: it cannot
+    run the Python checks, and its report carries no `RuntimeFacts` to align.
+
+    Raises:
+        ValueError: If the grids were produced at different sizes, which makes a row-by-row
+            diff meaningless rather than merely noisy.
+    """
+    if (left.columns, left.rows) != (right.columns, right.rows):
+        raise ValueError(
+            f"grids differ in size: {left.columns}x{left.rows} vs "
+            f"{right.columns}x{right.rows}; force both to the same grid before comparing"
+        )
+    return left.diff(right)

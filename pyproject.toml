@@ -9,6 +9,7 @@ dependencies = [
     "textual (>=8.2,<9.0)",
     "typer (>=0.15,<1.0)",
     "rich (>=13.0)",
+    "pyte (>=0.8.2,<0.9.0)",
 ]
 
 [project.scripts]
