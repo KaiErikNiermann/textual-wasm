@@ -1,9 +1,13 @@
 # Textual → WASM: feasibility study
 
-**Date:** 2026-09-06
+**Date:** 2026-09-06, revised 2026-09-09 with spike results
 **Audited against:** `textual` 8.2.8 (`/usr/lib/python3.14/site-packages/textual`)
 **Question:** can one Textual app be shipped *both* as a classic terminal TUI *and* as a
 fully client-side web app (no server, no PTY, no WebSocket back to a Python process)?
+
+> **Status: confirmed by a working spike.** §11 records what was actually built and measured.
+> The audit below is unchanged except where the spike corrected it; every correction is
+> marked **[spike]**.
 
 ---
 
@@ -118,6 +122,15 @@ One thing to verify empirically: `run_async` calls
 Pyodide's `WebLoop` is a hand-written `AbstractEventLoop`; if it does not honour a task
 factory this is silently ignored (behavioural difference only, eager tasks are an
 optimisation). **Flag as a smoke test, not a blocker.**
+
+> **[spike] This was the one prediction that was wrong, and it was wrong in the worse
+> direction.** `WebLoop` *does* honour `set_task_factory` — and then dies. Its `create_task`
+> is a copy of CPython 3.13's `BaseEventLoop.create_task`, whose task-factory branch calls
+> `asyncio.tasks._set_task_name`, a private helper **removed in CPython 3.14**. Pyodide
+> 314.0.6 ships CPython 3.14. The branch is taken only once a factory is set, and
+> `App.run_async` sets one unconditionally, so under Pyodide *every* `loop.create_task`
+> after the app starts raises `AttributeError`. It is a Pyodide bug, not a Textual one, and
+> a four-line polyfill fixes it — but nothing about it is "a behavioural difference only".
 
 ### 2.5 Input parsing is pure and synchronous
 
@@ -267,6 +280,11 @@ demos look broken.
 | Package install | `micropip` (pure-Python wheels) | bundle-time | bundle-time |
 | Fit for this | **yes** | workable, awkward | **no** — no DOM |
 
+> **[spike] Pyodide's versioning changed.** Releases are now aligned to the CPython version
+> they ship: `314.0.6` is CPython 3.14, and the old `0.2x` line ended at `0.29.4`. Anything
+> written against "Pyodide 0.29" is a major version behind. Pinning matters more than usual
+> here — see the micropip finding in §11.
+
 **Pyodide is the only sensible target.** The wasmtime/WASI attempt reported in #2764 hitting
 "platform driver import failures with socket permission errors" is exactly what you'd
 expect: WASI has no DOM, so you'd be reinventing xterm.js inside WASM for no reason. Kill
@@ -294,11 +312,21 @@ platformdirs       0.12 MB
                    ~9.1 MB source
 ```
 
-Plus the Pyodide runtime (`pyodide.asm.wasm` ≈ 9 MB raw, ~4 MB brotli — *approximate, verify
-against the version you pin*).
+**[spike] Measured**, against the pinned `pyodide@314.0.6`:
 
-Rough first-load: **~12–15 MB raw, ~5–7 MB over the wire with brotli.** Cold start on the
-order of 2–4 s; cached, well under a second.
+```
+pyodide.asm.wasm    9.2 MB raw   3.1 MB brotli
+python_stdlib.zip   2.4 MB raw   2.4 MB brotli   (already deflated)
+```
+
+So first load is **~12 MB raw, ~5.5 MB over the wire**, plus the Python packages above. The
+earlier estimate held. Measured timings under Node, warm cache:
+
+```
+pyodide boot          ~0.9 s
+dependency install    ~0.7 s
+probe (app run)       ~3.8 s   <- dominated by the probe's own deliberate waits
+```
 
 Levers, in order of payoff:
 1. **Drop / subset `pygments`** — it is only reachable via syntax highlighting in
@@ -384,13 +412,13 @@ headless Chrome on every Textual/Pyodide bump, and a deliberately boring scope.
 
 ## 9. Recommended path
 
-**Spike (½–1 day).** `HeadlessDriver` subclass under Pyodide whose `write()` pushes to a
-JS array; render one `Static("hello")`; confirm `import textual.app` doesn't drag in
-`termios`, that `run_async` starts, and that `Resize` reaches the app. This kills or
-confirms the whole thesis for almost nothing.
+**Spike (½–1 day).** ~~`HeadlessDriver` subclass under Pyodide…~~ **Done — see §11.** It
+went further than planned: the driver, the Node probe *and* an xterm.js page all landed, so
+v0 below is mostly hardening rather than new construction.
 
-**v0 (~1 week).** Real `WasmDriver` + xterm.js host. Keyboard, mouse, resize, alt screen.
-Target: `code_browser.py` and the Textual demo running interactively.
+**v0 (~1 week).** Harden the browser driver: mouse, bracketed paste, clipboard, focus/blur,
+the ESC-timeout pump under real load. Target: `code_browser.py` and the Textual demo
+running interactively.
 
 **v0.1.** `open_url`, `deliver_binary`, clipboard, MEMFS `DirectoryTree`, a font that
 matches, the `@work(thread=True)` loud failure, `textual_wasm.compat.IS_WASM`.
@@ -416,5 +444,103 @@ The reason it doesn't exist is that Textualize chose a server-side business mode
 the code resists it. **Nothing here needs a fork.** The genuinely hard problems are font
 metrics and thread workers, and both are containable.
 
-Confidence: **high** that a working demo is a week of work. **Medium** that it stays
-low-maintenance without CI against upstream releases — build that CI early.
+Confidence: ~~**high** that a working demo is a week of work~~ — **[spike] it was a day**,
+including the browser half; see §11. **Medium** that it stays low-maintenance without CI
+against upstream releases — build that CI early.
+
+---
+
+## 11. Spike results (2026-09-09)
+
+Everything in §0–§10 above was a reading of the source. This section is measurement.
+
+### 11.1 What was built
+
+An out-of-tree package (`textual_wasm`) against **unpatched Textual 8.2.8 from PyPI**:
+
+| Piece | What it is |
+|---|---|
+| `driver.py` | `WasmDriverBase` — app-mode sequences, `XTermParser` pump, resize, capability overrides. ~190 lines. |
+| `driver.py` | `CaptureDriver` — sink is a list. Used by the probe and the tests. |
+| `browser.py` | `BrowserDriver` — sink is `xterm.js`. ~110 lines. |
+| `probe.py` | One driver-agnostic coroutine that boots a real `App` and returns a structured verdict. |
+| `scripts/run-pyodide-node.mjs` | Runs that same coroutine under Pyodide in Node. |
+| `web/` + `scripts/serve.mjs` | The same app in a browser against a real terminal emulator. |
+
+**No patch to Textual, and no fork.** `TEXTUAL_DRIVER=textual_wasm.driver:CaptureDriver` was
+sufficient, exactly as §2.1 predicted.
+
+### 11.2 The result
+
+Eight mechanically-checkable claims, run natively and under Pyodide, compared by
+`textual-wasm-spike compare`:
+
+| check | native | wasm |
+|---|---|---|
+| `import_purity` — no tty module, no Textual platform driver imported | pass | pass |
+| `driver_hook` — `TEXTUAL_DRIVER` selected the out-of-tree class | pass | pass |
+| `run_async` — completed on the host loop, returned the sentinel | pass | pass |
+| `resize_delivered` — driver-synthesised `Resize` reached the app | pass | pass |
+| `ansi_output` — compositor emitted truecolor SGR | pass | pass |
+| `widget_rendered` — composed widget text present in the stream | pass | pass |
+| `key_input` — bytes through `XTermParser` drove an app binding | pass | pass |
+| `timer` — `set_timer` fired | pass | pass |
+
+Runtime differences, all expected: `linux`/`emscripten`, `_UnixSelectorEventLoop`/`WebLoop`,
+threads `True`/`False`, one polyfill. `textual_version` identical, which is what makes the
+comparison mean anything.
+
+**The compositor emitted a byte-identical 7311 characters on both runtimes.**
+
+In the browser: renders correctly at 119×32 in `xterm.js`, truecolor, borders and box-drawing
+intact; three real Chrome keystrokes produced three increments and three live re-renders.
+
+### 11.3 Findings the source audit could not have produced
+
+Ranked by how much time they would cost someone starting from the audit alone.
+
+**1. `App.run_async` breaks every `create_task` under Pyodide.** See the box in §2.4. Four-line
+polyfill, but the symptom is an `AttributeError` from deep inside `WebLoop` that names nothing
+recognisable.
+
+**2. Python callbacks handed to JavaScript need `pyodide.ffi.create_proxy`.** The automatic
+proxy is *borrowed* and destroyed when the call it was passed into returns, so
+`terminal.onData(self.feed_input)` registers cleanly and then throws
+`This borrowed proxy was automatically destroyed` on every keystroke — into the browser
+console, where a Textual app will never see it. Cost: 114 silent errors and a key that did
+nothing. **Any browser driver must own its proxies and destroy them on teardown.**
+
+**3. `textual.constants` caches every `TEXTUAL_*` variable at import time** (`constants.py:113`).
+Setting `os.environ["TEXTUAL_DRIVER"]` after anything has imported `textual` has no effect
+whatsoever, silently, and the app falls back to the platform driver and dies on `termios`. The
+ordering has to be structural, not remembered.
+
+**4. micropip resolves Pyodide's bundled package set before PyPI.** `micropip.install("textual")`
+pulled `rich 14.3.3` (bundled) rather than 15.0.0 — and that older `rich` imports `getpass`,
+which imports `termios`, which failed the import-purity check for a reason that had nothing to
+do with Textual or with WASM. Pyodide 314.0.6 bundles `rich`, `pygments`, `platformdirs` and
+`typing_extensions`. **Pin the whole closure, generated from the native environment**, or the
+two runtimes are not running the same code and no comparison between them is valid.
+
+**5. Three browser-only failures, all silent.** A 404 stylesheet (xterm's hidden
+character-measurement element renders on top of the app); a container class of `terminal`,
+which is also what `xterm.js` names its own root element (every rule applies twice); and
+`FitAddon.fit()` before `document.fonts.ready` (divides the container by an unmeasurable cell
+and yields a 1-row grid — the app renders, just one line of it). None raise.
+
+**6. `fcntl` is not a Textual import.** `import asyncio` pulls it via `subprocess` on POSIX,
+along with `selectors` and `signal`. An import-purity check that watches them tests an import
+graph Textual does not control. The meaningful watch list is `termios`, `tty`, `pty`, `curses`
+plus `textual.drivers.*_driver`.
+
+### 11.4 What the spike did *not* settle
+
+- **Font metrics.** Still the top risk in §8, and the spike used a single ASCII-only app. The
+  interesting cases — CJK, emoji/ZWJ, Nerd Font glyphs — were not exercised.
+- **Frame-for-frame equality.** Both runtimes emit an identical byte stream, which is strong.
+  Comparing the *rendered* result would need the native stream replayed through a terminal
+  emulator (`pyte`) and diffed against the browser's buffer. That is the natural next step and
+  would make the browser half CI-able.
+- **Mouse, paste, clipboard, focus/blur** are written but untested.
+- **`@work(thread=True)`** is confirmed unavailable (`threads_available: false`) but still
+  fails obscurely rather than loudly.
