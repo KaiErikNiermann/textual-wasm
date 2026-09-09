@@ -40,8 +40,12 @@ _WASM_RUNTIME = dataclasses.replace(
 _SCREEN = RenderedScreen(columns=80, rows=24, lines=("hello",))
 
 
+_TARGET = "textual_wasm.app:SpikeApp"
+
+
 def _report(runtime: RuntimeFacts, *statuses: CheckStatus) -> ProbeReport:
     return ProbeReport(
+        target=_TARGET,
         runtime=runtime,
         checks=tuple(
             CheckResult(check, status, "") for check, status in zip(CheckId, statuses, strict=True)
@@ -91,9 +95,17 @@ def test_disagreement_is_reported() -> None:
 
 def test_reports_covering_different_checks_are_rejected() -> None:
     partial = ProbeReport(
+        target=_TARGET,
         runtime=_WASM_RUNTIME,
         checks=(CheckResult(CheckId.TIMER, CheckStatus.PASS, ""),),
         screen=_SCREEN,
     )
     with pytest.raises(ValueError, match="different checks"):
         compare(_report(_NATIVE_RUNTIME, *_ALL_PASS), partial)
+
+
+def test_reports_of_different_applications_are_rejected() -> None:
+    """The checks would line up perfectly, and the verdict would be about nothing."""
+    other = dataclasses.replace(_report(_WASM_RUNTIME, *_ALL_PASS), target="other:App")
+    with pytest.raises(ValueError, match="different applications"):
+        compare(_report(_NATIVE_RUNTIME, *_ALL_PASS), other)

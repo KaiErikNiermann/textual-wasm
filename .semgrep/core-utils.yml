@@ -21,6 +21,7 @@ rules:
     paths:
       include:
         - "src/textual_wasm/probe.py"
+        - "src/textual_wasm/target.py"
         - "src/textual_wasm/driver.py"
         - "src/textual_wasm/app.py"
         - "src/textual_wasm/report.py"
@@ -68,12 +69,21 @@ rules:
         # the defaults. There is no import it could call first.
         - "scripts/*_entry.py"
         - "src/textual_wasm/assets/entry.py"
+        # The render reference is the other direction of the same exception: it removes
+        # TEXTUAL_DRIVER so Textual picks the platform driver, which is what makes it a
+        # reference at all. Same ordering constraint, same reason it must happen here.
+        - "src/textual_wasm/reference.py"
     # The key has to be matched with a metavariable-regex: semgrep does not bind
     # metavariables inside a string literal, so `os.environ["TEXTUAL_$NAME"]` matches nothing.
     patterns:
       - pattern-either:
           - pattern: os.environ[$KEY] = ...
           - pattern: os.environ.setdefault($KEY, ...)
+          # Removing one is a write with the same failure mode: after anything has imported
+          # textual it changes nothing, silently.
+          - pattern: os.environ.pop($KEY, ...)
+          - pattern: os.environ.pop($KEY)
+          - pattern: del os.environ[$KEY]
       - metavariable-regex:
           metavariable: $KEY
           regex: '^["'']TEXTUAL_'

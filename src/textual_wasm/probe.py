@@ -2,6 +2,12 @@
 
 One coroutine, executed unchanged on CPython and on Pyodide. Every claim in the feasibility
 study that can be settled mechanically is a :class:`~textual_wasm.report.CheckId` here.
+
+The app under test is a parameter, not this module's own demo, so the same eight checks are
+available to anyone porting their own application. Nothing here asks the app to cooperate:
+the timer is scheduled by the probe, the resize is read back off the `Screen` the app laid
+out, and input is judged by what appears on that screen. An app that has never heard of this
+project is measurable by exactly the same code as the one that ships with it.
 """
 
 from __future__ import annotations
@@ -12,14 +18,12 @@ import sys
 import threading  # textual-wasm: allow threading.thread - measures whether threads exist
 from typing import Final
 
-from rich.text import Text
 from textual import __version__ as textual_version
 from textual import constants
-from textual.geometry import Size
+from textual.app import App, ScreenStackError
 from textual.pilot import Pilot
 
 from textual_wasm import APPLIED_POLYFILLS
-from textual_wasm.app import EXIT_CODE, MARKER, SpikeApp
 from textual_wasm.bootstrap import DRIVER_IMPORT_PATH
 from textual_wasm.capabilities import detect as detect_capabilities
 from textual_wasm.driver import DEFAULT_SIZE, CaptureDriver, active_capture
@@ -30,7 +34,8 @@ from textual_wasm.report import (
     ProbeReport,
     RuntimeFacts,
 )
-from textual_wasm.screen import replay
+from textual_wasm.screen import RenderedScreen, replay
+from textual_wasm.target import SPIKE_TARGET, AppTarget
 
 FORBIDDEN_TTY_MODULES: Final[tuple[str, ...]] = ("termios", "tty", "pty", "curses")
 """Modules that only a tty driver needs.
@@ -57,8 +62,18 @@ equally meaningful on both runtimes, because these modules exist in the wheel ei
 TRUECOLOR_SGR: Final[str] = "\x1b[38;2;"
 """Foreground truecolor SGR introducer — emitted by the compositor, never by the driver."""
 
+EXIT_CODE: Final[int] = 7
+"""Arbitrary non-zero, non-default value, so `run_async` returning it cannot be a coincidence.
+
+Owned by the probe rather than by any app: the probe is what calls `App.exit`, so any app can
+be made to settle the `run_async` question without knowing this value exists.
+"""
+
+TIMER_DELAY: Final[float] = 0.05
+"""Short enough to keep the probe quick, long enough to be a real `call_later` round trip."""
+
 _SETTLE_MARGIN: Final[float] = 0.1
-"""Extra wait beyond the app's timer delay, so a slow `setTimeout` clamp cannot flake the run."""
+"""Extra wait beyond the timer delay, so a slow `setTimeout` clamp cannot flake the run."""
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -66,11 +81,11 @@ class _Observations:
     """Raw facts gathered from one app run, before they are judged."""
 
     driver_class_name: str
-    return_value: int | None
-    observed_size: tuple[int, int] | None
-    bump_count: int
+    return_value: object
+    laid_out_size: tuple[int, int] | None
     timer_fired: bool
     rendered_output: str
+    screen: RenderedScreen
 
 
 def _verdict(*, passed: bool) -> CheckStatus:
@@ -113,15 +128,21 @@ def _check_driver_hook(observed_class_name: str) -> CheckResult:
     return CheckResult(CheckId.DRIVER_HOOK, _verdict(passed=passed), detail)
 
 
-def _check_run_async(return_value: int | None) -> CheckResult:
+def _check_run_async(return_value: object) -> CheckResult:
     passed = return_value == EXIT_CODE
     detail = f"run_async returned {return_value!r} (expected {EXIT_CODE!r})"
     return CheckResult(CheckId.RUN_ASYNC, _verdict(passed=passed), detail)
 
 
 def _check_resize(observed: tuple[int, int] | None, expected: tuple[int, int]) -> CheckResult:
+    """Assert the driver-synthesised resize reached the widget tree.
+
+    Read off `Screen.size` rather than an `on_resize` handler the app would have to declare.
+    A `Screen` only has a size once `_check_resize` has arranged it, and that runs solely
+    from `App._on_resize` - so this is the same claim without asking the app for anything.
+    """
     passed = observed == expected
-    detail = f"app observed Resize{observed} (expected {expected})"
+    detail = f"Screen laid out at {observed} (expected {expected})"
     return CheckResult(CheckId.RESIZE_DELIVERED, _verdict(passed=passed), detail)
 
 
@@ -135,43 +156,68 @@ def _check_ansi(rendered: str) -> CheckResult:
     return CheckResult(CheckId.ANSI_OUTPUT, _verdict(passed=passed), detail)
 
 
-def _check_widget_rendered(rendered: str) -> CheckResult:
-    plain = Text.from_ansi(rendered).plain
-    passed = MARKER in plain
-    detail = f"{MARKER!r} {'found' if passed else 'absent'} in de-ANSI'd output"
+def _check_widget_rendered(screen: RenderedScreen, target: AppTarget) -> CheckResult:
+    """Assert the app drew something, judged on the replayed grid.
+
+    The grid rather than the byte stream, because that is what every other leg reads: the
+    terminal capture polls a pane and the browser harness reads the xterm buffer. A marker
+    that the probe finds in the stream but a terminal never puts on screen would make the
+    legs disagree for reasons that have nothing to do with the runtime.
+    """
+    if target.ready_marker is None:
+        # No marker to look for. Weaker, but still an observation, and it is the honest
+        # answer for an app whose output this project has never seen.
+        passed = any(line.strip() for line in screen.lines)
+        detail = (
+            f"{'some' if passed else 'no'} non-blank content on the "
+            f"{screen.columns}x{screen.rows} grid (no ready marker was given)"
+        )
+        return CheckResult(CheckId.WIDGET_RENDERED, _verdict(passed=passed), detail)
+    passed = screen.contains(target.ready_marker)
+    detail = f"ready marker {target.ready_marker!r} {'found' if passed else 'absent'} on the grid"
     return CheckResult(CheckId.WIDGET_RENDERED, _verdict(passed=passed), detail)
 
 
-def _check_key_input(bump_count: int) -> CheckResult:
-    passed = bump_count == 1
-    detail = f"XTermParser-fed 'a' fired the binding {bump_count} time(s), expected 1"
+def _check_key_input(screen: RenderedScreen, target: AppTarget) -> CheckResult:
+    """Assert bytes fed through `XTermParser` changed what is on screen.
+
+    Skipped rather than failed when the target declares no keys: an app that cannot be
+    driven from a fixed keystroke is not a broken runtime, and reporting it as one would
+    make the whole check untrustworthy on real applications.
+    """
+    if not target.exercises_input or target.settled_marker is None:
+        return CheckResult(
+            CheckId.KEY_INPUT,
+            CheckStatus.SKIP,
+            "target declares no keys and a settled marker, so the input path is unexercised",
+        )
+    passed = screen.contains(target.settled_marker)
+    detail = (
+        f"fed {target.keys!r} through XTermParser; settled marker "
+        f"{target.settled_marker!r} {'found' if passed else 'absent'} on the grid"
+    )
     return CheckResult(CheckId.KEY_INPUT, _verdict(passed=passed), detail)
 
 
 def _check_timer(*, fired: bool) -> CheckResult:
-    detail = f"set_timer callback {'fired' if fired else 'did not fire'}"
+    detail = f"probe-scheduled set_timer callback {'fired' if fired else 'did not fire'}"
     return CheckResult(CheckId.TIMER, _verdict(passed=fired), detail)
 
 
 def _evaluate(
-    observations: _Observations, expected_size: tuple[int, int]
+    observations: _Observations, target: AppTarget, expected_size: tuple[int, int]
 ) -> tuple[CheckResult, ...]:
     """Turn raw observations into verdicts, in `CheckId` declaration order."""
     return (
         _check_import_purity(),
         _check_driver_hook(observations.driver_class_name),
         _check_run_async(observations.return_value),
-        _check_resize(observations.observed_size, expected_size),
+        _check_resize(observations.laid_out_size, expected_size),
         _check_ansi(observations.rendered_output),
-        _check_widget_rendered(observations.rendered_output),
-        _check_key_input(observations.bump_count),
+        _check_widget_rendered(observations.screen, target),
+        _check_key_input(observations.screen, target),
         _check_timer(fired=observations.timer_fired),
     )
-
-
-def _as_pair(size: Size | None) -> tuple[int, int] | None:
-    """Narrow a `Size` to a plain pair so the report stays JSON-shaped and comparable."""
-    return None if size is None else (size.width, size.height)
 
 
 def _threads_available() -> bool:
@@ -215,43 +261,77 @@ def _collect_runtime_facts(loop: asyncio.AbstractEventLoop) -> RuntimeFacts:
     )
 
 
-async def run_probe(*, size: tuple[int, int] = DEFAULT_SIZE) -> ProbeReport:
-    """Boot :class:`~textual_wasm.app.SpikeApp` on the host runtime and report the outcome.
+def _laid_out_size(app: App[object]) -> tuple[int, int] | None:
+    """The size the `Screen` was arranged at, or None if there is no screen to ask."""
+    try:
+        size = app.screen.size
+    except ScreenStackError:
+        return None
+    return (size.width, size.height)
+
+
+@dataclasses.dataclass(slots=True)
+class _Run:
+    """Mutable state the pilot fills in, kept out of the app so no app has to declare it."""
+
+    facts: RuntimeFacts | None = None
+    timer_fired: bool = False
+    laid_out_size: tuple[int, int] | None = None
+
+
+async def run_probe(
+    *, target: AppTarget = SPIKE_TARGET, size: tuple[int, int] = DEFAULT_SIZE
+) -> ProbeReport:
+    """Boot `target` on the host runtime and report the outcome.
 
     Args:
-        size: Grid to force, so the `Resize` assertion has a value that cannot come from a
+        target: The application to run, and the text that proves it ran.
+        size: Grid to force, so the resize assertion has a value that cannot come from a
             real terminal.
 
     Returns:
         A report whose JSON is directly comparable between the native and WASM runs.
     """
-    app = SpikeApp()
+    app = target.load()()
     driver_class_name = app.driver_class.__name__
-    facts: list[RuntimeFacts] = []
+    run = _Run()
+
+    def mark_timer_fired() -> None:
+        run.timer_fired = True
 
     async def drive(pilot: Pilot[object]) -> None:
-        facts.append(_collect_runtime_facts(asyncio.get_running_loop()))
+        run.facts = _collect_runtime_facts(asyncio.get_running_loop())
         await pilot.pause()
-        # Straight into the driver, not `pilot.press`: the point is to exercise the real
-        # host -> XTermParser -> Driver.process_message -> App path a browser would use.
-        active_capture().feed_input("a")
+        # Scheduled here rather than expected from the app: `set_timer` is a runtime
+        # capability, and making the app provide it would mean only instrumented apps could
+        # settle the question.
+        app.set_timer(TIMER_DELAY, mark_timer_fired)
+        if target.keys:
+            # Straight into the driver, not `pilot.press`: the point is to exercise the real
+            # host -> XTermParser -> Driver.process_message -> App path a browser would use.
+            active_capture().feed_input(target.keys)
         await pilot.pause()
-        await asyncio.sleep(_SETTLE_MARGIN)
+        await asyncio.sleep(TIMER_DELAY + _SETTLE_MARGIN)
         await pilot.pause()
+        run.laid_out_size = _laid_out_size(app)
         app.exit(EXIT_CODE)
 
     return_value = await app.run_async(size=size, auto_pilot=drive)
     driver = active_capture()
+    rendered_output = driver.rendered_output
     observations = _Observations(
         driver_class_name=driver_class_name,
         return_value=return_value,
-        observed_size=_as_pair(app.observed_size),
-        bump_count=app.bump_count,
-        timer_fired=app.timer_fired,
-        rendered_output=driver.rendered_output,
+        laid_out_size=run.laid_out_size,
+        timer_fired=run.timer_fired,
+        rendered_output=rendered_output,
+        screen=replay(rendered_output, columns=size[0], rows=size[1]),
     )
+    if run.facts is None:  # pragma: no cover - the pilot always runs before the app exits
+        raise RuntimeError("the pilot never ran, so no runtime facts were collected")
     return ProbeReport(
-        runtime=facts[0],
-        checks=_evaluate(observations, size),
-        screen=replay(observations.rendered_output, columns=size[0], rows=size[1]),
+        target=target.entry,
+        runtime=run.facts,
+        checks=_evaluate(observations, target, size),
+        screen=observations.screen,
     )

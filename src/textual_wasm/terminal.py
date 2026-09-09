@@ -24,11 +24,12 @@ import subprocess  # textual-wasm: allow subprocess.run - drives tmux, native-on
 import sys
 import time
 import uuid
-from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from textual_wasm.app import MARKER
 from textual_wasm.screen import RenderedScreen, normalise
+
+if TYPE_CHECKING:
+    from textual_wasm.target import AppTarget
 
 TMUX: Final[str | None] = shutil.which("tmux")
 """The tmux binary, or None. Callers skip rather than fail: a machine without tmux can still
@@ -63,22 +64,32 @@ def _tmux(*args: str) -> str:
     return completed.stdout
 
 
-def _wait_for(session: str, marker: str, timeout: float) -> str:
+def _pane_shows(pane: str, marker: str | None) -> bool:
+    """Whether a capture is the one being waited for."""
+    return marker in pane if marker is not None else bool(pane.strip())
+
+
+def _wait_for(session: str, marker: str | None, timeout: float) -> str:
     """Poll the pane until `marker` appears, returning the capture that contained it.
 
+    A marker of None waits for any non-blank pane instead. Weaker, and the honest fallback
+    for an app whose output is unknown: without it a target with no markers could not be
+    captured at all, and with it the capture is at least not of an empty screen.
+
     Raises:
-        CaptureTimeoutError: If the marker never appeared, with the last screen attached -
-            without it the failure says only that something did not happen.
+        CaptureTimeoutError: If it never appeared, with the last screen attached - without
+            it the failure says only that something did not happen.
     """
     deadline = time.monotonic() + timeout
     pane = ""
     while time.monotonic() < deadline:
         pane = _tmux("capture-pane", "-p", "-t", session)
-        if marker in pane:
+        if _pane_shows(pane, marker):
             return pane
         # textual-wasm: allow time.sleep - native-only reference capture, no event loop
         time.sleep(POLL_INTERVAL)
-    raise CaptureTimeoutError(f"{marker!r} never appeared within {timeout}s; last screen:\n{pane}")
+    wanted = repr(marker) if marker is not None else "any non-blank screen"
+    raise CaptureTimeoutError(f"{wanted} never appeared within {timeout}s; last screen:\n{pane}")
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -88,11 +99,11 @@ class CaptureRequest:
     command: tuple[str, ...]
     """Argv of the program to run in the pane."""
 
-    columns: int
-    rows: int
+    columns: int = 80
+    rows: int = 24
 
-    ready_marker: str
-    """Text that means the app has finished its first render."""
+    ready_marker: str | None = None
+    """Text that means the app has finished its first render, or None for any output."""
 
     keys: str = ""
     """Literal keystrokes to send once ready."""
@@ -148,28 +159,33 @@ def capture(request: CaptureRequest) -> RenderedScreen:
     )
 
 
-SPIKE_ENTRY: Final[Path] = Path(__file__).resolve().parents[2] / "scripts" / "terminal_entry.py"
-"""The reference runner. Outside the package because it must set `TEXTUAL_DRIVER` back to
-Textual's own platform driver before anything imports `textual`, and importing this package
-is what sets it to ours."""
-
-SETTLED_MARKER: Final[str] = "pressed 1"
-"""Proof the app handled the keystroke, not merely that it started."""
+REFERENCE_MODULE: Final[str] = "textual_wasm.reference"
+"""The runner, invoked with `-m` so it works from an installed package as well as a checkout."""
 
 
-def capture_spike(*, columns: int, rows: int) -> RenderedScreen:
-    """Capture the spike app's render from a real terminal.
+def capture_target(target: AppTarget, *, columns: int, rows: int) -> RenderedScreen:
+    """Capture any target's render from a real terminal.
 
-    Shared by the CLI and the tests so there is one definition of what the reference run is.
+    Shared by the CLI, the check orchestrator and the tests, so there is one definition of
+    what the reference run is - and so the markers that decide when to capture are the same
+    ones the browser harness waits for.
+
+    Args:
+        target: The application, and the text that says it is ready and settled.
+        columns: Pane width.
+        rows: Pane height.
+
+    Returns:
+        The grid the terminal drew.
     """
     return capture(
         CaptureRequest(
-            command=(sys.executable, str(SPIKE_ENTRY)),
+            command=(sys.executable, "-m", REFERENCE_MODULE, target.entry),
             columns=columns,
             rows=rows,
-            ready_marker=MARKER,
-            keys="a",
-            settled_marker=SETTLED_MARKER,
+            ready_marker=target.ready_marker,
+            keys=target.keys,
+            settled_marker=target.settled_marker,
         )
     )
 

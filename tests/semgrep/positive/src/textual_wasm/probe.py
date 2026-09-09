@@ -34,6 +34,8 @@ def bad() -> None:
 def more_bad() -> dict:
     os.environ["TEXTUAL_COLOR_SYSTEM"] = "truecolor"
     os.environ.setdefault("TEXTUAL_FPS", "30")
+    os.environ.pop("TEXTUAL_ANIMATIONS", None)
+    del os.environ["TEXTUAL_DRIVER"]
     stamp = datetime.utcnow()
     collected = []
     for value in (1, 2, 3):

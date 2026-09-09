@@ -34,10 +34,15 @@ class CheckId(enum.StrEnum):
     """The compositor must emit truecolor SGR, i.e. real terminal output to feed xterm.js."""
 
     WIDGET_RENDERED = "widget_rendered"
-    """Composed widget text must appear in the captured stream."""
+    """The app's own text must appear on the replayed grid."""
 
     KEY_INPUT = "key_input"
-    """Bytes fed through `XTermParser` must drive an app-level binding."""
+    """Bytes fed through `XTermParser` must change what is on that grid.
+
+    Skipped, not failed, for a target that declares no keystrokes: not every application can
+    be driven from one fixed key, and reporting that as a runtime fault would make the
+    verdict untrustworthy on real apps.
+    """
 
     TIMER = "timer"
     """`set_timer` must fire, proving asyncio timing works on the host loop."""
@@ -105,6 +110,13 @@ class RuntimeFacts:
 class ProbeReport:
     """The complete result of one probe run."""
 
+    target: str
+    """The `module:AppClass` that was run.
+
+    Carried so a comparison can refuse two reports of different applications: the checks
+    would line up perfectly and the verdict would be meaningless.
+    """
+
     runtime: RuntimeFacts
     checks: tuple[CheckResult, ...]
     screen: RenderedScreen
@@ -142,6 +154,7 @@ class ProbeReport:
             raise _wrong_type("report", "an object", decoded)
         report = cast("dict[str, object]", decoded)
         return cls(
+            target=_as_str(report, "target"),
             runtime=_runtime_from(_as_object(report, "runtime")),
             checks=tuple(_check_from(entry) for entry in _as_array(report, "checks")),
             screen=screen_from(_as_object(report, "screen")),

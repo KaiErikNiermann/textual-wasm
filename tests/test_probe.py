@@ -14,7 +14,7 @@ from typing import Final
 import pytest
 from textual import constants
 
-from textual_wasm.app import EXIT_CODE, MARKER
+from textual_wasm.app import MARKER
 from textual_wasm.bootstrap import DRIVER_IMPORT_PATH, REQUIRED_ENVIRONMENT
 from textual_wasm.driver import (
     ENTER_APPLICATION_MODE,
@@ -22,8 +22,14 @@ from textual_wasm.driver import (
     CaptureDriver,
     active_capture,
 )
-from textual_wasm.probe import FORBIDDEN_DRIVER_MODULES, TRUECOLOR_SGR, run_probe
-from textual_wasm.report import CheckStatus, ProbeReport
+from textual_wasm.probe import (
+    EXIT_CODE,
+    FORBIDDEN_DRIVER_MODULES,
+    TRUECOLOR_SGR,
+    run_probe,
+)
+from textual_wasm.report import CheckId, CheckStatus, ProbeReport
+from textual_wasm.target import SPIKE_TARGET
 
 PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parent.parent
 
@@ -55,6 +61,7 @@ def test_every_check_passes_natively() -> None:
     report = _probe_in_a_fresh_interpreter()
     assert report.failures == ()
     assert {result.status for result in report.checks} == {CheckStatus.PASS}
+    assert report.target == SPIKE_TARGET.entry
 
 
 async def test_report_survives_a_json_round_trip() -> None:
@@ -86,6 +93,22 @@ def test_forced_size_reaches_the_app() -> None:
     report = _probe_in_a_fresh_interpreter("--width", "120", "--height", "40")
     assert report.ok, report.failures
     assert report.screen.columns == 120
+
+
+def test_the_probe_needs_nothing_from_the_app_it_runs() -> None:
+    """A bare app, with no markers and no instrumentation, still settles six checks.
+
+    The point of the generalisation: `key_input` skips because nothing was typed, and
+    `widget_rendered` falls back to "something is on screen", but every check about the
+    *runtime* is unaffected by the app being unknown.
+    """
+    report = _probe_in_a_fresh_interpreter("--app", "tests.bare_app:BareApp", "--keys", "")
+    assert report.failures == ()
+    statuses = {result.check: result.status for result in report.checks}
+    assert statuses[CheckId.KEY_INPUT] is CheckStatus.SKIP
+    assert statuses[CheckId.WIDGET_RENDERED] is CheckStatus.PASS
+    assert statuses[CheckId.TIMER] is CheckStatus.PASS
+    assert statuses[CheckId.RESIZE_DELIVERED] is CheckStatus.PASS
 
 
 async def test_probe_exit_code_is_distinctive() -> None:

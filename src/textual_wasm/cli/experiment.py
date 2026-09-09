@@ -19,18 +19,30 @@ from rich.table import Table
 
 from textual_wasm.cli._app import app
 from textual_wasm.cli._render import render_comparison, render_report
+from textual_wasm.cli._target import (
+    EntryOption,
+    KeysOption,
+    ReadyMarkerOption,
+    SettledMarkerOption,
+)
 from textual_wasm.compare import compare as compare_reports
 from textual_wasm.compare import compare_screens as diff_screens
 from textual_wasm.driver import DEFAULT_SIZE
 from textual_wasm.probe import run_probe
+from textual_wasm.reference import PLATFORM_DRIVER_LABEL
 from textual_wasm.report import ProbeReport, screen_from
 from textual_wasm.screen import RenderedScreen
-from textual_wasm.terminal import TMUX, capture_spike
+from textual_wasm.target import resolve_target
+from textual_wasm.terminal import TMUX, capture_target
 from textual_wasm.terminal import version as tmux_version
 
 
 @app.command()
 def probe(
+    entry: EntryOption = None,
+    ready_marker: ReadyMarkerOption = None,
+    keys: KeysOption = None,
+    settled_marker: SettledMarkerOption = None,
     width: Annotated[int, typer.Option(help="Forced grid width.")] = DEFAULT_SIZE[0],
     height: Annotated[int, typer.Option(help="Forced grid height.")] = DEFAULT_SIZE[1],
     as_json: Annotated[
@@ -40,7 +52,10 @@ def probe(
 ) -> None:
     """Run the feasibility probe natively and exit non-zero if any check failed."""
     logging.basicConfig(level=logging.DEBUG if verbose else logging.WARNING)
-    report = asyncio.run(run_probe(size=(width, height)))
+    target = resolve_target(
+        entry, ready_marker=ready_marker, keys=keys, settled_marker=settled_marker
+    )
+    report = asyncio.run(run_probe(target=target, size=(width, height)))
     if as_json:
         typer.echo(report.to_json())
     else:
@@ -120,6 +135,10 @@ def compare_screens(
 
 @app.command()
 def capture_terminal(
+    entry: EntryOption = None,
+    ready_marker: ReadyMarkerOption = None,
+    keys: KeysOption = None,
+    settled_marker: SettledMarkerOption = None,
     width: Annotated[int, typer.Option(help="Pane width.")] = DEFAULT_SIZE[0],
     height: Annotated[int, typer.Option(help="Pane height.")] = DEFAULT_SIZE[1],
 ) -> None:
@@ -133,9 +152,13 @@ def capture_terminal(
         typer.echo("tmux is not installed; cannot capture a real terminal", err=True)
         raise typer.Exit(2)
 
-    grid = capture_spike(columns=width, rows=height)
+    target = resolve_target(
+        entry, ready_marker=ready_marker, keys=keys, settled_marker=settled_marker
+    )
+    grid = capture_target(target, columns=width, rows=height)
     payload = {
-        "runtime": {"terminal": tmux_version(), "driver": "textual.drivers.linux_driver"},
+        "target": target.entry,
+        "runtime": {"terminal": tmux_version(), "driver": PLATFORM_DRIVER_LABEL},
         "screen": dataclasses.asdict(grid),
     }
     typer.echo(json.dumps(payload, indent=2))

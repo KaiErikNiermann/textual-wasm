@@ -113,9 +113,16 @@ def compare(native: ProbeReport, wasm: ProbeReport) -> Comparison:
     """Pair the two reports check by check.
 
     Raises:
-        ValueError: If the reports do not cover the same checks, which means one of the runs
-            used a different build and the comparison would be meaningless.
+        ValueError: If the reports are of different applications, or do not cover the same
+            checks - either means one of the runs was a different experiment, and the
+            comparison would be meaningless.
     """
+    if native.target != wasm.target:
+        raise ValueError(
+            f"reports are of different applications: native ran {native.target!r}, "
+            f"wasm ran {wasm.target!r}; every check would still line up and the verdict "
+            f"would mean nothing"
+        )
     native_by_id = {result.check: result for result in native.checks}
     wasm_by_id = {result.check: result for result in wasm.checks}
     if native_by_id.keys() != wasm_by_id.keys():

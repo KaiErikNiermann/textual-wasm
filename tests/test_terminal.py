@@ -10,7 +10,8 @@ from __future__ import annotations
 import pytest
 
 from textual_wasm import terminal
-from textual_wasm.app import MARKER, WIDTH_SAMPLES
+from textual_wasm.app import WIDTH_SAMPLES
+from textual_wasm.target import SPIKE_TARGET
 
 pytestmark = pytest.mark.skipif(terminal.TMUX is None, reason="tmux is not installed")
 
@@ -20,18 +21,20 @@ GRID = (80, 24)
 @pytest.fixture(scope="module")
 def reference() -> terminal.RenderedScreen:
     """One capture for the whole module; each costs a real app start."""
-    return terminal.capture_spike(columns=GRID[0], rows=GRID[1])
+    return terminal.capture_target(SPIKE_TARGET, columns=GRID[0], rows=GRID[1])
 
 
 def test_the_app_renders_in_a_real_terminal(reference: terminal.RenderedScreen) -> None:
-    assert any(MARKER in line for line in reference.lines)
+    assert SPIKE_TARGET.ready_marker is not None
+    assert reference.contains(SPIKE_TARGET.ready_marker)
 
 
 def test_the_capture_waits_for_the_keystroke_to_be_handled(
     reference: terminal.RenderedScreen,
 ) -> None:
     """Without a settled marker the capture races the app and sometimes reads 'pressed 0'."""
-    assert any(terminal.SETTLED_MARKER in line for line in reference.lines)
+    assert SPIKE_TARGET.settled_marker is not None
+    assert reference.contains(SPIKE_TARGET.settled_marker)
 
 
 def test_every_width_sample_survives_a_real_terminal(
@@ -57,4 +60,4 @@ def test_capture_without_tmux_is_an_explicit_error(
 ) -> None:
     monkeypatch.setattr(terminal, "TMUX", None)
     with pytest.raises(terminal.TmuxUnavailableError):
-        terminal.capture_spike(columns=GRID[0], rows=GRID[1])
+        terminal.capture_target(SPIKE_TARGET, columns=GRID[0], rows=GRID[1])

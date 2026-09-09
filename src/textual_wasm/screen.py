@@ -56,6 +56,15 @@ class RenderedScreen:
     def text(self) -> str:
         return "\n".join(self.lines)
 
+    def contains(self, text: str) -> bool:
+        """Whether any single row carries `text`.
+
+        Per row rather than over the joined grid, and the same rule `tmux capture-pane` and
+        the xterm buffer are searched with, so a marker means the same thing in every leg. A
+        marker long enough to wrap would be missed here - which is why they are short.
+        """
+        return any(text in line for line in self.lines)
+
     def diff(self, other: RenderedScreen) -> tuple[LineDiff, ...]:
         """Rows on which this grid and `other` disagree."""
         return tuple(self._diff_lines(other))
