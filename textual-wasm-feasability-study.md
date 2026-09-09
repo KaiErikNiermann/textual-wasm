@@ -256,6 +256,12 @@ provides. Three ways to disagree:
 - **Emoji / ZWJ sequences** — Python's table vs the browser's font fallback.
 - **Powerline / Nerd Font glyphs** — only agree if the *exact* patched font is loaded.
 
+> **[spike] Measured, and largely not observed.** §12 diffs a `pyte` replay of the emitted
+> stream against the `xterm.js` buffer at the same forced grid. Box drawing, arrows, braille,
+> **CJK** and astral-plane characters land in identical cells — the wide/ambiguous CJK drift
+> predicted just above did not occur. Emoji remain unsettled, but for a different reason than
+> assumed: the divergence found there was in the *oracle*, not the browser.
+
 Mitigations, in order of effort:
 1. Ship a pinned, subsetted **Nerd Font** as a WOFF2 and set it on xterm.js. Removes the
    fallback ambiguity for the glyph set your app uses.
@@ -398,9 +404,11 @@ headless Chrome on every Textual/Pyodide bump, and a deliberately boring scope.
 
 ## 8. Risk register
 
+**[spike] Revised.** The top row was wrong; see §12.
+
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Font/cell-width drift looks broken | **high** | medium | pinned subsetted Nerd Font + xterm.js Unicode addon |
+| ~~Font/cell-width drift looks broken~~ **[spike]** not observed for BMP, CJK or astral; emoji unverified for want of an oracle | ~~high~~ **low–medium** | medium | pinned font stack; a real-terminal reference for emoji |
 | `_xterm_parser` private-API break | medium | medium | pin range, CI on Textual releases |
 | Payload too heavy for target users | medium | medium | drop pygments, brotli, precompiled bundle |
 | App uses `@work(thread=True)` | medium | **high** for that app | fail loudly + document; Worker+SAB later |
@@ -535,12 +543,98 @@ plus `textual.drivers.*_driver`.
 
 ### 11.4 What the spike did *not* settle
 
-- **Font metrics.** Still the top risk in §8, and the spike used a single ASCII-only app. The
-  interesting cases — CJK, emoji/ZWJ, Nerd Font glyphs — were not exercised.
-- **Frame-for-frame equality.** Both runtimes emit an identical byte stream, which is strong.
-  Comparing the *rendered* result would need the native stream replayed through a terminal
-  emulator (`pyte`) and diffed against the browser's buffer. That is the natural next step and
-  would make the browser half CI-able.
+- ~~**Font metrics.**~~ **Settled for everything but emoji — see §12.**
+- ~~**Frame-for-frame equality.**~~ **Done — see §12.**
 - **Mouse, paste, clipboard, focus/blur** are written but untested.
 - **`@work(thread=True)`** is confirmed unavailable (`threads_available: false`) but still
   fails obscurely rather than loudly.
+
+---
+
+## 12. Render equivalence (2026-09-09)
+
+§11 established that the two Python runtimes emit the same bytes. A byte stream is a
+rendering *instruction*, so that left the study's top risk — font and cell metrics — open.
+This section closes most of it.
+
+### 12.1 Method
+
+A third runtime was added: **headless Chrome driving the real page**, and a way to compare
+what it draws against what a terminal would.
+
+```
+Textual (rich cell_len)  ──emits──▶  ANSI stream
+                                        │
+                        ┌───────────────┴───────────────┐
+                        ▼                               ▼
+              pyte replay (wcwidth)            xterm.js render (own table)
+                        │                               │
+                        └──────────► diff ◄─────────────┘
+```
+
+Three character-width tables, none sharing code. `pyte` is a terminal emulator in pure
+Python, so it installs under Pyodide and both Python runtimes now carry a **rendered grid**
+in their report, not just a byte count. `scripts/run-browser-check.mjs` boots the page in
+Chrome at a forced grid (`?cols=80&rows=24` — a browser window's size is not a number anyone
+chose), drives the app through `xterm.js`'s own user-input entry point, and reads the buffer
+back. `textual-wasm-spike compare-screens` diffs the two.
+
+Both sides are normalised first: trailing blanks dropped, and text composed to NFC. `pyte`
+merges a combining mark into the cell it modifies and yields the composed character;
+`xterm.js` returns the codepoints it was sent. One column, one glyph, two spellings — that is
+a representation difference, not a rendering one.
+
+### 12.2 Result
+
+**Identical, cell for cell**, at 80×24:
+
+```
+ascii     abcdef|
+box       ─│┌┐└┘├┤|
+arrows    ←↑→↓|
+braille   ⠁⠂⠃⠄⠅|
+cjk       世界日本語|
+combining éà|
+astral    🚀💻|
+```
+
+Each sample carries a terminator, so a width disagreement would move that character and the
+diff would name the row and the column rather than merely failing. Nothing moved. **The
+wide/ambiguous CJK drift §4.1 predicted did not occur.**
+
+### 12.3 The one divergence, and which side was wrong
+
+The first run of this comparison was *not* green. Three rows differed — `combining`, `emoji`
+and `zwj` — and in every case **the browser was the faithful one**.
+
+`pyte` 0.8.2 silently discards the remainder of a line after a zero-width joiner (U+200D) or
+a variation selector (U+FE0F). Reduced to a one-liner:
+
+| fed | pyte renders | xterm.js renders |
+|---|---|---|
+| `世界\|` | `世界\|` | `世界\|` |
+| `🚀\|` | `🚀\|` | `🚀\|` |
+| `⚠️\|` | `⚠` | `⚠️\|` |
+| `👩‍💻\|` | `👩` | `👩‍💻\|` |
+
+CJK and astral-plane characters are fine; a joiner or a variation selector eats the rest of
+the row. So on emoji sequences the oracle is wrong and the browser is right, which means
+`pyte` **cannot adjudicate emoji at all** — including them would only measure the measuring
+instrument. Those samples were removed, with the reason recorded next to them and pinned by a
+characterisation test: if `pyte` is ever fixed, that test fails and the samples go back.
+
+This is the shape of finding a spike exists to produce. The study assumed the browser would be
+the unreliable side. Where a disagreement was actually found, it was the reference
+implementation that was wrong.
+
+### 12.4 What remains open on rendering
+
+- **Emoji and ZWJ sequences.** Not shown correct, not shown incorrect — untestable with this
+  reference. Settling them needs a real terminal as the oracle, e.g. captured through
+  `tmux capture-pane` and diffed the same way. That is a small extension of the same harness.
+- **Nerd Font / Powerline glyphs.** Private-use codepoints whose width depends entirely on the
+  loaded font. Not exercised; the page pins a plain monospace stack.
+- **Non-default fonts generally.** One font stack was measured (`IBM Plex Mono`, `DejaVu Sans
+  Mono`, `ui-monospace`). The result is about that stack.
+- **Styling.** The diff is over characters, not colours or attributes. Truecolor SGR is
+  asserted present but never compared cell by cell.

@@ -4,9 +4,9 @@ Feasibility spike for running a [Textual](https://github.com/Textualize/textual)
 client-side** under WebAssembly — the same application source running either as a classic
 terminal TUI or as a static web page with no server-side Python process.
 
-**Result: it works, against unpatched Textual 8.2.8, with no fork and no upstream patch.**
-[`textual-wasm-feasability-study.md`](./textual-wasm-feasability-study.md) has the
-architecture audit and, in §11, what the spike actually measured.
+**Result: it works, against unpatched Textual 8.2.8, with no fork and no upstream patch —
+and a browser renders it identically.** [`textual-wasm-feasability-study.md`](./textual-wasm-feasability-study.md)
+has the architecture audit; §11 is what the spike measured and §12 is render equivalence.
 
 ## The claim, and how it is checked
 
