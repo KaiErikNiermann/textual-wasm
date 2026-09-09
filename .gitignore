@@ -1,3 +1,10 @@
-.remember/
 __pycache__/
-*.pyc
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+node_modules/
+.remember/
+web/vendor/
+artifacts/
