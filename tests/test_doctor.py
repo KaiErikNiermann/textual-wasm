@@ -182,8 +182,17 @@ def test_a_pure_local_package_is_installable() -> None:
     assert _catalogue().classify("typer").state is DependencyState.PURE
 
 
+@pytest.mark.skipif(
+    not doctor.DEFAULT_LOCKFILE.exists(),
+    reason=f"{doctor.DEFAULT_LOCKFILE} not present; install the Pyodide runtime",
+)
 def test_the_real_lockfile_classifies_the_projects_own_pins() -> None:
-    """Guards the lock-file reader against a schema change in the vendored runtime."""
+    """Guards the lock-file reader against a schema change in the vendored runtime.
+
+    Skipped rather than failed without the runtime: it reads a file a contributor may not
+    have fetched, and a suite that fails for a missing optional tool is one people learn to
+    ignore.
+    """
     catalogue = doctor.load_catalogue()
     assert catalogue.packages
     assert catalogue.classify("rich").state is DependencyState.PURE

@@ -31,8 +31,17 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - run: pipx install poetry
       - run: poetry install
+      - name: install the Pyodide runtime
+        # The characterisation tests re-measure every claim in the substitution registry
+        # inside a real Pyodide. They skip cleanly without it - a suite that fails for a
+        # missing optional tool is one people learn to ignore - so if this step were absent
+        # the registry could drift with CI green.
+        run: pnpm install --frozen-lockfile
       - name: ruff (lint)
         run: poetry run ruff check src tests
       - name: ruff (format)
@@ -74,14 +83,32 @@ jobs:
           cache: pnpm
       - run: pipx install poetry
       - run: poetry install
-      - name: install the optional runtimes
-        # tmux is the only terminal emulator that will hand its screen back as text, which is
-        # what makes the render comparison possible at all. Chrome is preinstalled on this
-        # image; the harness drives the installed browser rather than downloading one.
+      - name: build tmux from source
+        # The distribution's tmux is 3.4, and 3.4 is not a usable render reference: fed the
+        # identical byte stream it places a VS16 emoji one column further along than Chrome
+        # does. Measured across three versions - 3.4 disagrees, 3.5a and 3.7c agree with
+        # Chrome exactly - which is where the >= 3.5 floor in `textual_wasm.terminal` comes
+        # from. With the packaged version this leg would refuse to run and `--strict` would
+        # fail, correctly. An official release tarball, checksummed.
+        env:
+          TMUX_VERSION: "3.5a"
+          TMUX_SHA256: "16216bd0877170dfcc64157085ba9013610b12b082548c7c9542cc0103198951"
         run: |
           sudo apt-get update
-          sudo apt-get install -y tmux
-          pnpm install --frozen-lockfile
+          sudo apt-get install -y libevent-dev libncurses-dev bison pkg-config
+          curl -fsSL -o tmux.tar.gz \
+            "https://github.com/tmux/tmux/releases/download/${TMUX_VERSION}/tmux-${TMUX_VERSION}.tar.gz"
+          echo "${TMUX_SHA256}  tmux.tar.gz" | sha256sum --check --strict
+          tar xf tmux.tar.gz
+          cd "tmux-${TMUX_VERSION}"
+          ./configure --quiet
+          make -j"$(nproc)" --silent
+          sudo make install
+          tmux -V
+      - name: install the Pyodide runtime and the browser driver
+        # Chrome is preinstalled on this image; the harness drives the installed browser
+        # rather than downloading one.
+        run: pnpm install --frozen-lockfile
       - name: check every runtime
         run: poetry run textual-wasm check --strict
       - name: the registry's claims, re-measured under Pyodide

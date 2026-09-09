@@ -19,6 +19,7 @@ otherwise take one of the rows being compared.
 from __future__ import annotations
 
 import dataclasses
+import re
 import shutil
 import subprocess  # textual-wasm: allow subprocess.run - drives tmux, native-only
 import sys
@@ -34,6 +35,19 @@ if TYPE_CHECKING:
 TMUX: Final[str | None] = shutil.which("tmux")
 """The tmux binary, or None. Callers skip rather than fail: a machine without tmux can still
 run every other part of the experiment."""
+
+MINIMUM_VERSION: Final[tuple[int, int]] = (3, 5)
+"""Oldest tmux whose character widths can be trusted as a reference.
+
+Measured, and the reason is worth stating precisely: fed the identical byte stream, tmux 3.4
+and Chrome place `\N{WARNING SIGN}\ufe0f` in different columns, while tmux 3.7c and Chrome
+agree exactly. A variation selector requests emoji presentation, and emulators only honour it
+consistently once their Unicode width data is recent enough.
+
+So an older tmux is not a *worse* reference, it is a reference for a different question - "how
+does this tmux measure emoji" rather than "what would a user see". Using one anyway produces a
+diff that reads as a browser bug and is not one. The leg reports itself unavailable instead.
+"""
 
 POLL_INTERVAL: Final[float] = 0.1
 """Gap between screen captures while waiting for the app to draw."""
@@ -193,3 +207,39 @@ def capture_target(target: AppTarget, *, columns: int, rows: int) -> RenderedScr
 def version() -> str:
     """Report the tmux build, so a capture records which emulator produced it."""
     return _tmux("-V").strip()
+
+
+def _parse_version(reported: str) -> tuple[int, int] | None:
+    """Pull `(major, minor)` out of `tmux 3.5a`, or None if it is not shaped like that.
+
+    tmux appends a letter to patch releases and `-rc` to candidates, so the minor component is
+    read up to the first non-digit rather than parsed as an integer.
+    """
+    match = re.search(r"(\d+)\.(\d+)", reported)
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
+def usable() -> tuple[bool, str]:
+    """Whether a capture from this machine can serve as the render reference.
+
+    Returns:
+        Whether to use it, and a sentence saying why - which is what the check prints when a
+        leg does not run, so it names the fix rather than the symptom.
+    """
+    if TMUX is None:
+        return False, (
+            "tmux is not installed; it is the only emulator that will hand its screen back "
+            "as text, and without it there is no render reference"
+        )
+    reported = version()
+    parsed = _parse_version(reported)
+    if parsed is None:
+        return False, f"could not read a version from {reported!r}"
+    if parsed < MINIMUM_VERSION:
+        wanted = ".".join(str(part) for part in MINIMUM_VERSION)
+        return False, (
+            f"{reported} is older than {wanted}, whose Unicode width data is where terminals "
+            f"start agreeing with browsers about emoji presentation; a capture from it would "
+            f"report a disagreement about tmux as though it were one about the browser"
+        )
+    return True, reported

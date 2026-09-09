@@ -32,7 +32,8 @@ from textual_wasm.reference import PLATFORM_DRIVER_LABEL
 from textual_wasm.report import ProbeReport, screen_from
 from textual_wasm.screen import RenderedScreen
 from textual_wasm.target import resolve_target
-from textual_wasm.terminal import TMUX, capture_target
+from textual_wasm.terminal import capture_target
+from textual_wasm.terminal import usable as terminal_usable
 from textual_wasm.terminal import version as tmux_version
 
 
@@ -130,8 +131,9 @@ def capture_terminal(
     real pty, with nothing from this project in the path. Emits the same `{runtime, screen}`
     shape the browser harness does, so `compare-screens` reads either.
     """
-    if TMUX is None:
-        typer.echo("tmux is not installed; cannot capture a real terminal", err=True)
+    ready, reason = terminal_usable()
+    if not ready:
+        typer.echo(reason, err=True)
         raise typer.Exit(2)
 
     target = resolve_target(

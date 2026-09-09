@@ -13,7 +13,8 @@ from textual_wasm import terminal
 from textual_wasm.app import WIDTH_SAMPLES
 from textual_wasm.target import SPIKE_TARGET
 
-pytestmark = pytest.mark.skipif(terminal.TMUX is None, reason="tmux is not installed")
+_USABLE, _REASON = terminal.usable()
+pytestmark = pytest.mark.skipif(not _USABLE, reason=_REASON)
 
 GRID = (80, 24)
 
@@ -61,3 +62,22 @@ def test_capture_without_tmux_is_an_explicit_error(
     monkeypatch.setattr(terminal, "TMUX", None)
     with pytest.raises(terminal.TmuxUnavailableError):
         terminal.capture_target(SPIKE_TARGET, columns=GRID[0], rows=GRID[1])
+
+
+def test_an_old_tmux_is_refused_as_a_reference(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Measured: fed the same bytes, tmux 3.4 and Chrome place a VS16 emoji in different
+    columns, while 3.7c and Chrome agree. Capturing from the old one anyway reports a
+    disagreement about tmux as though it were one about the browser."""
+    monkeypatch.setattr(terminal, "version", lambda: "tmux 3.4")
+    usable, reason = terminal.usable()
+    assert not usable
+    assert "3.5" in reason
+
+
+def test_a_patch_suffix_does_not_confuse_the_version_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """tmux appends a letter to patch releases: `3.5a` is newer than `3.5`, not unparseable."""
+    monkeypatch.setattr(terminal, "version", lambda: "tmux 3.5a")
+    usable, _reason = terminal.usable()
+    assert usable

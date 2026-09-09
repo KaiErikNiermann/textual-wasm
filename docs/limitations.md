@@ -91,6 +91,15 @@ cross-runtime check.** They are exercised by hand, not mechanically.
 
 **The stdlib is not trimmed.** A build ships the full closure. Nothing lazily loads.
 
+**Emoji-presentation width is a property of the terminal, not of this project.** Fed the same
+bytes, tmux 3.4 places `⚠️` (U+26A0 U+FE0F) one column further along than Chrome does; tmux
+3.5a and 3.7c agree with Chrome exactly. A variation selector requests emoji presentation and
+emulators only honour it consistently once their Unicode width data is recent enough — so an
+app that draws such emoji will occupy different columns in different terminals, and nothing on
+the WebAssembly side changes that. `check` refuses to use a tmux older than 3.5 as its
+reference rather than reporting a disagreement about tmux as though it were one about the
+browser.
+
 **Nerd Font and Powerline glyphs are unmeasured.** They are private-use codepoints whose width
 is a property of the font file rather than of the emulator, so the render equivalence result —
 which covers box drawing, CJK, combining marks, astral characters, variation selectors and ZWJ

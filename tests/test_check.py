@@ -65,7 +65,9 @@ def test_the_check_runs_the_legs_it_can_and_says_why_not_the_rest(
         return UNAVAILABLE
 
     monkeypatch.setattr(check_module.node, "availability", unavailable)
-    monkeypatch.setattr(check_module, "TMUX", None)
+    monkeypatch.setattr(
+        check_module, "terminal_usable", lambda: (False, "tmux is not installed; ...")
+    )
 
     report = run_check(SPIKE_TARGET)
 

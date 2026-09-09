@@ -13,13 +13,13 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, Final
 
 import pytest
 
+from textual_wasm import node
 from textual_wasm.substitutions import (
     PROBEABLE,
     SUBSTITUTIONS,
@@ -34,7 +34,16 @@ from textual_wasm.substitutions import (
 
 PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parent.parent
 HARNESS: Final[Path] = PROJECT_ROOT / "scripts" / "run-substitution-check.mjs"
-NODE: Final[str | None] = shutil.which("node")
+
+PYODIDE: Final[node.NodeAvailability] = node.availability(
+    [node.PYODIDE_PACKAGE], start=PROJECT_ROOT
+)
+"""Whether a Pyodide runtime can be booted here.
+
+Through the same lookup the `check` command uses, rather than a `which node`: the harness
+needs the *package*, and a machine with node but no `node_modules` was reported as ready and
+then failed - which is how these tests broke on their first CI run.
+"""
 
 
 # --- the fast half ---------------------------------------------------------------------
@@ -93,9 +102,9 @@ def test_unknown_id_raises() -> None:
 @pytest.fixture(scope="module")
 def observed() -> dict[str, dict[str, Any]]:
     """Re-measure every probeable claim inside Pyodide. One runtime boot for the module."""
-    assert NODE is not None  # guarded by the marker below
+    assert PYODIDE.node is not None  # guarded by the marker below
     completed = subprocess.run(  # noqa: S603 - fixed argv, no shell, paths are ours
-        [NODE, str(HARNESS)],
+        [PYODIDE.node, str(HARNESS)],
         capture_output=True,
         text=True,
         check=True,
@@ -107,7 +116,7 @@ def observed() -> dict[str, dict[str, Any]]:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(NODE is None, reason="node is not installed")
+@pytest.mark.skipif(not PYODIDE.available, reason=PYODIDE.reason)
 @pytest.mark.parametrize("substitution", PROBEABLE, ids=lambda s: s.id)
 def test_severity_still_matches_reality(
     substitution: Substitution, observed: dict[str, dict[str, Any]]
@@ -126,7 +135,7 @@ def test_severity_still_matches_reality(
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(NODE is None, reason="node is not installed")
+@pytest.mark.skipif(not PYODIDE.available, reason=PYODIDE.reason)
 @pytest.mark.parametrize(
     "substitution",
     [s for s in PROBEABLE if s.native_message],
@@ -144,7 +153,7 @@ def test_recorded_message_still_matches_reality(
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(NODE is None, reason="node is not installed")
+@pytest.mark.skipif(not PYODIDE.available, reason=PYODIDE.reason)
 def test_every_probeable_substitution_was_measured(
     observed: dict[str, dict[str, Any]],
 ) -> None:

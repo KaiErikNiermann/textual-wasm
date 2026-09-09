@@ -14,7 +14,13 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
-from textual_wasm.doctor.deps import Catalogue, Dependency, DependencyState, load_catalogue
+from textual_wasm.doctor.deps import (
+    DEFAULT_LOCKFILE,
+    Catalogue,
+    Dependency,
+    DependencyState,
+    load_catalogue,
+)
 from textual_wasm.doctor.scan import Finding, scan_path
 from textual_wasm.substitutions import Severity
 
@@ -91,6 +97,7 @@ def run(
 
 __all__ = [
     "BLOCKING",
+    "DEFAULT_LOCKFILE",
     "Catalogue",
     "Dependency",
     "DependencyState",

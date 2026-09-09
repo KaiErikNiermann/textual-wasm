@@ -700,6 +700,27 @@ test now pins that reasoning. tmux is optional throughout: the tests skip and
 
 - ~~**Emoji and ZWJ sequences.**~~ **Settled — see §12.3.** They render identically in a real
   terminal and in the browser.
+- **Emoji-presentation width is a property of the emulator's Unicode data, not of the
+  runtime.** Found by CI rather than by design: on `ubuntu-24.04`'s **tmux 3.4** the sample
+  `\N{WHITE HEAVY CHECK MARK}\N{WARNING SIGN}\uFE0F` lands one column further along than in
+  Chrome, so the row diff reported a divergence that was entirely about tmux. Measured across
+  three versions with the identical byte stream:
+
+  | tmux | agrees with Chrome |
+  |---|---|
+  | 3.4 | no |
+  | 3.5a | yes |
+  | 3.7c | yes |
+
+  A variation selector requests emoji presentation, and emulators only honour it consistently
+  once their width tables are recent enough. `textual_wasm.terminal` now refuses to serve as a
+  reference below 3.5 — an older tmux is not a worse reference, it is a reference for a
+  different question — and CI builds 3.5a from the official release tarball so the comparison
+  still covers emoji rather than dropping the samples that exposed this.
+
+  The finding generalises past this project: an app that draws VS16 emoji occupies different
+  columns in different terminals, and no amount of correctness on the WASM side changes that.
+
 - **Nerd Font / Powerline glyphs.** Private-use codepoints whose width depends entirely on the
   loaded font. Not exercised; the page pins a plain monospace stack.
 - **Non-default fonts generally.** One font stack was measured (`IBM Plex Mono`, `DejaVu Sans

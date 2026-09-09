@@ -37,8 +37,8 @@ from textual_wasm.compare import compare as compare_reports
 from textual_wasm.driver import DEFAULT_SIZE
 from textual_wasm.pins import resolve_pins
 from textual_wasm.report import ProbeReport, screen_from
-from textual_wasm.terminal import TMUX, capture_target
-from textual_wasm.terminal import version as tmux_version
+from textual_wasm.terminal import capture_target
+from textual_wasm.terminal import usable as terminal_usable
 
 if TYPE_CHECKING:
     from textual_wasm.screen import LineDiff, RenderedScreen
@@ -256,19 +256,12 @@ def _screen_object(payload: dict[str, object]) -> dict[str, object]:
 def _terminal_leg(
     target: AppTarget, size: tuple[int, int]
 ) -> tuple[LegOutcome, RenderedScreen | None]:
-    """Capture the app from a real terminal, if tmux is installed."""
-    if TMUX is None:
-        return (
-            LegOutcome(
-                Leg.TERMINAL,
-                LegStatus.SKIPPED,
-                "tmux is not installed; it is the only emulator that will hand its screen "
-                "back as text, and without it there is no render reference",
-            ),
-            None,
-        )
+    """Capture the app from a real terminal, if one that can be trusted is installed."""
+    ready, reason = terminal_usable()
+    if not ready:
+        return LegOutcome(Leg.TERMINAL, LegStatus.SKIPPED, reason), None
     grid = capture_target(target, columns=size[0], rows=size[1])
-    return LegOutcome(Leg.TERMINAL, LegStatus.RAN, tmux_version()), grid
+    return LegOutcome(Leg.TERMINAL, LegStatus.RAN, reason), grid
 
 
 def _runtime_comparison(native: ProbeReport | None, wasm: ProbeReport | None) -> Comparison | None:
