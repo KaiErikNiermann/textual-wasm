@@ -85,6 +85,18 @@ class BuildSpec:
     else's application would be branding, and a tab labelled "spike" is worse.
     """
 
+    worker: bool = False
+    """Run the interpreter in a Web Worker instead of on the page's main thread.
+
+    Off by default because it is a different failure surface, not because it is worse: a
+    worker build needs no COOP/COEP headers (measured - `crossOriginIsolated` is `False`
+    inside one and Pyodide boots anyway), so it deploys anywhere the default does.
+
+    What it buys is that a slow Python call stops freezing the tab. What it does not buy is
+    threads: `sys._emscripten_info.pthreads` is `False` in a worker exactly as it is on the
+    main thread, so `@work(thread=True)` remains unavailable either way.
+    """
+
     template: Path | None = None
     """A directory of files copied over the default page, or None for the default.
 
@@ -177,6 +189,7 @@ def build(spec: BuildSpec) -> BuildResult:
         "entry": spec.entry,
         "title": spec.title or spec.entry.partition(":")[2],
         "requirements": list(requirements),
+        "worker": spec.worker,
         **ASSET_URLS,
         "sourcesUrl": f"./{SOURCES_NAME}",
         "entryUrl": f"./{ENTRY_NAME}",

@@ -9,6 +9,15 @@ The host contract is four members on a JavaScript object, and nothing else:
 
     { write(text), onData(callback), onResize(callback), cols, rows }
 
+Two further members are optional, and exist for one reason: when the interpreter runs in a
+Web Worker there is no `window` and no `document`, so the two operations that need a page
+have to be handed back to the thread that has one.
+
+    { openUrl(url, newTab), deliverFile(href, filename) }
+
+A host that omits them is not deficient - on the main thread the page's own globals are
+right there, and that is the fallback.
+
 `_emit` is the only method the base class requires; the rest of this module is the capability
 overrides that would otherwise shell out to a process that does not exist in a browser tab.
 """
@@ -52,6 +61,20 @@ class TerminalHost(Protocol):
     def onData(self, callback: Callable[[str], None]) -> None: ...  # noqa: N802
 
     def onResize(self, callback: Callable[[int, int], None]) -> None: ...  # noqa: N802
+
+
+class PageCapabilities(Protocol):
+    """The two operations a worker cannot perform for itself.
+
+    Separate from `TerminalHost` rather than optional members on it, because a Protocol with
+    optional members cannot be checked at runtime and this is precisely a runtime question:
+    the same driver runs against a host that has these and one that does not.
+    """
+
+    # camelCase because these are JavaScript members, not Python ones.
+    def openUrl(self, url: str, new_tab: bool) -> None: ...  # noqa: N802
+
+    def deliverFile(self, href: str, filename: str) -> None: ...  # noqa: N802
 
 
 def _host() -> TerminalHost:
@@ -111,8 +134,18 @@ class BrowserDriver(WasmDriverBase):
         self._on_data.destroy()
         self._on_resize.destroy()
 
+    def _page(self) -> PageCapabilities | None:
+        """The host's page-side delegate, or None if this scope has a page of its own."""
+        if hasattr(self._terminal, "openUrl"):
+            return cast("PageCapabilities", self._terminal)
+        return None
+
     def open_url(self, url: str, new_tab: bool = True) -> None:
         """Open in the page rather than via `webbrowser`, which would try to spawn a process."""
+        page = self._page()
+        if page is not None:
+            page.openUrl(url, new_tab)
+            return
         from js import window  # noqa: PLC0415 - only importable inside a browser runtime
 
         window.open(url, "_blank" if new_tab else "_self")
@@ -124,9 +157,14 @@ class BrowserDriver(WasmDriverBase):
         neither the path nor the thread exists here. A page-driven download is the browser's
         equivalent, and keeping it a separate method means the base signature is untouched.
         """
+        href = f"data:{mime_type};base64,{base64.b64encode(payload).decode('ascii')}"
+        page = self._page()
+        if page is not None:
+            page.deliverFile(href, filename)
+            return
         from js import document  # noqa: PLC0415 - only importable inside a browser runtime
 
         anchor = document.createElement("a")
-        anchor.href = f"data:{mime_type};base64,{base64.b64encode(payload).decode('ascii')}"
+        anchor.href = href
         anchor.download = filename
         anchor.click()

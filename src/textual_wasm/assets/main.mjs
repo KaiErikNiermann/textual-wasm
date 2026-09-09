@@ -10,11 +10,7 @@
  */
 
 
-/**
- * Where Python packages are written into Pyodide's filesystem. A build writes both this
- * project and the application here, so neither has to be a wheel.
- */
-const SITE_PACKAGES = "/lib/python3.14/site-packages";
+import { boot, importPyodide, readManifest } from "./boot.mjs";
 
 /**
  * Everything the page needs to know about the app it is hosting, written by
@@ -27,7 +23,6 @@ const SITE_PACKAGES = "/lib/python3.14/site-packages";
  * works when the build *is* the site.
  */
 const MANIFEST_URL = new URL("app.json", import.meta.url);
-const HOST_MODULE = "textual_wasm_host";
 
 /**
  * Used when the host page defines no `--font-terminal`. A real fixed-pitch stack, because
@@ -172,107 +167,161 @@ function createTerminal({ Terminal, FitAddon }) {
 }
 
 /**
- * Write Python sources into Pyodide's filesystem.
- *
- * Sources rather than wheels, so a development server can serve straight from disk and an
- * edit needs only a reload - and so the browser demonstrably runs the same files the other
- * runtimes do.
- *
- * @param {object} pyodide
- * @param {Record<string, Record<string, string>>} packages package name to {path: source}
- */
-function installPackages(pyodide, packages) {
-  for (const [name, files] of Object.entries(packages)) {
-    for (const [relative, source] of Object.entries(files)) {
-      const target = `${SITE_PACKAGES}/${name}/${relative}`;
-      pyodide.FS.mkdirTree(target.slice(0, target.lastIndexOf("/")));
-      pyodide.FS.writeFile(target, source, { encoding: "utf8" });
-    }
-  }
-}
-
-/**
- * Import the runtime dependencies at the versions the build pinned.
+ * Import the terminal emulator at the versions the build pinned, and its stylesheet.
  *
  * Dynamic rather than static imports because the URLs come from the manifest: a static
  * import would mean a second copy of every version number living in this file, and a copy
  * is a thing that drifts.
  *
+ * Pyodide is deliberately absent. In worker mode it is loaded inside the worker, and
+ * fetching a second copy here would download a runtime the page never runs.
+ *
  * @param {object} manifest
  */
-async function loadDependencies(manifest) {
+async function loadTerminalDependencies(manifest) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
   stylesheet.href = manifest.xtermCssUrl;
   document.head.append(stylesheet);
 
-  const [xterm, fit, pyodide] = await Promise.all([
+  const [xterm, fit] = await Promise.all([
     import(manifest.xtermUrl),
     import(manifest.fitAddonUrl),
-    import(`${manifest.pyodideIndexUrl}pyodide.mjs`),
   ]);
-  return { Terminal: xterm.Terminal, FitAddon: fit.FitAddon, loadPyodide: pyodide.loadPyodide };
+  return { Terminal: xterm.Terminal, FitAddon: fit.FitAddon };
 }
 
 /**
- * @returns {Promise<object>} the build manifest.
+ * Run the interpreter inside a Web Worker, with this thread keeping only the terminal.
+ *
+ * The worker satisfies exactly the same four-member host contract; it just satisfies it
+ * over `postMessage` instead of by direct call. That is why nothing on the Python side
+ * changes between the two modes, and why `globalThis.textualWasm` below is assembled the
+ * same way for both - the automation surface reads this thread's `xterm.js` buffer, which
+ * is where the output lands either way.
+ *
+ * @param {object} manifest
+ * @param {object} host the terminal-backed host built by `createTerminal`
+ * @returns {Promise<{finished: Promise<unknown>}>} resolves once the app is running. The
+ *   exit promise is returned *wrapped*, because resolving a promise with a promise adopts
+ *   it - `resolve(finished)` would make this wait for the application to exit rather than
+ *   to start, which is a hang with no error attached to it.
  */
-async function readManifest() {
-  const response = await fetch(MANIFEST_URL);
-  if (!response.ok) {
-    throw new Error(`no ${MANIFEST_URL}; run \`textual-wasm build\` to produce one`);
-  }
-  const manifest = await response.json();
-  // The manifest's own relative URLs are relative to *it*, for the same reason.
-  return {
-    ...manifest,
-    sourcesUrl: new URL(manifest.sourcesUrl, MANIFEST_URL),
-    entryUrl: new URL(manifest.entryUrl, MANIFEST_URL),
+async function bootInWorker(manifest, host) {
+  const worker = new Worker(new URL("worker.mjs", import.meta.url), { type: "module" });
+
+  const {promise: running, resolve: onRunning, reject: onFailed} = Promise.withResolvers();
+  // "Running" has to mean "has drawn", not "has been started". On the main thread those
+  // coincide, because the driver's first writes happen synchronously inside the call that
+  // starts the app; through a worker they are two messages with a gap between them, and a
+  // harness that reads the grid in that gap sees a blank screen and calls it the render.
+  // So the page waits for the interpreter to say it started *and* for the first output to
+  // arrive. An app that exits without drawing anything resolves it too, so this cannot hang.
+  let isStarted = false;
+  let isDrawn = false;
+  const settleIfReady = () => {
+    if (isStarted && isDrawn) {
+      onRunning({ finished });
+    }
   };
+  const {promise: finished, resolve: onExited, reject: onCrashed} = Promise.withResolvers();
+
+  worker.addEventListener("message", ({ data }) => {
+    switch (data.type) {
+      case "write": {
+        host.write(data.data);
+        isDrawn = true;
+        settleIfReady();
+        break;
+      }
+      case "status": {
+        setStatus(data.state, data.message);
+        break;
+      }
+      case "running": {
+        isStarted = true;
+        settleIfReady();
+        break;
+      }
+      case "exited": {
+        isDrawn = true;
+        settleIfReady();
+        onExited();
+        break;
+      }
+      case "crashed": {
+        isDrawn = true;
+        settleIfReady();
+        onCrashed(new Error(data.error));
+        break;
+      }
+      // The two capabilities a worker cannot perform itself, forwarded back to this thread
+      // rather than failing: neither `window` nor `document` exists inside one.
+      case "open-url": {
+        open(data.url, data.newTab ? "_blank" : "_self");
+        break;
+      }
+      case "deliver-file": {
+        const anchor = document.createElement("a");
+        anchor.href = data.href;
+        anchor.download = data.filename;
+        anchor.click();
+        break;
+      }
+      default: {
+        console.warn(`[textual-wasm] unknown message from worker: ${data.type}`);
+      }
+    }
+  });
+  // A worker that fails to load reports here and nowhere else; without this the page sits
+  // on "starting Python…" forever with the real error only in the console.
+  worker.addEventListener("error", (event) => {
+    onFailed(new Error(event.message || "the worker failed to start"));
+  });
+
+  host.onData((data) => worker.postMessage({ type: "input", data }));
+  host.onResize((cols, rows) => worker.postMessage({ type: "resize", cols, rows }));
+
+  worker.postMessage({
+    type: "start",
+    manifest,
+    cols: host.cols,
+    rows: host.rows,
+  });
+  return running;
+}
+
+/**
+ * Run the interpreter on this thread, which is the default.
+ *
+ * @param {object} manifest
+ * @param {object} host
+ * @returns {Promise<{finished: Promise<unknown>}>} wrapped for the same reason as above:
+ *   returning a bare promise from an async function adopts it.
+ */
+async function bootHere(manifest, host) {
+  const loadPyodide = await importPyodide(manifest);
+  const { finished } = await boot({ manifest, host, loadPyodide, onStatus: setStatus });
+  return { finished };
 }
 
 async function main() {
-  const manifest = await readManifest();
+  const manifest = await readManifest(MANIFEST_URL);
   // The document is named after the application, not after this project. A page is a thing
   // people bookmark and put in a tab strip.
   if (manifest.title) {
     document.title = manifest.title;
   }
-  const dependencies = await loadDependencies(manifest);
 
-  const { terminal, host, fit } = createTerminal(dependencies);
+  const { terminal, host, fit } = createTerminal(await loadTerminalDependencies(manifest));
   await layoutSettled();
   fit();
 
-  setStatus("booting", "starting Python…");
-  const pyodide = await dependencies.loadPyodide({
-    indexURL: manifest.pyodideIndexUrl,
-    // COLUMNS and LINES because os.get_terminal_size() raises here and
-    // shutil.get_terminal_size() falls back to 80x24 - a TUI would lay out for the wrong
-    // grid without them. isatty likewise: a terminal app that believes it has no terminal
-    // disables colour and line editing before it draws anything.
-    env: { COLUMNS: String(host.cols), LINES: String(host.rows), TERM: "xterm-256color" },
-  });
-  pyodide.setStdin({ stdin: () => null, isatty: true });
-
-  setStatus("booting", `installing ${manifest.requirements.length} package(s)…`);
-  await pyodide.loadPackage("micropip");
-  await pyodide.pyimport("micropip").install(manifest.requirements);
-  const sources = await fetch(manifest.sourcesUrl);
-  installPackages(pyodide, await sources.json());
-
-  // Registered before the driver is imported: `textual_wasm.browser` resolves the host at
-  // import time and says so explicitly if the page skipped this.
-  pyodide.registerJsModule(HOST_MODULE, host);
-
-  setStatus("booting", "starting the app…");
-  const entry = await fetch(manifest.entryUrl);
-  await pyodide.runPythonAsync(await entry.text());
+  const { finished } = await (
+    manifest.worker ? bootInWorker(manifest, host) : bootHere(manifest, host)
+  );
 
   setStatus("ready", `running at ${host.cols}x${host.rows}`);
-
-  const start = pyodide.globals.get("start");
-  const finished = start(manifest.entry);
 
   // Published only once the app is actually driving the terminal, so a harness that waits
   // for it cannot read a half-booted screen.
@@ -288,6 +337,7 @@ async function main() {
     // same onData path a keystroke does rather than bypassing it.
     input: (data) => terminal.input(data),
     finished,
+    worker: Boolean(manifest.worker),
   };
 
   // Attached rather than awaited, and that distinction is the whole embedding story: a

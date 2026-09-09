@@ -55,6 +55,14 @@ class Capabilities:
     cross_origin_isolated: bool | None
     """Whether the page is cross-origin isolated, or None outside a browser."""
 
+    in_worker: bool | None
+    """Whether this interpreter runs in a Web Worker, or None outside a browser.
+
+    Worth reporting because it changes which failures are possible rather than how fast
+    anything is: `window` and `document` do not exist here, so code reaching for either
+    raises where the same code works on the main thread. It does *not* imply threads -
+    `pthreads` is False in a worker too."""
+
     enoent: int
     """`errno.ENOENT`. Emscripten uses its own table where this is 44, not 2, so code that
     compares a caught errno against a literal silently stops matching."""
@@ -114,6 +122,21 @@ def _cross_origin_isolated() -> bool | None:
         return None
 
 
+def _in_worker() -> bool | None:
+    """Whether this is a Web Worker global scope, or None if there is no JavaScript host.
+
+    Tested by the absence of `window` rather than the presence of a worker-only global,
+    because that is the property the callers actually depend on: `browser.open_url` and
+    `browser.deliver_file` need a document, and every scope without one is equally unable
+    to give them one.
+    """
+    try:
+        import js  # noqa: PLC0415 - only exists inside a WASM runtime
+    except ImportError:
+        return None
+    return not hasattr(js, "document")
+
+
 def detect() -> Capabilities:
     """Interrogate the host and return what it supports."""
     runtime, pthreads, shared_memory = _emscripten_info()
@@ -124,5 +147,6 @@ def detect() -> Capabilities:
         shared_memory=shared_memory,
         jspi=_jspi_available(),
         cross_origin_isolated=_cross_origin_isolated(),
+        in_worker=_in_worker(),
         enoent=errno.ENOENT,
     )

@@ -144,3 +144,25 @@ def test_a_missing_template_is_an_error_not_a_silent_default(tmp_path: Path) -> 
     """Building the default page instead would look like the override was ignored."""
     with pytest.raises(FileNotFoundError):
         bundler.build(dataclasses.replace(_spec(tmp_path), template=tmp_path / "nope"))
+
+
+def test_the_worker_runtime_ships_with_every_build(built: bundler.BuildResult) -> None:
+    """Both entry points and the code they share are always present.
+
+    Shipped unconditionally rather than only for `--worker` builds because the page decides
+    which to use from the manifest at runtime: a template that turns the flag on by editing
+    `app.json` should not also have to know which files to copy.
+    """
+    for name in ("boot.mjs", "worker.mjs"):
+        assert (built.output / name).exists(), name
+
+
+def test_a_build_runs_on_the_main_thread_unless_asked(built: bundler.BuildResult) -> None:
+    """The default is the mode with fewer moving parts."""
+    assert _manifest(built)["worker"] is False
+
+
+def test_the_worker_flag_reaches_the_page(tmp_path: Path) -> None:
+    """The manifest is how `main.mjs` knows to start a worker at all."""
+    manifest = _manifest(bundler.build(dataclasses.replace(_spec(tmp_path), worker=True)))
+    assert manifest["worker"] is True

@@ -38,6 +38,10 @@ def build(
         Path | None,
         typer.Option("--template", help="Directory of files to copy over the default page."),
     ] = None,
+    worker: Annotated[
+        bool,
+        typer.Option("--worker/--main-thread", help="Run Python in a Web Worker."),
+    ] = False,
 ) -> None:
     """Build a Textual app into a static site.
 
@@ -48,6 +52,10 @@ def build(
     it, because a Textual app already draws its own header and footer. `--template` replaces
     any part of that page with your own; the contract is an element with `id="terminal"` and
     a module script loading `./main.mjs`.
+
+    `--worker` moves the interpreter off the main thread, so a slow call stops freezing the
+    tab. It needs no special headers and deploys to the same static hosts. It does not make
+    threads available: Pyodide has none in either mode.
     """
     console = Console()
     result = build_site(
@@ -58,11 +66,14 @@ def build(
             requirements=tuple(requirement or ()),
             title=title,
             template=template,
+            worker=worker,
         )
     )
     console.print(f"[bold green]built[/] {result.output} - {result.summary}")
     console.print(f"[dim]packages: {', '.join(result.packages)}[/]")
     console.print(f"[dim]pyodide {PYODIDE_VERSION} from CDN[/]")
+    if worker:
+        console.print("[dim]python runs in a Web Worker; no COOP/COEP headers required[/]")
     console.print(f"[dim]serve it with: textual-wasm dev {result.output}[/]")
 
 
