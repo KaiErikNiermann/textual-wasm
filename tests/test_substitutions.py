@@ -85,10 +85,27 @@ def test_import_lookup_does_not_match_unrelated_modules() -> None:
     assert for_import("threading_utils") == ()
 
 
-def test_call_lookup_matches_a_bare_name() -> None:
+def test_call_lookup_matches_a_bare_name_that_was_imported() -> None:
     """`from os import system` then `system(...)` is the same call, seen without its module."""
-    assert by_id("os.system") in for_call("system")
+    assert by_id("os.system") in for_call("system", bound_from={"os"})
     assert by_id("os.system") in for_call("os.system")
+
+
+def test_a_bare_name_needs_the_import_to_match() -> None:
+    """Without one, a bare `system(...)` is somebody else's function of the same name."""
+    assert for_call("system") == ()
+    assert for_call("system", bound_from={"subprocess"}) == ()
+
+
+def test_a_builtin_is_not_mistaken_for_a_module_function() -> None:
+    """The regression this rule exists for.
+
+    Matching any trailing segment made `"webbrowser.open".endswith(".open")` true, so every
+    `open(...)` in a project was reported as a browser call. Four real applications in a row
+    had their ordinary file I/O labelled that way.
+    """
+    assert for_call("open") == ()
+    assert by_id("webbrowser.open") in for_call("open", bound_from={"webbrowser"})
 
 
 def test_unknown_id_raises() -> None:

@@ -116,6 +116,21 @@ def _is_harmless_zero_call(dotted: str, node: ast.Call) -> bool:
     return isinstance(value, int | float) and not isinstance(value, bool) and value == 0
 
 
+def _bound_names(tree: ast.AST) -> dict[str, frozenset[str]]:
+    """Names bound by `from MODULE import NAME`, mapped to the modules that bound them.
+
+    Without this a bare call can only be matched by guessing, and guessing meant treating
+    every `open(...)` as `webbrowser.open`. `from os import system as run` binds "run" to
+    "os", so the alias is what the call site will actually say.
+    """
+    bound: dict[str, set[str]] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module and not node.level:
+            for alias in node.names:
+                bound.setdefault(alias.asname or alias.name, set()).add(node.module)
+    return {name: frozenset(modules) for name, modules in bound.items()}
+
+
 def _called_names(tree: ast.AST) -> Iterator[tuple[str, ast.expr]]:
     """Every call target that can be written as a dotted name."""
     for node in ast.walk(tree):
@@ -172,10 +187,11 @@ def scan_source(source: str, path: Path) -> tuple[Finding, ...]:
         for substitution in for_import(module)
         if not allowed(substitution.id, node.lineno)
     ]
+    bound = _bound_names(tree)
     findings += [
         build(substitution, node)
         for dotted, node in _called_names(tree)
-        for substitution in for_call(dotted)
+        for substitution in for_call(dotted, bound_from=bound.get(dotted, frozenset()))
         if not allowed(substitution.id, node.lineno)
     ]
     # Deduplicated because one line can match twice - `import threading` plus

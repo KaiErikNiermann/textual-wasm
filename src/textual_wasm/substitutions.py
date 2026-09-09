@@ -19,7 +19,10 @@ from __future__ import annotations
 
 import dataclasses
 import enum
-from typing import Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Collection
 
 
 class Severity(enum.StrEnum):
@@ -380,19 +383,31 @@ def for_import(module: str) -> tuple[Substitution, ...]:
     )
 
 
-def for_call(dotted: str) -> tuple[Substitution, ...]:
+def for_call(dotted: str, *, bound_from: Collection[str] = ()) -> tuple[Substitution, ...]:
     """Substitutions triggered by calling `dotted`.
 
-    Matches on a trailing segment as well as the whole path, because `from os import system`
-    then `system(...)` is the same call written differently, and the analyser sees only the
-    name at the call site.
+    Args:
+        dotted: The call target as written, e.g. "os.system" or a bare "system".
+        bound_from: Modules this bare name was imported from in the file being scanned, so
+            `from os import system` then `system(...)` still matches `os.system`.
+
+    Returns:
+        Every substitution whose call rule this names.
+
+    A bare name is only matched against a module's rule when that module actually bound it.
+    Matching any trailing segment instead - which this did - reports every `open(...)` in
+    the world as `webbrowser.open`, because `"webbrowser.open".endswith(".open")`. Real
+    projects are full of `open(...)`, so the doctor labelled ordinary file I/O as a browser
+    call in four places in the first application it was pointed at.
     """
+    candidates = {dotted}
+    if "." not in dotted:
+        candidates |= {f"{module}.{dotted}" for module in bound_from}
     return tuple(
         substitution
         for substitution in SUBSTITUTIONS
         for rule in substitution.detect
-        if rule.kind is DetectionKind.CALL
-        and (rule.target == dotted or rule.target.endswith(f".{dotted}"))
+        if rule.kind is DetectionKind.CALL and rule.target in candidates
     )
 
 
