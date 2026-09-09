@@ -739,3 +739,43 @@ Two adjacent options were assessed and rejected for their own reasons. **RustPyt
 22.8 MB of wasm — *larger* than Pyodide — with an incomplete standard library.
 **MicroPython-wasm** is not CPython, and Rich and Textual need the full standard library. For
 payload, `pyodide-pack` plus a custom `stdLibURL` remains the boring, measurable lever.
+
+---
+
+## 14. Acceptance: Textual's own demo (2026-09-09)
+
+The spike measured a nine-widget app written for the purpose. `python -m textual` is the
+opposite: lazily-loaded screens, a Markdown widget, a command palette, animation, network
+calls. Pointing the finished tool at it is the acceptance test, and it produced three
+findings that the demo app could not have.
+
+**It runs.** `textual.demo.demo_app:DemoApp` boots under Pyodide and renders in a browser at
+100x30, unmodified — Markdown, emoji, box drawing, the footer. All eight probe checks pass on
+both Python runtimes (`key_input` skips, since no keystroke is declared for it). Nothing about
+the demo was changed, and nothing in this project knows it exists.
+
+**Finding 1 — the pin list was hand-written, and it was wrong.** `pins.py` claimed to avoid a
+hand-maintained version list, and did: it generated the *versions* from the native
+environment. But the *set* of distributions was typed by hand, and it was missing
+`markdown-it-py[linkify]`. Nothing failed until Textual's own `Markdown` widget ran in a
+browser and died with `ModuleNotFoundError: Linkify enabled but not installed` — three layers
+away from the list that was wrong, and invisible to every test the project had. The closure is
+now walked from the installed metadata with extras followed, which is the only form that can
+express `markdown-it-py[linkify]` at all.
+
+**Finding 2 — a fixed settle window is not enough for a real app.** The probe slept 150 ms and
+then judged what was on screen. Textual's demo draws `Loading...` first, so `widget_rendered`
+would have failed there while the tmux and browser legs — which *poll* for a marker until a
+timeout — waited and passed. The probe now polls on the same rule, so all three legs mean the
+same thing by "ready". A disagreement produced by three different waiting strategies is a
+disagreement about the harness.
+
+**Finding 3 — a grid comparison is only meaningful for a deterministic screen.** The demo
+fetches GitHub star counts and shows a toast when `httpx` is absent, and its home screen
+assembles asynchronously. The terminal and browser captures therefore differ in eleven rows —
+a "Loading..." on one side, a version banner and an `Install httpx to update stars` toast on
+the other. None of that is a rendering difference; the cells both sides actually drew agree.
+The limitation is real and belongs in the documentation rather than in a workaround: the
+render comparison assumes a screen that is the same on both sides, and an app whose content
+depends on the network or on timing does not have one.
+

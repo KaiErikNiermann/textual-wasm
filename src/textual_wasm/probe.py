@@ -75,6 +75,19 @@ TIMER_DELAY: Final[float] = 0.05
 _SETTLE_MARGIN: Final[float] = 0.1
 """Extra wait beyond the timer delay, so a slow `setTimeout` clamp cannot flake the run."""
 
+MARKER_TIMEOUT: Final[float] = 30.0
+"""How long to wait for a target's marker to appear on the grid.
+
+Generous, and the same rule the other legs use: the tmux capture polls a pane and the browser
+harness polls the xterm buffer, both until a timeout. A fixed sleep here instead would fail
+`widget_rendered` on any app that loads lazily - Textual's own demo draws "Loading..." first -
+while the other legs waited and passed, and the check would report a disagreement about
+nothing.
+"""
+
+_MARKER_POLL: Final[float] = 0.05
+"""Gap between grid replays while waiting. Small enough not to dominate a fast app's run."""
+
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class _Observations:
@@ -270,6 +283,23 @@ def _laid_out_size(app: App[object]) -> tuple[int, int] | None:
     return (size.width, size.height)
 
 
+async def _wait_for_marker(
+    pilot: Pilot[object], driver: CaptureDriver, marker: str, size: tuple[int, int]
+) -> None:
+    """Let the app run until `marker` is on the grid, or the timeout expires.
+
+    Not an assertion: a marker that never arrives is reported by the check that was waiting
+    for it, with what the grid did say. Raising here would lose that.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + MARKER_TIMEOUT
+    while loop.time() < deadline:
+        if replay(driver.rendered_output, columns=size[0], rows=size[1]).contains(marker):
+            return
+        await pilot.pause()
+        await asyncio.sleep(_MARKER_POLL)
+
+
 @dataclasses.dataclass(slots=True)
 class _Run:
     """Mutable state the pilot fills in, kept out of the app so no app has to declare it."""
@@ -302,6 +332,9 @@ async def run_probe(
     async def drive(pilot: Pilot[object]) -> None:
         run.facts = _collect_runtime_facts(asyncio.get_running_loop())
         await pilot.pause()
+        driver = active_capture()
+        if target.ready_marker is not None:
+            await _wait_for_marker(pilot, driver, target.ready_marker, size)
         # Scheduled here rather than expected from the app: `set_timer` is a runtime
         # capability, and making the app provide it would mean only instrumented apps could
         # settle the question.
@@ -309,7 +342,9 @@ async def run_probe(
         if target.keys:
             # Straight into the driver, not `pilot.press`: the point is to exercise the real
             # host -> XTermParser -> Driver.process_message -> App path a browser would use.
-            active_capture().feed_input(target.keys)
+            driver.feed_input(target.keys)
+            if target.settled_marker is not None:
+                await _wait_for_marker(pilot, driver, target.settled_marker, size)
         await pilot.pause()
         await asyncio.sleep(TIMER_DELAY + _SETTLE_MARGIN)
         await pilot.pause()

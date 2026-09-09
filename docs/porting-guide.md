@@ -135,3 +135,16 @@ What the check compares:
   share code.
 
 `--strict` makes a runtime that could not be checked a failure, which is what CI wants.
+
+### What the render comparison assumes
+
+That the screen is the same on both sides. It compares cells, and it cannot tell a font-width
+bug from an app that drew something different — so an app whose content depends on the
+network, on the clock, or on how fast a screen assembles will differ between legs for reasons
+that have nothing to do with WASM.
+
+Textual's own demo is the worked example: it fetches GitHub star counts and lazily assembles
+its home screen, so its terminal and browser captures disagree on eleven rows while every cell
+either side actually drew agrees. If your app is like that, point the check at a screen that
+is deterministic - a start screen with fixed content, or a `--ready-marker` that only appears
+once the variable parts have settled.
