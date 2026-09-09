@@ -1,0 +1,14 @@
+{
+  "name": "textual-wasm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WASM harness for the Textual feasibility spike.",
+  "scripts": {
+    "probe:wasm": "node scripts/run_pyodide_node.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "dependencies": {
+    "pyodide": "314.0.6"
+  }
+}
