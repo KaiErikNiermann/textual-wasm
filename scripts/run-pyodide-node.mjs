@@ -23,7 +23,9 @@ const PROJECT_ROOT = path.resolve(HERE, "..");
 const SRC_DIR = path.join(PROJECT_ROOT, "src");
 const MOUNT_POINT = "/mnt/src";
 
-/** Kept in sync with `textual_wasm.report.REPORT_SENTINEL`. */
+/**
+ * Kept in sync with `textual_wasm.report.REPORT_SENTINEL`.
+ */
 const REPORT_SENTINEL = "TEXTUAL_WASM_PROBE_JSON";
 
 /**
@@ -75,20 +77,12 @@ async function main() {
 
   mountSource(pyodide);
 
+  // Defining a function and calling it, rather than running a code string with values
+  // spliced in: the entry point stays a real .py file that ruff and pyright can see.
   const probeStarted = performance.now();
-  const output = await pyodide.runPythonAsync(`
-import sys
-
-sys.path.insert(0, ${JSON.stringify(MOUNT_POINT)})
-
-# First import of textual_wasm applies the TEXTUAL_* environment. It has to happen before
-# anything imports textual, which is exactly what the package __init__ guarantees.
-from textual_wasm.probe import run_probe
-from textual_wasm.report import REPORT_SENTINEL
-
-report = await run_probe()
-f"{REPORT_SENTINEL}{report.to_json(indent=None)}{REPORT_SENTINEL}"
-`);
+  await pyodide.runPythonAsync(readFileSync(path.join(HERE, "wasm_entry.py"), "utf8"));
+  const run = pyodide.globals.get("run");
+  const output = await run(MOUNT_POINT);
   const probeMs = performance.now() - probeStarted;
 
   const parts = output.split(REPORT_SENTINEL);
