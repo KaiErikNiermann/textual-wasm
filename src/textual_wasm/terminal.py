@@ -52,6 +52,12 @@ diff that reads as a browser bug and is not one. The leg reports itself unavaila
 POLL_INTERVAL: Final[float] = 0.1
 """Gap between screen captures while waiting for the app to draw."""
 
+SETTLE_INTERVAL: Final[float] = 0.25
+"""Gap between the two captures that have to match for the screen to count as settled."""
+
+SETTLE_TIMEOUT: Final[float] = 15.0
+"""How long to keep waiting for two identical captures before using the last one anyway."""
+
 DEFAULT_TIMEOUT: Final[float] = 30.0
 """Generous: a cold Textual start on a loaded machine is seconds."""
 
@@ -104,6 +110,30 @@ def _wait_for(session: str, marker: str | None, timeout: float) -> str:
         time.sleep(POLL_INTERVAL)
     wanted = repr(marker) if marker is not None else "any non-blank screen"
     raise CaptureTimeoutError(f"{wanted} never appeared within {timeout}s; last screen:\n{pane}")
+
+
+def _wait_until_stable(session: str, timeout: float) -> str:
+    """Poll until two captures a moment apart are identical, and return the later one.
+
+    A marker says the app *reached* a state, not that it has finished drawing it. Textual
+    composes in frames, and the frame carrying the marker is not always the last one - so a
+    capture taken the instant a marker appears can be missing whatever the next frame draws.
+    Measured in the browser leg, where a slower engine had not yet painted the footer at the
+    moment a faster one had, and the row diff reported it as a rendering divergence.
+
+    Degrades rather than fails: an app that never settles - a clock, an animation - uses the
+    last reading, which is the screen the comparison would have taken regardless.
+    """
+    deadline = time.monotonic() + timeout
+    previous = ""
+    while time.monotonic() < deadline:
+        current = _tmux("capture-pane", "-p", "-t", session)
+        if current == previous:
+            return current
+        previous = current
+        # textual-wasm: allow time.sleep - native-only reference capture, no event loop
+        time.sleep(SETTLE_INTERVAL)
+    return previous
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -159,7 +189,8 @@ def capture(request: CaptureRequest) -> RenderedScreen:
         _wait_for(session, request.ready_marker, request.timeout)
         if request.keys:
             _tmux("send-keys", "-t", session, "-l", request.keys)
-        pane = _wait_for(session, request.settled_marker or request.ready_marker, request.timeout)
+        _wait_for(session, request.settled_marker or request.ready_marker, request.timeout)
+        pane = _wait_until_stable(session, SETTLE_TIMEOUT)
     finally:
         subprocess.run(  # noqa: S603 - same fixed binary; teardown must not mask the error
             [TMUX or "true", "-f", "/dev/null", "kill-session", "-t", session],

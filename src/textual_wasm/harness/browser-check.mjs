@@ -29,6 +29,14 @@ import process from "node:process";
  */
 const READY_TIMEOUT_MS = 120_000;
 
+/**
+ * How long to keep waiting for the grid to stop changing, and how long a gap counts as
+ * stopped. Two frames at Textual's default 60fps is ~33ms; 250 is generous enough that a
+ * slow engine is not mistaken for a settled one.
+ */
+const SETTLE_TIMEOUT_MS = 15_000;
+const SETTLE_INTERVAL_MS = 250;
+
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
   "/usr/bin/google-chrome-stable",
@@ -94,6 +102,34 @@ async function waitForMarker(page, marker) {
 }
 
 /**
+ * Wait until the grid stops changing.
+ *
+ * A marker says the app *reached* a state, not that it has finished drawing it. Textual
+ * composes in frames, and on a slower engine a later frame can still be in flight when the
+ * marker's frame has landed - measured: WebKit had not yet painted the footer at the moment
+ * Chromium had, and the row diff reported that as a rendering divergence between browsers.
+ * It was a divergence in how fast they got there.
+ *
+ * Quiescence is the honest signal, and it degrades gracefully: an app that never settles
+ * (a clock, an animation) simply uses the last reading, which is the same screen the
+ * comparison would have taken anyway.
+ *
+ * @param {import("puppeteer-core").Page} page
+ */
+async function waitForStableGrid(page) {
+  let previous = null;
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const current = await page.evaluate(() => globalThis.textualWasm.screen().lines.join("\n"));
+    if (current === previous) {
+      return;
+    }
+    previous = current;
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_INTERVAL_MS));
+  }
+}
+
+/**
  * @param {import("puppeteer-core").Page} page
  * @param {object} config
  * @returns {Promise<{runtime: object, screen: object}>}
@@ -112,6 +148,7 @@ async function collect(page, config) {
     await page.evaluate((keys) => globalThis.textualWasm.input(keys), config.target.keys);
     await waitForMarker(page, config.target.settled_marker);
   }
+  await waitForStableGrid(page);
 
   return page.evaluate(() => ({
     runtime: {
