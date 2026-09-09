@@ -1,0 +1,22 @@
+/* Two small adjustments to Furo, and deliberately nothing else: a theme that is being
+   overridden heavily is the wrong theme. */
+
+/* Live demos are embedded as iframes and need a real block size - a character grid measured
+   against `height: auto` collapses to nothing. */
+.demo-frame {
+  inline-size: 100%;
+  block-size: 34rem;
+  border: 1px solid var(--color-background-border);
+  border-radius: 0.5rem;
+}
+
+/* The porting matrix is wide and its cells are prose. Without this the table is squeezed into
+   a column and every row wraps to five lines. */
+.wide-table table {
+  display: table;
+  inline-size: 100%;
+}
+
+.wide-table td {
+  vertical-align: top;
+}

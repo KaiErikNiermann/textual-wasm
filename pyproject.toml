@@ -58,6 +58,14 @@ semgrep = "^1.100"
 pyyaml = "^6.0.3"
 types-pyyaml = "^6.0.12.20260906"
 
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "^9.1.0"
+furo = "^2025.12.19"
+myst-parser = "^5.1.0"
+sphinx-copybutton = "^0.5.2"
+sphinx-design = "^0.7.0"
+
 [build-system]
 requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"

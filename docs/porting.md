@@ -1,15 +1,20 @@
-# Porting a Textual app to the browser
+# Porting an existing app
 
 In the order you will actually hit the problems, with the reason each one is a problem.
 
-The short version: a Textual app that avoids threads, subprocesses and blocking I/O usually
-runs unchanged. What follows is how to find out whether yours is one, and what to do when it
+The short version: **a Textual app that avoids threads, subprocesses and raw sockets usually
+runs unchanged.** What follows is how to find out whether yours is one, and what to do when it
 is not.
+
+:::{seealso}
+{doc}`quickstart` if you are starting a new app rather than moving one. {doc}`limitations` for
+the same material organised by *whose* constraint each one is.
+:::
 
 ## 1. Ask before you run
 
-```bash
-textual-wasm doctor myapp.main:App --requirements requirements.txt
+```console
+$ textual-wasm doctor myapp.main:App -r httpx -r pydantic
 ```
 
 The doctor reads your source and reports three classes of problem with a `file:line` for
@@ -49,7 +54,7 @@ whose absence you cannot feel in testing:
 warning that names the substitute. The build output calls it for you; call it yourself if
 you are hosting Pyodide some other way.
 
-The full list, with what was measured for each, is the [porting matrix](./porting-matrix.md).
+The full list, with what was measured for each, is the {doc}`matrix`.
 
 ## 3. Threads are not available, in any configuration
 
@@ -92,29 +97,8 @@ constants at import time, so a value set afterwards is ignored, silently.
 
 ### The page around your app
 
-The default page is bare on purpose: the terminal fills the viewport and nothing is drawn
-around it. A Textual app already renders its own header, footer and title, so page chrome
-would be a second frame competing with the one the app draws - and a heading naming this
-project would be branding on your product.
-
-Two levers:
-
-```bash
-textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
-textual-wasm build myapp.main:App myapp -o dist/ --template page/
-```
-
-`--title` names the document, and defaults to your application class. `--template` is a
-directory copied over the built page, so overriding `index.html` alone is a one-file
-directory and adding a stylesheet is two. The contract that page has to satisfy is small:
-
-- an element with `id="terminal"` for the terminal to open into, with **no padding or border
-  of its own** - `FitAddon` sizes the grid from that element's parent box, so decoration on
-  the mount is counted as room for text and the bottom rows get clipped. Decorate a wrapper.
-- `<script type="module" src="./main.mjs"></script>`.
-- optionally an element with `id="status"`, which receives boot progress and a
-  `data-state` of `booting`, `ready` or `failed`. Without one those messages go to the
-  console.
+The default page is bare, and `--title` and `--template` are how you change it. That is a
+subject of its own: see {doc}`embedding`.
 
 ## 6. Crashes go where nobody is looking
 
@@ -128,8 +112,8 @@ terminal, so a hosted app gets it without asking.
 
 ## 7. Pin the dependency closure, not just your dependencies
 
-```bash
-textual-wasm pins        # writes wasm-requirements.txt from the native environment
+```console
+$ textual-wasm pins        # writes wasm-requirements.txt from the native environment
 ```
 
 micropip resolves against Pyodide's own bundled package set *before* PyPI. Asking for bare
@@ -142,8 +126,9 @@ native environment is what makes that true.
 
 ## 8. Check it rather than believing it
 
-```bash
-textual-wasm check --app myapp.main:App --ready-marker "My App" --keys q --settled-marker bye
+```console
+$ textual-wasm check --app myapp.main:App \
+    --ready-marker "My App" --keys q --settled-marker bye
 ```
 
 The markers are what let a machine tell "the app has drawn" from "the runtime has not
@@ -161,6 +146,7 @@ What the check compares:
   share code.
 
 `--strict` makes a runtime that could not be checked a failure, which is what CI wants.
+{doc}`usage` has more on reading the output.
 
 ### What the render comparison assumes
 
