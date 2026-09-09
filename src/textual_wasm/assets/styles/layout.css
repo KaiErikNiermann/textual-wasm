@@ -1,25 +1,20 @@
-/* Whole-page arrangement. Two primitives, both intrinsic rather than breakpoint-driven
-   (PC-7): the page is a single column that fills the viewport block axis and hands all
-   remaining space to the terminal. */
+/* Whole-page arrangement, and there is deliberately very little of it: the terminal fills
+   the viewport and nothing is drawn around it. A Textual app already renders its own header,
+   footer and title, so page chrome would compete with the application rather than frame it.
+
+   Anyone who wants chrome supplies their own page with `textual-wasm build --template`. That
+   is a better seam than a set of options here, because the thing being customised is a
+   document. */
 
 @layer layout {
   .page {
     display: grid;
-    gap: var(--space-4);
-    block-size: 100dvb;
-    grid-template-rows: auto 1fr;
-    padding-block: var(--space-4);
-    padding-inline: var(--space-4);
-  }
 
-  .masthead {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-3);
-    inline-size: min(var(--measure), 100%);
-    margin-inline: auto;
+    /* The terminal's own colour rather than the document's: a character grid rarely divides
+       the viewport exactly, and the leftover fraction of a cell should be invisible instead
+       of a stripe down one edge - which in light mode would be a bright one. */
+    background: var(--color-terminal-bg);
+    block-size: 100dvb;
   }
 
   /* State is read from the DOM rather than mirrored into modifier classes (PC-6), and the
@@ -30,6 +25,9 @@
 
     color: var(--_accent);
     font-size: var(--text-1);
+    inset-block-end: var(--space-3);
+    inset-inline-end: var(--space-3);
+    position: fixed;
     transition: color var(--duration-1) ease;
   }
 
@@ -43,8 +41,10 @@
     margin-inline-end: var(--space-2);
   }
 
+  /* Gone rather than green: it exists to say that a slow boot is progressing, and once the
+     app is running the app is the thing to look at. */
   .status[data-state="ready"] {
-    --_accent: var(--color-ok);
+    display: none;
   }
 
   .status[data-state="failed"] {
@@ -53,8 +53,6 @@
 
   .stage {
     display: grid;
-    inline-size: min(var(--measure), 100%);
-    margin-inline: auto;
     min-block-size: 0;
   }
 
@@ -64,12 +62,9 @@
   .terminal-frame {
     display: grid;
     background: var(--color-terminal-bg);
-    border: var(--space-1) solid var(--color-edge);
-    border-radius: var(--radius-2);
     font-family: var(--font-terminal);
     min-block-size: 0;
     overflow: hidden;
-    padding: var(--space-3);
   }
 
   /* Deliberately undecorated, and the only element xterm.js is opened into. FitAddon

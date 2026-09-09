@@ -6,6 +6,7 @@ shape of what lands on disk rather than mocking the pieces that produce it.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 from pathlib import Path
 
@@ -15,6 +16,15 @@ from textual_wasm import bundler
 
 ENTRY = "textual_wasm.app:SpikeApp"
 PACKAGE = Path("src/textual_wasm")
+
+
+def _spec(root: Path) -> bundler.BuildSpec:
+    """A build into a fresh directory under `root`."""
+    return bundler.BuildSpec(entry=ENTRY, package=PACKAGE, output=root / "site")
+
+
+def _manifest(result: bundler.BuildResult) -> dict[str, object]:
+    return json.loads((result.output / bundler.MANIFEST_NAME).read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
@@ -103,3 +113,34 @@ def test_a_single_file_is_not_a_package(tmp_path: Path) -> None:
     lonely.write_text("")
     with pytest.raises(NotADirectoryError):
         bundler.build(bundler.BuildSpec(entry=ENTRY, package=lonely, output=tmp_path / "o"))
+
+
+def test_the_title_defaults_to_the_application_class(tmp_path: Path) -> None:
+    """The page is the user's. A tab labelled after this project would be branding."""
+    manifest = _manifest(bundler.build(_spec(tmp_path)))
+    assert manifest["title"] == "SpikeApp"
+
+
+def test_a_given_title_wins(tmp_path: Path) -> None:
+    manifest = _manifest(bundler.build(dataclasses.replace(_spec(tmp_path), title="My App")))
+    assert manifest["title"] == "My App"
+
+
+def test_a_template_overrides_the_shipped_page(tmp_path: Path) -> None:
+    """The whole customisation story: what people want to change is a document."""
+    template = tmp_path / "template"
+    template.mkdir()
+    (template / "index.html").write_text("<div id=terminal></div>", encoding="utf-8")
+
+    output = bundler.build(dataclasses.replace(_spec(tmp_path), template=template)).output
+
+    assert (output / "index.html").read_text(encoding="utf-8") == "<div id=terminal></div>"
+    # Only the named file is replaced; everything the page needs is still there.
+    assert (output / "main.mjs").exists()
+    assert (output / bundler.MANIFEST_NAME).exists()
+
+
+def test_a_missing_template_is_an_error_not_a_silent_default(tmp_path: Path) -> None:
+    """Building the default page instead would look like the override was ignored."""
+    with pytest.raises(FileNotFoundError):
+        bundler.build(dataclasses.replace(_spec(tmp_path), template=tmp_path / "nope"))

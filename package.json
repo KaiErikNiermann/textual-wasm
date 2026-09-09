@@ -7,8 +7,8 @@
   "scripts": {
     "check": "poetry run textual-wasm check",
     "lint:all": "pnpm lint:css && pnpm lint:style",
-    "lint:css": "eslint \"src/textual_wasm/assets/**/*.css\" && stylelint \"src/textual_wasm/assets/**/*.css\"",
-    "lint:style": "EIO_BACKEND=posix poetry run semgrep --config ~/.claude/skills/principled-css/rules/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets"
+    "lint:css": "eslint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" && stylelint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\"",
+    "lint:style": "EIO_BACKEND=posix poetry run semgrep --config ~/.claude/skills/principled-css/rules/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets examples"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",

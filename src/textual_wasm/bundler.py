@@ -78,6 +78,22 @@ class BuildSpec:
     requirements: tuple[str, ...] = ()
     """Extra distributions to install, on top of this project's own closure."""
 
+    title: str | None = None
+    """Document title. Defaults to the application class's name.
+
+    The page is the user's, not this project's: a heading naming `textual-wasm` on someone
+    else's application would be branding, and a tab labelled "spike" is worse.
+    """
+
+    template: Path | None = None
+    """A directory of files copied over the default page, or None for the default.
+
+    The whole customisation story, and deliberately a directory rather than a set of options:
+    what people want to change is a *document*, and every option that tries to parameterise
+    one ends up reinventing a worse templating language. Anything here wins over the shipped
+    asset of the same name, so overriding `index.html` alone is a two-file directory.
+    """
+
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class BuildResult:
@@ -107,9 +123,19 @@ def _collect_sources(package: Path) -> dict[str, str]:
     }
 
 
-def _copy_assets(output: Path) -> None:
-    """Copy the page and its stylesheet, leaving the entry script to be placed by name."""
+def _copy_assets(output: Path, template: Path | None) -> None:
+    """Copy the shipped page, then let a template overwrite any part of it.
+
+    Raises:
+        FileNotFoundError: If a template directory was named and does not exist. Silently
+            building the default page instead would look like the override was ignored.
+    """
     shutil.copytree(ASSETS, output, dirs_exist_ok=True)
+    if template is None:
+        return
+    if not template.is_dir():
+        raise FileNotFoundError(template)
+    shutil.copytree(template, output, dirs_exist_ok=True)
 
 
 def _measure(output: Path) -> tuple[int, int]:
@@ -137,7 +163,7 @@ def build(spec: BuildSpec) -> BuildResult:
         raise NotADirectoryError(spec.package)
 
     spec.output.mkdir(parents=True, exist_ok=True)
-    _copy_assets(spec.output)
+    _copy_assets(spec.output, spec.template)
 
     own_package = Path(__file__).parent
     sources = {
@@ -149,6 +175,7 @@ def build(spec: BuildSpec) -> BuildResult:
     requirements = (*resolve_pins(), *spec.requirements)
     manifest = {
         "entry": spec.entry,
+        "title": spec.title or spec.entry.partition(":")[2],
         "requirements": list(requirements),
         **ASSET_URLS,
         "sourcesUrl": f"./{SOURCES_NAME}",

@@ -30,11 +30,24 @@ def build(
         list[str] | None,
         typer.Option("--requirement", "-r", help="Extra distribution. Repeatable."),
     ] = None,
+    title: Annotated[
+        str | None,
+        typer.Option("--title", help="Document title. Default: the application class name."),
+    ] = None,
+    template: Annotated[
+        Path | None,
+        typer.Option("--template", help="Directory of files to copy over the default page."),
+    ] = None,
 ) -> None:
     """Build a Textual app into a static site.
 
     The output needs no server and no build step to deploy: copy it somewhere that serves
     files. Pyodide and xterm.js come from a pinned CDN, so the directory itself stays small.
+
+    The default page is bare - the terminal fills the viewport and nothing is drawn around
+    it, because a Textual app already draws its own header and footer. `--template` replaces
+    any part of that page with your own; the contract is an element with `id="terminal"` and
+    a module script loading `./main.mjs`.
     """
     console = Console()
     result = build_site(
@@ -43,6 +56,8 @@ def build(
             package=package,
             output=output,
             requirements=tuple(requirement or ()),
+            title=title,
+            template=template,
         )
     )
     console.print(f"[bold green]built[/] {result.output} - {result.summary}")

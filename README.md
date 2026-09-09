@@ -21,7 +21,7 @@ Textual itself is untouched. The extension point is a public one —
 | | |
 |---|---|
 | `textual-wasm doctor <module:App>` | What will break, with a `file:line`. Reads imports, **call sites**, and dependencies. |
-| `textual-wasm build <module:App> <package> -o dist/` | A static site. |
+| `textual-wasm build <module:App> <package> -o dist/` | A static site. Bare page by default; `--title` and `--template` if you want otherwise. |
 | `textual-wasm dev dist/` | Serve it locally. Standard library only. |
 | `textual-wasm check --app <module:App>` | Run it on every runtime available and compare. |
 

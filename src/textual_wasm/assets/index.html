@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>textual-wasm spike</title>
+    <!-- Replaced at boot by the title the build was given. Present as a fallback so the tab
+         is never blank while Pyodide starts. -->
+    <title>Terminal</title>
     <!-- Inline, so the browser never issues the /favicon.ico request it makes by default.
          That 404 is invisible in a browser and a failure in the headless harness, which
          treats any page-reported error as a failed run. -->
@@ -15,11 +17,18 @@
          lives in exactly one place. -->
     <link rel="stylesheet" href="./styles/index.css" />
   </head>
+  <!--
+    Deliberately bare: the terminal fills the viewport and the page adds nothing around it.
+    A Textual app draws its own header, footer and title, so page chrome would be a second,
+    competing frame around an application that already has one - and a heading naming this
+    project would end up on someone else's product.
+
+    Replace this file wholesale with `textual-wasm build --template <dir>`. The contract is
+    small: an element with `id="terminal"` for the terminal to open into, and a `<script
+    type="module" src="./main.mjs">`. An element with `id="status"` is optional; without one
+    the boot messages go to the console instead.
+  -->
   <body class="page">
-    <header class="masthead">
-      <h1>Textual under WebAssembly</h1>
-      <p id="status" class="status" data-state="booting">booting Pyodide&hellip;</p>
-    </header>
     <main class="stage">
       <!-- Two elements, not one, and the nesting is load-bearing: the frame is decorated
            and the mount is bare. FitAddon divides the mount's *parent* box by the cell size
@@ -29,6 +38,10 @@
         <div id="terminal" class="terminal-mount"></div>
       </div>
     </main>
+    <!-- Outside the terminal's box and out of the layout, because it is transient: booting
+         Pyodide takes seconds, and a page that is blank for that long reads as broken. It
+         removes itself once the app is running. -->
+    <p id="status" class="status" data-state="booting">starting&hellip;</p>
     <script type="module" src="./main.mjs"></script>
   </body>
 </html>

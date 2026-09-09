@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tasks</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='14'%3E%E2%9C%93%3C/text%3E%3C/svg%3E"
+    />
+    <!-- The shipped stylesheet first, then ours. It declares an empty `overrides` layer that
+         chrome.css fills, so this page changes the design without out-specifying it. -->
+    <link rel="stylesheet" href="./styles/index.css" />
+    <link rel="stylesheet" href="./styles/chrome.css" />
+  </head>
+  <body class="page framed">
+    <header class="masthead">
+      <h1>Tasks</h1>
+      <p class="byline">a Textual app, running in your browser</p>
+    </header>
+    <main class="stage">
+      <!-- The frame is decorated and the mount is bare. That split is the contract: FitAddon
+           sizes the grid from the mount's *parent* box, so padding or a border on #terminal
+           would be counted as room for text and the footer would be drawn outside the box. -->
+      <div class="terminal-frame">
+        <div id="terminal" class="terminal-mount"></div>
+      </div>
+    </main>
+    <p id="status" class="status" data-state="booting">starting&hellip;</p>
+    <script type="module" src="./main.mjs"></script>
+  </body>
+</html>

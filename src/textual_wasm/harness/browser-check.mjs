@@ -174,7 +174,10 @@ async function measureFit(browser, url) {
     await page.goto(url, { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#terminal[data-fitted]", { timeout: READY_TIMEOUT_MS });
     return await page.evaluate(() => {
-      const frame = document.querySelector(".terminal-frame").getBoundingClientRect();
+      // The mount's parent, not a class name: a page supplied with `--template` decides its
+      // own markup, and the only element this can rely on is the one the terminal is
+      // opened into - which is also the box FitAddon measured.
+      const frame = document.querySelector("#terminal").parentElement.getBoundingClientRect();
       const grid = document.querySelector("#terminal .xterm").getBoundingClientRect();
       return Math.round(Math.max(grid.bottom - frame.bottom, grid.right - frame.right));
     });

@@ -35,6 +35,25 @@ pinned CDN, and this app's `.py` and `.tcss` are written into the page's own fil
 Nothing in `simple_app/` changed between those two commands, and nothing in it imports
 `textual_wasm`. That is the whole point of the example.
 
+The page is bare - the terminal fills the viewport and nothing is drawn around it, because
+this app already draws its own header and footer. Two levers if you want otherwise:
+
+```bash
+poetry run textual-wasm build simple_app.app:TaskList simple_app -o dist-framed/ \
+  --title "Tasks" --template page
+```
+
+`--title` names the browser tab (it defaults to the class name, `TaskList`). `--template` is
+a directory copied over the built page: `page/` here holds an `index.html` with a heading and
+a framed terminal, and a stylesheet that lands in the empty `overrides` layer the shipped CSS
+declares - so it changes the design without out-specifying it.
+
+The contract a replacement page has to satisfy is small: an element with `id="terminal"` for
+the terminal to open into, **with no padding or border of its own** (`FitAddon` sizes the
+grid from that element's parent, so decoration on the mount is counted as room for text and
+the bottom rows get clipped - decorate a wrapper, as `page/` does), and a module script
+loading `./main.mjs`. An `id="status"` element is optional and receives boot progress.
+
 ## Check that both really behave the same
 
 ```bash

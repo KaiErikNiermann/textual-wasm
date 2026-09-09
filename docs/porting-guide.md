@@ -90,6 +90,32 @@ package import side effect. It has to happen before the first `import textual` a
 the process: `textual.constants` reads every `TEXTUAL_*` variable into module-level
 constants at import time, so a value set afterwards is ignored, silently.
 
+### The page around your app
+
+The default page is bare on purpose: the terminal fills the viewport and nothing is drawn
+around it. A Textual app already renders its own header, footer and title, so page chrome
+would be a second frame competing with the one the app draws - and a heading naming this
+project would be branding on your product.
+
+Two levers:
+
+```bash
+textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
+textual-wasm build myapp.main:App myapp -o dist/ --template page/
+```
+
+`--title` names the document, and defaults to your application class. `--template` is a
+directory copied over the built page, so overriding `index.html` alone is a one-file
+directory and adding a stylesheet is two. The contract that page has to satisfy is small:
+
+- an element with `id="terminal"` for the terminal to open into, with **no padding or border
+  of its own** - `FitAddon` sizes the grid from that element's parent box, so decoration on
+  the mount is counted as room for text and the bottom rows get clipped. Decorate a wrapper.
+- `<script type="module" src="./main.mjs"></script>`.
+- optionally an element with `id="status"`, which receives boot progress and a
+  `data-state` of `booting`, `ready` or `failed`. Without one those messages go to the
+  console.
+
 ## 6. Crashes go where nobody is looking
 
 Textual prints tracebacks through a `Console(stderr=True)`. Under Pyodide stderr is the

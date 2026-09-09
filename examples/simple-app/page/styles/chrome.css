@@ -1,0 +1,50 @@
+/* Chrome for the built page, as an example of `textual-wasm build --template`.
+
+   Everything lands in the `overrides` layer that the shipped stylesheet declares and leaves
+   empty. That is what makes this additive rather than a specificity fight (PC-5): these
+   rules win because of where they are, not because of how they are written, and every value
+   still comes from the token table the page already ships (PC-1). */
+
+@layer overrides {
+  .framed {
+    display: grid;
+    gap: var(--space-4);
+    background: var(--color-surface);
+    grid-template-rows: auto 1fr;
+    padding-block: var(--space-4);
+    padding-inline: var(--space-4);
+  }
+
+  .framed .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    inline-size: min(var(--measure), 100%);
+    margin-inline: auto;
+  }
+
+  .framed h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-3);
+    line-height: var(--line-tight);
+  }
+
+  .framed .byline {
+    color: var(--color-ink-dim);
+    font-size: var(--text-1);
+  }
+
+  .framed .stage {
+    inline-size: min(var(--measure), 100%);
+    margin-inline: auto;
+  }
+
+  /* Decoration on the frame, never on the mount inside it. */
+  .framed .terminal-frame {
+    border: var(--space-1) solid var(--color-edge);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+  }
+}

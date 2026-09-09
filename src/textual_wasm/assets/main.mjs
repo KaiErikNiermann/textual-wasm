@@ -72,10 +72,18 @@ const statusElement = document.querySelector("#status");
  * Report progress. The state lands on a `data-state` attribute rather than a class,
  * because the stylesheet reads state the DOM already holds (PC-6).
  *
+ * Optional: a custom page supplied with `--template` need not carry a status element, and a
+ * missing one falls back to the console rather than throwing - a page that renders the app
+ * perfectly should not fail because it declined to show a boot message.
+ *
  * @param {"booting" | "ready" | "failed"} state
  * @param {string} message
  */
 function setStatus(state, message) {
+  if (statusElement === null) {
+    console.info(`[textual-wasm] ${state}: ${message}`);
+    return;
+  }
   statusElement.dataset.state = state;
   statusElement.textContent = message;
 }
@@ -205,13 +213,18 @@ async function readManifest() {
 
 async function main() {
   const manifest = await readManifest();
+  // The document is named after the application, not after this project. A page is a thing
+  // people bookmark and put in a tab strip.
+  if (manifest.title) {
+    document.title = manifest.title;
+  }
   const dependencies = await loadDependencies(manifest);
 
   const { terminal, host, fit } = createTerminal(dependencies);
   await layoutSettled();
   fit();
 
-  setStatus("booting", "booting Pyodide…");
+  setStatus("booting", "starting Python…");
   const pyodide = await dependencies.loadPyodide({
     indexURL: manifest.pyodideIndexUrl,
     // COLUMNS and LINES because os.get_terminal_size() raises here and
@@ -236,7 +249,7 @@ async function main() {
   const entry = await fetch(manifest.entryUrl);
   await pyodide.runPythonAsync(await entry.text());
 
-  setStatus("ready", `running ${manifest.entry} at ${host.cols}x${host.rows}`);
+  setStatus("ready", `running at ${host.cols}x${host.rows}`);
 
   const start = pyodide.globals.get("start");
   const finished = start(manifest.entry);
@@ -258,7 +271,9 @@ async function main() {
   };
 
   await finished;
-  setStatus("ready", "app exited cleanly");
+  // Said plainly rather than left blank: a terminal app that has exited leaves its last
+  // frame on screen, which is indistinguishable from one that has frozen.
+  setStatus("failed", "the application exited");
 }
 
 try {
