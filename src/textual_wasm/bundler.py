@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from textual_wasm.pins import resolve_pins
-from textual_wasm.target import AppTarget
+from textual_wasm.target import AppTarget, importable_from
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
@@ -246,7 +246,12 @@ def build(spec: BuildSpec) -> BuildResult:
         raise NotADirectoryError(spec.package)
     notes = ()
     if spec.verify_entry:
-        note = AppTarget(entry=spec.entry).verify()
+        # From the package's parent, not the working directory. `build` is given the package
+        # directory explicitly, so the app need not be importable from wherever the command
+        # was run - and the docs site builds every demo from the repository root, which is
+        # precisely that case.
+        with importable_from(spec.package.parent.resolve()):
+            note = AppTarget(entry=spec.entry).verify()
         notes = () if note is None else (note,)
 
     spec.output.mkdir(parents=True, exist_ok=True)

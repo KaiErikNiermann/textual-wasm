@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Final, cast
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
+    from contextlib import AbstractContextManager
 
     from textual.app import App
 
@@ -33,7 +34,24 @@ class EntryError(ValueError):
 
 
 @contextlib.contextmanager
-def working_directory_importable() -> Generator[None]:
+def importable_from(directory: Path) -> Generator[None]:
+    """Put one directory on `sys.path` for the duration of the block.
+
+    Args:
+        directory: Where the import machinery should also look.
+    """
+    location = str(directory)
+    if location in sys.path:
+        yield
+        return
+    sys.path.insert(0, location)
+    try:
+        yield
+    finally:
+        sys.path.remove(location)
+
+
+def working_directory_importable() -> AbstractContextManager[None]:
     """Put the working directory on `sys.path`, as `python -m` does.
 
     A console script does not do this and `python -m` does, which would otherwise make
@@ -44,15 +62,7 @@ def working_directory_importable() -> Generator[None]:
     Applied wherever this package resolves an app reference, so every leg of a check reaches
     the same application by the same rule.
     """
-    cwd = str(Path.cwd())
-    if cwd in sys.path:
-        yield
-        return
-    sys.path.insert(0, cwd)
-    try:
-        yield
-    finally:
-        sys.path.remove(cwd)
+    return importable_from(Path.cwd())
 
 
 @dataclasses.dataclass(frozen=True, slots=True)

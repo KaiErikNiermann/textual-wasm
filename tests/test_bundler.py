@@ -251,3 +251,29 @@ def test_verification_can_be_turned_off(tmp_path: Path) -> None:
         dataclasses.replace(_spec(tmp_path), entry="nosuchmodule:App", verify_entry=False)
     )
     assert (result.output / bundler.MANIFEST_NAME).exists()
+
+
+def test_the_app_need_not_be_importable_from_the_working_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`build` is given the package directory, so that is where the entry is resolved from.
+
+    Verifying against the working directory instead broke the docs site, which builds every
+    demo from the repository root while each app lives under `examples/`.
+    """
+    package = tmp_path / "sources" / "away_app"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "app.py").write_text(
+        "from textual.app import App\n\n\nclass Away(App[None]):\n    pass\n", encoding="utf-8"
+    )
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    result = bundler.build(
+        bundler.BuildSpec(entry="away_app.app:Away", package=package, output=tmp_path / "site-away")
+    )
+
+    assert result.notes == ()
+    assert (result.output / bundler.MANIFEST_NAME).exists()
