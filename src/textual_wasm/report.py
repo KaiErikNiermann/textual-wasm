@@ -81,6 +81,22 @@ class RuntimeFacts:
     eager_task_factory_accepted: bool
     """Whether the loop honoured `set_task_factory`, which `App.run_async` attempts."""
 
+    runtime: str
+    """The host: "native", "Node.js/26", or a browser user-agent.
+
+    Node and a browser disagree about several capabilities in both directions, so a fact
+    gathered under one is not a fact about the other.
+    """
+
+    jspi: bool
+    """Whether stack switching is available, letting synchronous Python await a promise."""
+
+    shared_memory: bool
+    """Whether SharedArrayBuffer exists. Gates interrupts and streaming - never threads."""
+
+    cross_origin_isolated: bool | None
+    """Whether the page is cross-origin isolated, or None outside a browser."""
+
     polyfills_applied: tuple[str, ...]
     """Runtime shims this host needed, so a WASM run can never look accidentally native."""
 
@@ -186,6 +202,13 @@ def _as_bool(source: Mapping[str, object], key: str) -> bool:
     return value
 
 
+def _as_optional_bool(source: Mapping[str, object], key: str) -> bool | None:
+    value = source.get(key)
+    if value is not None and not isinstance(value, bool):
+        raise _wrong_type(repr(key), "a boolean or null", value)
+    return value
+
+
 def _runtime_from(source: Mapping[str, object]) -> RuntimeFacts:
     return RuntimeFacts(
         platform=_as_str(source, "platform"),
@@ -194,6 +217,10 @@ def _runtime_from(source: Mapping[str, object]) -> RuntimeFacts:
         event_loop=_as_str(source, "event_loop"),
         threads_available=_as_bool(source, "threads_available"),
         eager_task_factory_accepted=_as_bool(source, "eager_task_factory_accepted"),
+        runtime=_as_str(source, "runtime"),
+        jspi=_as_bool(source, "jspi"),
+        shared_memory=_as_bool(source, "shared_memory"),
+        cross_origin_isolated=_as_optional_bool(source, "cross_origin_isolated"),
         polyfills_applied=tuple(str(item) for item in _as_array(source, "polyfills_applied")),
     )
 

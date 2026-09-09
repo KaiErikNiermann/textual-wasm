@@ -20,3 +20,9 @@ class Window(Protocol):
 
 document: Document
 window: Window
+
+crossOriginIsolated: bool
+"""True when the page is cross-origin isolated (COOP + COEP).
+
+Gates SharedArrayBuffer, and therefore Pyodide's interrupt buffer and urllib3's
+streaming worker - but not Python threads, which no header can enable."""

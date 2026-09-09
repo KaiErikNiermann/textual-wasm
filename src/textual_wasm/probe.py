@@ -21,6 +21,7 @@ from textual.pilot import Pilot
 from textual_wasm import APPLIED_POLYFILLS
 from textual_wasm.app import EXIT_CODE, MARKER, SpikeApp
 from textual_wasm.bootstrap import DRIVER_IMPORT_PATH
+from textual_wasm.capabilities import detect as detect_capabilities
 from textual_wasm.driver import DEFAULT_SIZE, CaptureDriver, active_driver
 from textual_wasm.report import (
     CheckId,
@@ -197,13 +198,18 @@ def _eager_task_factory_accepted(loop: asyncio.AbstractEventLoop) -> bool:
 
 
 def _collect_runtime_facts(loop: asyncio.AbstractEventLoop) -> RuntimeFacts:
+    capabilities = detect_capabilities()
     return RuntimeFacts(
-        platform=sys.platform,
+        platform=capabilities.platform,
         python_version=sys.version.split()[0],
         textual_version=textual_version,
         event_loop=type(loop).__name__,
         threads_available=_threads_available(),
         eager_task_factory_accepted=_eager_task_factory_accepted(loop),
+        runtime=capabilities.runtime,
+        jspi=capabilities.jspi,
+        shared_memory=capabilities.shared_memory,
+        cross_origin_isolated=capabilities.cross_origin_isolated,
         polyfills_applied=APPLIED_POLYFILLS,
     )
 

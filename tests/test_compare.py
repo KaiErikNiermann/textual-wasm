@@ -18,6 +18,10 @@ _NATIVE_RUNTIME = RuntimeFacts(
     threads_available=True,
     eager_task_factory_accepted=True,
     polyfills_applied=(),
+    runtime="native",
+    jspi=False,
+    shared_memory=True,
+    cross_origin_isolated=None,
 )
 
 _WASM_RUNTIME = dataclasses.replace(
@@ -27,6 +31,9 @@ _WASM_RUNTIME = dataclasses.replace(
     event_loop="WebLoop",
     threads_available=False,
     polyfills_applied=("asyncio.tasks._set_task_name",),
+    runtime="Node.js/26",
+    jspi=True,
+    shared_memory=False,
 )
 
 
@@ -61,6 +68,9 @@ def test_expected_host_differences_do_not_break_equivalence() -> None:
         "event_loop",
         "threads_available",
         "polyfills_applied",
+        "runtime",
+        "jspi",
+        "shared_memory",
     }
 
 

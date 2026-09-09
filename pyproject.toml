@@ -96,6 +96,13 @@ venv = ".venv"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-q --strict-markers"
+markers = [
+    # Boots a real Pyodide runtime. Measured at ~4s for the whole set, so these run by
+    # default: a characterisation test that is deselected by default is a test that rots,
+    # which is the exact failure the registry exists to prevent. Deselect with
+    # `-m "not slow"` when working offline.
+    "slow: re-measures a claim inside a real Pyodide runtime",
+]
 filterwarnings = [
     "error",
     # pytest-asyncio 0.25 still uses the event-loop policy APIs CPython 3.16 will remove.

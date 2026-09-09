@@ -20,6 +20,10 @@ EXPECTED_RUNTIME_DIVERGENCE: Final[frozenset[str]] = frozenset(
         "event_loop",
         "threads_available",
         "polyfills_applied",
+        "runtime",
+        "jspi",
+        "shared_memory",
+        "cross_origin_isolated",
     }
 )
 """Runtime fields that *should* differ between the two hosts.

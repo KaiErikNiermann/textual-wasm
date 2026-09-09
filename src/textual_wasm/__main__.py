@@ -46,8 +46,12 @@ def _render(report: ProbeReport, console: Console) -> None:
         ("python", report.runtime.python_version),
         ("textual", report.runtime.textual_version),
         ("event loop", report.runtime.event_loop),
-        ("threads available", str(report.runtime.threads_available)),
         ("eager task factory", str(report.runtime.eager_task_factory_accepted)),
+        ("runtime", report.runtime.runtime),
+        ("threads available", str(report.runtime.threads_available)),
+        ("jspi (run_sync)", str(report.runtime.jspi)),
+        ("shared memory", str(report.runtime.shared_memory)),
+        ("cross-origin isolated", str(report.runtime.cross_origin_isolated)),
         ("polyfills applied", ", ".join(report.runtime.polyfills_applied) or "none"),
     ):
         facts.add_row(field, value)
