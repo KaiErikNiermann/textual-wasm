@@ -1,0 +1,93 @@
+# Gates, then the cross-runtime check.
+#
+# Split into two jobs on purpose. `gates` is what a push has to satisfy and takes seconds;
+# `check` boots a real Pyodide, a real Chrome and a real pty, which is minutes and needs the
+# network. Merging them would mean a lint failure and a runtime regression arrive as the same
+# red mark.
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+env:
+  # Without it semgrep-core fails intermittently with `Unix_error: Cannot allocate memory
+  # io_uring_queue_init` and returns an empty results list - a crashed scan then looks
+  # exactly like a clean one.
+  EIO_BACKEND: posix
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor and the ceiling of `requires-python`. The floor is the one that catches
+        # syntax this project would otherwise adopt without noticing.
+        python: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pipx install poetry
+      - run: poetry install
+      - name: ruff (lint)
+        run: poetry run ruff check src tests
+      - name: ruff (format)
+        run: poetry run ruff format --check src tests
+      - name: pyright (strict)
+        run: poetry run pyright
+      - name: radon (nothing above grade B)
+        run: |
+          offenders="$(poetry run radon cc -n C src)"
+          if [[ -n "${offenders}" ]]; then
+            echo "${offenders}"
+            echo "error: blocks above grade B; simplify or split them" >&2
+            exit 1
+          fi
+      - name: semgrep (conventions + core-utils)
+        run: poetry run semgrep --config .semgrep --metrics=off --error --quiet src
+      - name: pytest
+        run: poetry run pytest
+      - name: the porting matrix is a rendering of the registry
+        run: poetry run textual-wasm matrix --check -o docs/porting-matrix.md
+
+  check:
+    # The claim this project makes, checked rather than asserted: the same app on CPython,
+    # on Pyodide, in a browser and on a real pty, compared. `--strict` is what makes it a
+    # gate - without it a runner missing tmux would still print a verdict, and the verdict
+    # would cover fewer runtimes than the badge implies.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pipx install poetry
+      - run: poetry install
+      - name: install the optional runtimes
+        # tmux is the only terminal emulator that will hand its screen back as text, which is
+        # what makes the render comparison possible at all. Chrome is preinstalled on this
+        # image; the harness drives the installed browser rather than downloading one.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tmux
+          pnpm install --frozen-lockfile
+      - name: check every runtime
+        run: poetry run textual-wasm check --strict
+      - name: the registry's claims, re-measured under Pyodide
+        run: node scripts/run-substitution-check.mjs > substitutions.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: substitution-measurements
+          path: substitutions.json

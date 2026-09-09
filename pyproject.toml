@@ -1,9 +1,23 @@
 [project]
 name = "textual-wasm"
 version = "0.1.0"
-description = "Feasibility spike: running a Textual TUI fully client-side under WebAssembly."
+description = "Ship a Textual TUI as both a terminal app and a client-side web page."
 authors = [{ name = "KaiErikNiermann", email = "61298289+KaiErikNiermann@users.noreply.github.com" }]
 readme = "README.md"
+license = "MIT"
+keywords = ["textual", "tui", "webassembly", "wasm", "pyodide", "xterm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Environment :: WebAssembly :: Emscripten",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Terminals",
+    "Typing :: Typed",
+]
 requires-python = ">=3.12,<4.0"
 dependencies = [
     "textual (>=8.2,<9.0)",
@@ -18,8 +32,20 @@ textual-wasm = "textual_wasm.cli:app"
 # Kept so the existing scripts and docs keep working while the rename settles.
 textual-wasm-spike = "textual_wasm.cli:app"
 
+[project.urls]
+Homepage = "https://github.com/KaiErikNiermann/textual-wasm"
+Documentation = "https://github.com/KaiErikNiermann/textual-wasm/blob/main/docs/index.md"
+Repository = "https://github.com/KaiErikNiermann/textual-wasm"
+
 [tool.poetry]
 packages = [{ include = "textual_wasm", from = "src" }]
+# The page, its stylesheet, the browser entry script and the two JavaScript harnesses are
+# not Python and are all load-bearing: without them `build` writes an empty site and `check`
+# has no wasm or browser leg. Named explicitly rather than relying on the backend's defaults.
+include = [
+    { path = "src/textual_wasm/assets/**/*", format = ["sdist", "wheel"] },
+    { path = "src/textual_wasm/harness/*.mjs", format = ["sdist", "wheel"] },
+]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3"

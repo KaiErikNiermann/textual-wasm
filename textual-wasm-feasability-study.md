@@ -234,7 +234,7 @@ A `textual_wasm.compat` module with a `IS_WASM` flag and a `@work` shim covers m
 | # | Breakage | Severity | Shim? |
 |---|---|---|---|
 | 1 | `@work(thread=True)` — `worker.py:326` calls `loop.run_in_executor` | **hard** | No (single-threaded). Best effort: raise a clear `WorkerError` at decoration time under WASM, and document "use `@work` async". |
-| 2 | Blocking sync I/O — `requests`, `urllib`, `socket` | **hard** | No. Apps must use `pyodide.http.pyfetch` / `httpx` async. Standard Pyodide tax, not a Textual problem. |
+| 2 | Blocking sync I/O — `requests`, `urllib`, `socket` | **[spike] partly wrong, see below** | `requests` and `httpx` work. Raw sockets do not. |
 | 3 | `subprocess`, `os.fork` | **hard** | No. |
 | 4 | `App.suspend()` / `Ctrl+Z` (`app.py:4785`) | trivial | `can_suspend = False` already gates it. |
 | 5 | `App.run()` blocking | trivial | Use `run_async`. |
@@ -244,6 +244,26 @@ A `textual_wasm.compat` module with a `IS_WASM` flag and a `@work` shim covers m
 | 9 | `platformdirs.user_downloads_path` (`app.py:56`) | small | Called lazily; only in the delivery path you're overriding anyway. |
 | 10 | **Font metrics / grapheme width** | **the real one** | See below. |
 | 11 | Payload size | medium | See §6. |
+
+> **[spike] Row 2 was too strong: blocking HTTP is not fatal.** "Apps must use pyfetch or
+> async httpx" is wrong as guidance. Bundled `urllib3 2.6.3` ships
+> `urllib3/contrib/emscripten/`, which routes through JSPI, a worker plus SharedArrayBuffer,
+> or XHR; and Pyodide *patches* httpx so that `sys.platform == "emscripten"` swaps in a
+> fetch-backed transport. Synchronous `requests` code therefore runs in a browser.
+>
+> The real constraints are narrower and worth stating instead: CORS applies to every request,
+> timeouts and certificate and proxy configuration are unavailable, and streaming responses
+> need both a Web Worker and cross-origin isolation. Note the patched httpx is *Pyodide's*,
+> not PyPI's. Raw `socket.connect` is the genuinely broken case, and it is worse than "hard"
+> — it succeeds and then hangs, which is why it is in the registry's silent class.
+>
+> **[spike] Row 3, and the dependency story generally, has changed.** This document assumed
+> C-extension dependencies work only if Pyodide bundles a build. Since Pyodide 314 a package
+> can publish a `...-pyemscripten_2026_0_wasm32.whl` to PyPI and `micropip.install()` works
+> with no Pyodide-side build at all. The inverse constraint is the new one, and it is the one
+> to design around: a package available only as a Pyodide-*bundled* native wheel pins you to
+> Pyodide's version of it — `cryptography` is three majors behind PyPI, `polars` eleven
+> minors. `textual-wasm doctor` reports which of the two a dependency is.
 
 ### 4.1 The font-width problem (the actual hard bug)
 
@@ -283,7 +303,7 @@ demos look broken.
 | Python | CPython, mature | CPython, game-oriented | CPython or component model |
 | JS interop | first class (`js`, `pyodide.ffi`) | limited | **none in-browser** |
 | asyncio | `WebLoop` on `setTimeout` | own loop | needs `wasi:io` poll |
-| Threads | no (without SAB+worker) | no | no |
+| Threads | **no, in any configuration** | no | no |
 | Package install | `micropip` (pure-Python wheels) | bundle-time | bundle-time |
 | Fit for this | **yes** | workable, awkward | **no** — no DOM |
 
@@ -298,9 +318,29 @@ expect: WASI has no DOM, so you'd be reinventing xterm.js inside WASM for no rea
 that branch.
 
 Optional later refinement: run Python in a **Web Worker** with the xterm.js instance on the
-main thread, `postMessage`-bridged. Keeps a heavy `on_mount` from freezing the page, and
-with `SharedArrayBuffer` (needs COOP/COEP headers) it also unlocks real threads and
-therefore `@work(thread=True)`. Non-goal for v1.
+main thread, `postMessage`-bridged. Keeps a heavy `on_mount` from freezing the page. Non-goal
+for v1.
+
+> **[spike] `SharedArrayBuffer` does not unlock threads.** This section originally said that
+> SAB plus a worker gives you real threads and therefore `@work(thread=True)`. That is wrong,
+> and it was the most load-bearing wrong claim in this document, because it made an
+> unavailable feature look like a deployment-header problem.
+>
+> Pyodide is not built with `-pthread`, and its ABI documentation forbids `-pthread` in any
+> library linked against it. Measured, not inferred: `grep -c SharedArrayBuffer
+> pyodide.asm.mjs` is `0`, and `sys._emscripten_info.pthreads` is `False` in the running
+> interpreter — the probe reports it as `threads_available` on every run. SAB buys the
+> interrupt buffer and `urllib3`'s streaming worker; it does not buy `threading`.
+>
+> `@work(thread=True)` is therefore unavailable short of a forked Pyodide build, and the
+> correct treatment is a loud, specific failure at the call site rather than a note about
+> COOP/COEP headers. That is what `textual_wasm.diagnostics` now does.
+>
+> **JSPI is the real escape hatch for synchronous code.** `pyodide.ffi.run_sync()` lets
+> synchronous Python await a JS promise by stack switching, and `can_run_sync()` feature-detects
+> it — measured `True` under `runPythonAsync`, `False` under plain `runPython`. Chrome has
+> shipped it unflagged since 137. Its own docstring still says "experimental / not yet
+> stable", so the probe *reports* it (`RuntimeFacts.jspi`) rather than depending on it.
 
 ---
 
@@ -473,8 +513,11 @@ An out-of-tree package (`textual_wasm`) against **unpatched Textual 8.2.8 from P
 | `driver.py` | `CaptureDriver` — sink is a list. Used by the probe and the tests. |
 | `browser.py` | `BrowserDriver` — sink is `xterm.js`. ~110 lines. |
 | `probe.py` | One driver-agnostic coroutine that boots a real `App` and returns a structured verdict. |
-| `scripts/run-pyodide-node.mjs` | Runs that same coroutine under Pyodide in Node. |
-| `web/` + `scripts/serve.mjs` | The same app in a browser against a real terminal emulator. |
+| `harness/pyodide-probe.mjs` | Runs that same coroutine under Pyodide in Node. |
+| `assets/` + `bundler.py` | The same app in a browser against a real terminal emulator. |
+
+*(Paths as of the module build-out; the spike's `scripts/run-pyodide-node.mjs`, `web/` and
+`scripts/serve.mjs` moved into the package so a user needs no checkout of this repository.)*
 
 **No patch to Textual, and no fork.** `TEXTUAL_DRIVER=textual_wasm.driver:CaptureDriver` was
 sufficient, exactly as §2.1 predicted.
@@ -482,7 +525,7 @@ sufficient, exactly as §2.1 predicted.
 ### 11.2 The result
 
 Eight mechanically-checkable claims, run natively and under Pyodide, compared by
-`textual-wasm-spike compare`:
+`textual-wasm check`:
 
 | check | native | wasm |
 |---|---|---|
@@ -491,7 +534,7 @@ Eight mechanically-checkable claims, run natively and under Pyodide, compared by
 | `run_async` — completed on the host loop, returned the sentinel | pass | pass |
 | `resize_delivered` — driver-synthesised `Resize` reached the app | pass | pass |
 | `ansi_output` — compositor emitted truecolor SGR | pass | pass |
-| `widget_rendered` — composed widget text present in the stream | pass | pass |
+| `widget_rendered` — the app's own text present on the replayed grid | pass | pass |
 | `key_input` — bytes through `XTermParser` drove an app binding | pass | pass |
 | `timer` — `set_timer` fired | pass | pass |
 
@@ -547,8 +590,11 @@ plus `textual.drivers.*_driver`.
 - ~~**Font metrics.**~~ **Settled for everything but emoji — see §12.**
 - ~~**Frame-for-frame equality.**~~ **Done — see §12.**
 - **Mouse, paste, clipboard, focus/blur** are written but untested.
-- **`@work(thread=True)`** is confirmed unavailable (`threads_available: false`) but still
-  fails obscurely rather than loudly.
+- ~~**`@work(thread=True)`** is confirmed unavailable (`threads_available: false`) but still
+  fails obscurely rather than loudly.~~ **Addressed.** `textual_wasm.diagnostics` now
+  intercepts `run_in_executor` — the call `worker.py:326` makes — and raises with the
+  constraint and the substitute named. §5's correction explains why no configuration can
+  make threads available.
 
 ---
 
@@ -581,7 +627,7 @@ Python, so it installs under Pyodide and both Python runtimes now carry a **rend
 in their report, not just a byte count. `scripts/run-browser-check.mjs` boots the page in
 Chrome at a forced grid (`?cols=80&rows=24` — a browser window's size is not a number anyone
 chose), drives the app through `xterm.js`'s own user-input entry point, and reads the buffer
-back. `textual-wasm-spike compare-screens` diffs the two.
+back. `textual-wasm compare-screens` diffs the two.
 
 Both sides are normalised first: trailing blanks dropped, and text composed to NFC. `pyte`
 merges a combining mark into the cell it modifies and yields the composed character;
@@ -660,3 +706,36 @@ test now pins that reasoning. tmux is optional throughout: the tests skip and
   Mono`, `ui-monospace`). The result is about that stack.
 - **Styling.** The diff is over characters, not colours or attributes. Truecolor SGR is
   asserted present but never compared cell by cell.
+
+---
+
+## 13. The WASM Component Model, assessed and closed (2026-09-09)
+
+The obvious question about anything WASM in 2026 is whether the **Component Model** and
+**WIT** help — a typed interface language, with Rust or Go or C filling in what Python cannot
+do. The answer is no, and the reason is structural rather than a matter of maturity, so it is
+recorded here to close the question rather than leaving it open.
+
+**Two different Pythons that cannot meet.** Pyodide is `wasm32-unknown-emscripten`.
+`componentize-py` targets `wasm32-wasip2` and ships *its own* CPython built against wasi-sdk.
+These are separate builds with separate memories and separate object graphs; there is no
+shared heap for a Python object to cross and no ABI that would let one call the other's
+interpreter. Putting both in one page means shipping two interpreters that can exchange
+nothing but bytes.
+
+**WASI 0.2 has no browser story.** `jco` can put a component in a browser only by transpiling
+it back to core WebAssembly plus JavaScript glue — which is `wasm-bindgen` with extra
+ceremony, and arrives at the same place the existing `pyodide.ffi` already occupies.
+
+**Pyodide has no component-model interop**, present or planned. Searched: no issues, no
+roadmap entry, no prior art.
+
+So the branch is killed. The practical version of "another language fills a gap" is what
+already works: compile that piece to a core wasm module and call it through `pyodide.ffi`, or
+publish it as a `pyemscripten` wheel and `micropip install` it. Both are available today and
+neither needs a second interpreter.
+
+Two adjacent options were assessed and rejected for their own reasons. **RustPython** is
+22.8 MB of wasm — *larger* than Pyodide — with an incomplete standard library.
+**MicroPython-wasm** is not CPython, and Rich and Textual need the full standard library. For
+payload, `pyodide-pack` plus a custom `stdLibURL` remains the boring, measurable lever.

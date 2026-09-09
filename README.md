@@ -1,41 +1,92 @@
 # textual-wasm
 
-Feasibility spike for running a [Textual](https://github.com/Textualize/textual) TUI **fully
-client-side** under WebAssembly — the same application source running either as a classic
-terminal TUI or as a static web page with no server-side Python process.
-
-**Result: it works, against unpatched Textual 8.2.8, with no fork and no upstream patch —
-and a browser renders it identically.** [`textual-wasm-feasability-study.md`](./textual-wasm-feasability-study.md)
-has the architecture audit; §11 is what the spike measured and §12 is render equivalence.
-
-## The claim, and how it is checked
-
-`textual_wasm.probe.run_probe()` is a **single driver-agnostic coroutine** that boots a real
-Textual `App`, drives it, and returns a structured `ProbeReport`. It runs unchanged in two
-places:
-
-| Runner | Command | Runtime |
-|---|---|---|
-| native | `poetry run textual-wasm-spike probe` | CPython on Linux |
-| WASM | `node scripts/run-pyodide-node.mjs` | Pyodide (CPython on wasm32-emscripten) |
-
-`./scripts/run-spike.sh` runs both and diffs the reports. Eight checks, both runtimes, all
-passing; the compositor emits a byte-identical 7311 characters either way.
-
-Nothing in the probe, the driver or the app may branch on `sys.platform` — a semgrep rule
-enforces it. Runtime differences are confined to `polyfills.py` and recorded in the report,
-so a WASM run can never look accidentally native.
-
-## The browser half
+Ship one [Textual](https://github.com/Textualize/textual) application as **both** a terminal
+TUI and a fully client-side web page — same source, no server-side Python process, no fork of
+Textual.
 
 ```bash
-pnpm install && pnpm serve      # http://localhost:8000
+textual-wasm build myapp.main:App myapp -o dist/   # a static directory
+textual-wasm dev dist/                             # http://127.0.0.1:8000
 ```
 
-`web/` runs the same app against a real `xterm.js` terminal: Pyodide boots, micropip installs
-the pinned closure, the page registers a four-member terminal object, and
-`textual_wasm.browser.BrowserDriver` writes to it. Python is served straight from `src/`, so
-the browser demonstrably runs the same files as the Node probe.
+The output is static files. Pyodide and xterm.js come from a pinned CDN; your application is
+copied in as source. There is no build toolchain at the far end and nothing for the person
+deploying it to install.
+
+Textual itself is untouched. The extension point is a public one —
+`TEXTUAL_DRIVER=module:Symbol` (`textual/app.py:1585`) — so there is no patch to rebase.
+
+## The four commands
+
+| | |
+|---|---|
+| `textual-wasm doctor <module:App>` | What will break, with a `file:line`. Reads imports, **call sites**, and dependencies. |
+| `textual-wasm build <module:App> <package> -o dist/` | A static site. |
+| `textual-wasm dev dist/` | Serve it locally. Standard library only. |
+| `textual-wasm check --app <module:App>` | Run it on every runtime available and compare. |
+
+## What `check` actually checks
+
+Four runtimes, and two comparisons that mean something:
+
+| Leg | Runtime | Settles |
+|---|---|---|
+| native | CPython | The baseline. |
+| wasm | Pyodide under Node | Everything on the Python side, in CI, with no browser. |
+| browser | a real Chrome over a real `build` | Rendering and font metrics. |
+| terminal | a real pty via tmux, on Textual's own driver | What a user would actually see. |
+
+`native` against `wasm` is compared check-by-check, fact-by-fact and grid-by-grid.
+`terminal` against `browser` is compared cell-by-cell — that one is the render claim, and it
+is made against a real terminal rather than a replay because three different character-width
+tables are involved and they do not share code.
+
+A runtime this machine cannot reach is reported as **skipped, with the command that would
+enable it**, and the rest still produce a verdict. `--strict` makes a skip a failure, which
+is what CI wants.
+
+```
+textual_wasm.app:SpikeApp at 80x24
+┏━━━━━━━━━━┳━━━━━━━━━┳──────────────────────────────────────┓
+┃ runtime  ┃ status  ┃ detail                               ┃
+┡━━━━━━━━━━╇━━━━━━━━━╇──────────────────────────────────────┩
+│ native   │ ran     │ 8 checks, 0 failed                   │
+│ wasm     │ ran     │ 0 check(s) failed                    │
+│ browser  │ ran     │ 19 rows rendered                     │
+│ terminal │ ran     │ tmux 3.7c                            │
+└──────────┴─────────┴──────────────────────────────────────┘
+identical: terminal and browser render the same
+equivalent across 4 runtime(s)
+```
+
+Nothing the probe measures is asked of your app: the timer is scheduled by the probe, the
+resize is read back off the `Screen` it laid out, and input is judged by what appears on the
+grid. An app that has never heard of this project is measured by exactly the code that
+measures the one that ships with it.
+
+## Diagnostics
+
+Pyodide's most dangerous failures are the ones that raise nothing. `os.system()` returns 0
+and does nothing; `loop.run_in_executor()` ignores the executor and runs inline on the only
+thread, so code written to keep a UI responsive freezes the page instead.
+
+`textual_wasm.diagnostics.install()` manufactures a loud, specific failure for each, naming
+the substitute. `diagnostics.attach(app, driver)` moves crash output off stderr — which under
+Pyodide is a browser console nobody is watching — and into the terminal the user is looking
+at. The build output does both for you.
+
+Every one of those claims is **measured, not transcribed**, and the
+[porting matrix](./docs/porting-matrix.md) is generated from the same registry the analyser
+and the guards read. A test fails when it drifts; a characterisation suite re-measures the
+registry inside a real Pyodide. Pyodide's own documentation lists four modules as removed
+that import fine in 314.0.6, which is what a hand-maintained table gets you.
+
+## Documentation
+
+- [Porting guide](./docs/porting-guide.md) — what to change, in the order you hit it.
+- [Porting matrix](./docs/porting-matrix.md) — every measured difference. Generated.
+- [Feasibility study](./textual-wasm-feasability-study.md) — the architecture audit, what the
+  spike measured, and the claims it corrected.
 
 ## How the pieces fit
 
@@ -44,20 +95,25 @@ bootstrap.py   TEXTUAL_* env, applied before the first `import textual` (it cach
 polyfills.py   runtime bugs, quarantined and reported
 driver.py      WasmDriverBase  ->  CaptureDriver (sink: a list)
 browser.py     WasmDriverBase  ->  BrowserDriver (sink: xterm.js)
-app.py         the Textual app under test — ordinary, with no WASM awareness
-probe.py       the experiment
-compare.py     the verdict
+target.py      which app, and how a harness knows it drew
+probe.py       the experiment, over any app
+check.py       every runtime this machine has, and the comparisons
+substitutions  the registry: one source for the analyser, the guards and the docs
 ```
 
-Selecting a driver needs no patch to Textual: `TEXTUAL_DRIVER=module:Symbol` is a supported
-hook (`textual/app.py:1585`).
+Nothing in the probe, the driver, the app or the report may branch on `sys.platform` — a
+semgrep rule enforces it. Runtime differences are confined to `polyfills.py` and recorded in
+the report, so a WASM run can never look accidentally native.
 
 ## Development
 
 ```bash
 poetry install
+pnpm install                                 # only for the wasm and browser legs of `check`
 poetry run pytest                            # includes a selftest of the semgrep rules
 pnpm lint:all                                # eslint (css + js), stylelint, principled-css
-poetry run textual-wasm-spike pins           # regenerate wasm-requirements.txt
+poetry run textual-wasm pins                 # regenerate wasm-requirements.txt
+poetry run textual-wasm matrix -o docs/porting-matrix.md
 git config core.hooksPath .githooks          # lint, types, complexity, policy, tests
+./scripts/run-spike.sh                       # the whole matrix, strictly
 ```

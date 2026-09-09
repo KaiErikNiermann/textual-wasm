@@ -1,7 +1,8 @@
 """Commands that help someone port an app: what will break, and what to install.
 
-The doctor and the pin generator both read the same registry the runtime diagnostics raise
-from, so a developer never gets one answer before running and a different one during.
+The doctor, the pin generator and the porting matrix all read the same registry the runtime
+diagnostics raise from, so a developer never gets one answer from the docs, another before
+running and a third during.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from rich.console import Console
 from textual_wasm import doctor as doctor_module
 from textual_wasm.cli._app import app
 from textual_wasm.cli._render import render_dependencies, render_findings
+from textual_wasm.docs import MATRIX_PATH, render_matrix
 from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.report import CheckId
 
@@ -68,3 +70,36 @@ def schema() -> None:
 
 if __name__ == "__main__":
     app()
+
+
+@app.command()
+def matrix(
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help=f"Write here instead of stdout, e.g. {MATRIX_PATH}."),
+    ] = None,
+    verify: Annotated[
+        bool,
+        typer.Option("--check", help="Exit non-zero if the file on disk is out of date."),
+    ] = False,
+) -> None:
+    """Render the porting matrix from the substitution registry.
+
+    The matrix is generated rather than maintained, because a hand-written porting table is
+    the first thing to rot: nothing fails when the runtime changes underneath it. `--check`
+    is the CI form, which turns that silence into a failure.
+    """
+    rendered = render_matrix()
+    if output is None:
+        typer.echo(rendered, nl=False)
+        return
+    if verify:
+        current = output.read_text(encoding="utf-8") if output.exists() else ""
+        if current != rendered:
+            typer.echo(f"{output} is out of date; run `textual-wasm matrix -o {output}`", err=True)
+            raise typer.Exit(1)
+        typer.echo(f"{output} is up to date")
+        return
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(rendered, encoding="utf-8")
+    typer.echo(f"wrote {output}")
