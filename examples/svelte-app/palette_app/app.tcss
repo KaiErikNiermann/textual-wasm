@@ -1,0 +1,26 @@
+#body {
+    padding: 1 2;
+}
+
+#chart {
+    height: 5;
+    margin-top: 1;
+}
+
+#progress {
+    margin-top: 1;
+}
+
+#buttons {
+    height: auto;
+    margin-top: 1;
+}
+
+#buttons Button {
+    margin-right: 2;
+}
+
+#current {
+    color: $text-muted;
+    margin-top: 1;
+}

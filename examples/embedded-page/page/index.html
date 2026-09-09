@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A terminal in a page</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='14' font-family='monospace'%3E%26gt;_%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles/index.css" />
+    <link rel="stylesheet" href="./styles/embed.css" />
+  </head>
+  <body class="page article">
+    <article class="prose">
+      <h1>A terminal in a page</h1>
+      <p>
+        The panel below is a Textual application: CPython compiled to WebAssembly, running in
+        this tab, rendering into an <code>xterm.js</code> terminal. It is one element among
+        several on this page rather than the page itself.
+      </p>
+
+      <div class="embed">
+        <div class="terminal-frame">
+          <div id="terminal" class="terminal-mount"></div>
+        </div>
+        <!-- Ordinary buttons. They send a keystroke through xterm's own user-input entry
+             point, so the app cannot tell them from a keyboard - and needs no JavaScript API
+             of its own to be driven from here. -->
+        <nav class="controls" aria-label="Panels">
+          <button type="button" data-key="1">Overview</button>
+          <button type="button" data-key="2">Rendering</button>
+          <button type="button" data-key="3">Control</button>
+        </nav>
+      </div>
+
+      <p id="status" class="status" data-state="booting">starting&hellip;</p>
+
+      <h2>How the buttons work</h2>
+      <p>
+        The page publishes nothing to the application and the application publishes nothing to
+        the page. The only thing crossing between them is a keystroke:
+      </p>
+      <pre><code>document.querySelector("[data-key]").addEventListener("click", (event) =&gt; {
+  globalThis.textualWasm.input(event.currentTarget.dataset.key);
+});</code></pre>
+      <p>
+        <code>globalThis.textualWasm</code> appears once the app is running and carries
+        <code>input()</code>, <code>screen()</code>, <code>columns</code>, <code>rows</code>
+        and a <code>finished</code> promise. That is the whole surface.
+      </p>
+    </article>
+    <script type="module" src="./main.mjs"></script>
+    <script type="module" src="./controls.mjs"></script>
+  </body>
+</html>

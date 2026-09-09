@@ -13,9 +13,12 @@ import unicorn from "eslint-plugin-unicorn";
 import { tailwind4 } from "tailwind-csstree";
 
 export default defineConfig([
+  // Global ignores: an object with only `ignores` applies to every config below. Build
+  // output is a copy of files already linted where they are written, so linting it again
+  // reports every finding twice - and reports them at a path nobody can fix.
+  { ignores: ["node_modules/**", "**/dist/**", "**/dist-*/**", "docs/_build/**"] },
   {
     files: ["**/*.mjs", "**/*.js"],
-    ignores: ["node_modules/**"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

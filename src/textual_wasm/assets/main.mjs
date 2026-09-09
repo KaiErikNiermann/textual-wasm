@@ -20,9 +20,20 @@ const SITE_PACKAGES = "/lib/python3.14/site-packages";
  * Everything the page needs to know about the app it is hosting, written by
  * `textual-wasm build`. Keeping it in a file rather than in this script means one page
  * serves every application, and a rebuild is a data change.
+ *
+ * Resolved against this module's own URL, not the document's. That is what lets a build be
+ * served from a subdirectory of someone else's site - `/terminal/main.mjs` finds
+ * `/terminal/app.json` while the page itself lives at `/`. A document-relative path only
+ * works when the build *is* the site.
  */
-const MANIFEST_URL = "./app.json";
+const MANIFEST_URL = new URL("app.json", import.meta.url);
 const HOST_MODULE = "textual_wasm_host";
+
+/**
+ * Used when the host page defines no `--font-terminal`. A real fixed-pitch stack, because
+ * the font is what decides how wide a character cell is.
+ */
+const FALLBACK_TERMINAL_FONT = '"IBM Plex Mono", "DejaVu Sans Mono", ui-monospace, monospace';
 
 /*
  * The automation surface is published as `globalThis.textualWasm`, deliberately and not as a
@@ -110,13 +121,16 @@ function createTerminal({ Terminal, FitAddon }) {
   const styles = getComputedStyle(document.documentElement);
   const terminal = new Terminal({
     // Taken from the token table rather than restated, so the font that decides cell
-    // widths has exactly one definition (PC-1).
-    fontFamily: styles.getPropertyValue("--font-terminal").trim(),
+    // widths has exactly one definition (PC-1) - but with a fallback, because a page that
+    // embeds this build supplies its own stylesheet and need not know that token exists.
+    // An empty fontFamily leaves xterm on its own default, and the font is what decides
+    // cell widths, so silently accepting one is how a render goes subtly wrong.
+    fontFamily: styles.getPropertyValue("--font-terminal").trim() || FALLBACK_TERMINAL_FONT,
     // Textual renders truecolor and expects to own the whole grid.
     allowProposedApi: true,
     convertEol: false,
     cursorBlink: false,
-    theme: { background: styles.getPropertyValue("--color-terminal-bg").trim() },
+    theme: { background: styles.getPropertyValue("--color-terminal-bg").trim() || undefined },
   });
   const container = document.querySelector("#terminal");
   const fitAddon = new FitAddon();
@@ -208,7 +222,13 @@ async function readManifest() {
   if (!response.ok) {
     throw new Error(`no ${MANIFEST_URL}; run \`textual-wasm build\` to produce one`);
   }
-  return response.json();
+  const manifest = await response.json();
+  // The manifest's own relative URLs are relative to *it*, for the same reason.
+  return {
+    ...manifest,
+    sourcesUrl: new URL(manifest.sourcesUrl, MANIFEST_URL),
+    entryUrl: new URL(manifest.entryUrl, MANIFEST_URL),
+  };
 }
 
 async function main() {
@@ -270,10 +290,16 @@ async function main() {
     finished,
   };
 
-  await finished;
-  // Said plainly rather than left blank: a terminal app that has exited leaves its last
-  // frame on screen, which is indistinguishable from one that has frozen.
-  setStatus("failed", "the application exited");
+  // Attached rather than awaited, and that distinction is the whole embedding story: a
+  // module whose top-level evaluation waits for the application to exit never finishes
+  // evaluating, so `await import("./main.mjs")` from a host page hangs forever - which is
+  // exactly what happened to the Svelte example. Said plainly on exit rather than left
+  // blank, because a terminal app that has exited leaves its last frame on screen, which is
+  // indistinguishable from one that has frozen.
+  const onExit = () => setStatus("failed", "the application exited");
+  const onCrash = (error) => setStatus("failed", `the application crashed: ${error}`);
+  // eslint-disable-next-line unicorn/prefer-await -- awaiting here is precisely the bug
+  finished.then(onExit).catch(onCrash);
 }
 
 try {

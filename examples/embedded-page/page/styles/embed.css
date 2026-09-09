@@ -1,0 +1,95 @@
+/* Page chrome for an embedded terminal, as an example of `textual-wasm build --template`.
+
+   Everything lands in the `overrides` layer the shipped stylesheet declares and leaves empty,
+   so these rules win by position rather than by specificity (PC-5), and every value still
+   comes from the tokens the page already ships (PC-1). */
+
+@layer overrides {
+  /* This page's own token. The shipped table has no "how tall is an embedded terminal"
+     entry because that is a property of *this* layout, not of the design system - so it is
+     bound here, once, and consumed by name below (PC-1). */
+  :root {
+    --embed-terminal-block-size: 24rem;
+  }
+
+  .article {
+    display: block;
+    background: var(--color-surface);
+    block-size: auto;
+    min-block-size: 100dvb;
+    padding-block: var(--space-5);
+    padding-inline: var(--space-4);
+  }
+
+  .prose {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    inline-size: min(var(--measure), 100%);
+    margin-inline: auto;
+  }
+
+  .prose h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-3);
+    line-height: var(--line-tight);
+  }
+
+  .prose h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-2);
+  }
+
+  .prose pre {
+    background: var(--color-terminal-bg);
+    border-radius: var(--radius-1);
+    color: var(--color-ink-dim);
+    font-family: var(--font-terminal);
+    font-size: var(--text-1);
+    overflow: auto;
+    padding: var(--space-3);
+  }
+
+  /* The terminal is a component here, so it is given a size rather than taking the viewport.
+     A character grid needs a real block size to be measured against; `auto` would collapse
+     it to nothing. */
+  .embed {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .embed .terminal-frame {
+    block-size: var(--embed-terminal-block-size);
+    border: var(--space-1) solid var(--color-edge);
+    border-radius: var(--radius-2);
+    padding: var(--space-3);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .controls button {
+    background: transparent;
+    border: var(--space-1) solid var(--color-edge);
+    border-radius: var(--radius-1);
+    color: var(--color-ink);
+    cursor: pointer;
+    font: inherit;
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+
+  .controls button:hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+  }
+
+  /* In the flow here rather than pinned to a corner: this page has content of its own, and a
+     floating overlay would sit on top of it. */
+  .article .status {
+    position: static;
+  }
+}

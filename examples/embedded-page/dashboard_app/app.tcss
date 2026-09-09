@@ -1,0 +1,12 @@
+#body {
+    padding: 1 2;
+}
+
+#panel-title {
+    color: $accent;
+    margin-bottom: 1;
+}
+
+#panel-body {
+    color: $text;
+}
