@@ -23,10 +23,13 @@ time.sleep(0.5)  # textual-wasm: allow time.sleep - CLI-only path, never reached
 ## `textual-wasm build`
 
 ```console
-$ textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR] [-r DIST]...
+$ textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR] [--worker] [-r DIST]...
 ```
 
 Writes a self-contained static site. See {doc}`usage` and {doc}`embedding`.
+
+`--worker` runs the interpreter in a Web Worker so a slow call does not freeze the page. It
+needs no special headers and deploys to the same static hosts. See {doc}`workers`.
 
 ## `textual-wasm dev`
 
@@ -41,10 +44,13 @@ server is not a deployment target.
 
 ```console
 $ textual-wasm check [--app module:App] [--ready-marker T] [--keys K] [--settled-marker T]
-                     [--width N] [--height N] [--strict]
+                     [--width N] [--height N] [--browser ENGINE] [--worker] [--strict]
 ```
 
 Runs the app on every runtime available and compares them. See {doc}`usage`.
+
+`--worker` builds the browser leg to run Python in a Web Worker. The render must come out
+identical, so this is the same comparison rather than a weaker one — see {doc}`workers`.
 
 ## `textual-wasm pins`
 

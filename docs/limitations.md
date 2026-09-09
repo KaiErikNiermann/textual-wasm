@@ -76,10 +76,21 @@ neither is wired up here yet.
 Deliberate v1 choices. These are the ones that could move, and the list is honest about what
 that would take.
 
-**Main thread only.** No Web Worker, which means a slow `on_mount` blocks the page, and it also
-means **no COOP/COEP headers are needed** — the simplest deployment works, including GitHub
-Pages. The driver is written to be worker-agnostic, so this is deferred rather than designed
-out.
+**Main thread by default; a Web Worker is one flag away.** By default the interpreter shares a
+thread with the page, so a slow `on_mount` freezes the tab — measured at a **1333 ms** gap
+between animation frames while a Textual app spent about a second in a synchronous loop.
+`textual-wasm build --worker` moves the interpreter off that thread, and the same measurement
+becomes **16.8 ms**, one frame. Both builds render identically; `textual-wasm check --worker`
+runs the full four-runtime comparison against a worker build to keep that true.
+
+Neither mode needs COOP/COEP headers, so both deploy to GitHub Pages. That is not an accident
+of the current design: cross-origin isolation would be required to *block* the worker waiting
+on main-thread input, and Textual never needs to — its input path is a queue an async loop
+drains, so a message arriving whenever it arrives is the right shape.
+
+What a worker does **not** buy is threads. `sys._emscripten_info.pthreads` is `False` inside
+one exactly as it is on the main thread, so `@work(thread=True)` remains unavailable. The
+freeze does not get shorter; it moves somewhere the user cannot see it.
 
 **The render comparison assumes a deterministic screen.** `check` diffs cells, and it cannot
 tell a font-width bug from an app that drew something different. An app whose content depends
