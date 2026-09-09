@@ -20,11 +20,27 @@ from textual_wasm.cli._render import render_dependencies, render_findings
 from textual_wasm.docs import MATRIX_PATH, render_matrix
 from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.report import CheckId
+from textual_wasm.target import AppTarget
+
+
+def _source_of(source: str) -> Path:
+    """Resolve what to scan: a path, or the package an app reference lives in.
+
+    Both forms are accepted because every other command here names an application as
+    `module:AppClass`, and a single command that wants a path instead is the one people get
+    wrong - with a `FileNotFoundError` naming the entry string, which reads as a missing file
+    rather than as the wrong kind of argument.
+    """
+    if ":" not in source:
+        return Path(source)
+    return AppTarget(entry=source).package_directory()
 
 
 @app.command()
 def doctor(
-    source: Annotated[Path, typer.Argument(help="Application file or package directory.")],
+    source: Annotated[
+        str, typer.Argument(help="Application as 'module:AppClass', or a file or directory.")
+    ],
     requirement: Annotated[
         list[str] | None,
         typer.Option("--requirement", "-r", help="Distribution to classify. Repeatable."),
@@ -37,7 +53,7 @@ def doctor(
     the run - the app will tell you about those itself.
     """
     console = Console()
-    report = doctor_module.run(source, requirements=requirement or ())
+    report = doctor_module.run(_source_of(source), requirements=requirement or ())
     render_findings(report, console)
     render_dependencies(report, console)
 

@@ -13,11 +13,14 @@ has not started yet", and it would race the app rather than measure it.
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
+import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, Final, cast
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Generator, Mapping
 
     from textual.app import App
 
@@ -27,6 +30,29 @@ SPIKE_ENTRY: Final[str] = "textual_wasm.app:SpikeApp"
 
 class EntryError(ValueError):
     """Raised when a `module:AppClass` reference cannot be resolved."""
+
+
+@contextlib.contextmanager
+def working_directory_importable() -> Generator[None]:
+    """Put the working directory on `sys.path`, as `python -m` does.
+
+    A console script does not do this and `python -m` does, which would otherwise make
+    `textual-wasm probe --app myapp:App` fail on an application that `python -m myapp` runs
+    perfectly - and fail with a bare `ModuleNotFoundError`, which sends the reader looking
+    for a packaging mistake that is not there.
+
+    Applied wherever this package resolves an app reference, so every leg of a check reaches
+    the same application by the same rule.
+    """
+    cwd = str(Path.cwd())
+    if cwd in sys.path:
+        yield
+        return
+    sys.path.insert(0, cwd)
+    try:
+        yield
+    finally:
+        sys.path.remove(cwd)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -94,6 +120,31 @@ class AppTarget:
             settled_marker=_as_optional_str(source, "settled_marker"),
         )
 
+    def package_directory(self) -> Path:
+        """The directory of the package the app lives in, which a build has to copy.
+
+        Found through the import system rather than guessed from the entry string, so a
+        package installed anywhere works the same as one in the working directory.
+
+        Raises:
+            EntryError: If the app's top-level module is not a package. A single module has
+                no directory to copy, and the browser build needs one to reconstruct the
+                import path.
+        """
+        import importlib.util  # noqa: PLC0415 - deferred, like `load`
+
+        top_level = self.module_name.partition(".")[0]
+        with working_directory_importable():
+            spec = importlib.util.find_spec(top_level)
+        search = None if spec is None else spec.submodule_search_locations
+        locations = list(search) if search is not None else []
+        if not locations:
+            raise EntryError(
+                f"{top_level!r} is not a package, so there is no directory to build from; "
+                f"put the app in a package, or name the directory explicitly"
+            )
+        return Path(locations[0])
+
     def load(self) -> type[App[object]]:
         """Import the application class.
 
@@ -107,7 +158,8 @@ class AppTarget:
         """
         import importlib  # noqa: PLC0415 - deferred so importing this module stays cheap
 
-        module = importlib.import_module(self.module_name)
+        with working_directory_importable():
+            module = importlib.import_module(self.module_name)
         try:
             attribute = getattr(module, self.attribute)
         except AttributeError as error:

@@ -9,15 +9,8 @@ import pytest
 
 from textual_wasm import check as check_module
 from textual_wasm import node
-from textual_wasm.check import (
-    CheckReport,
-    Leg,
-    LegOutcome,
-    LegStatus,
-    package_directory,
-    run_check,
-)
-from textual_wasm.target import SPIKE_TARGET, AppTarget
+from textual_wasm.check import CheckReport, Leg, LegOutcome, LegStatus, run_check
+from textual_wasm.target import SPIKE_TARGET, AppTarget, EntryError
 
 UNAVAILABLE = node.NodeAvailability(node=None, resolve_from=None, missing=("pyodide",))
 
@@ -28,13 +21,13 @@ def _outcome(leg: Leg, status: LegStatus) -> LegOutcome:
 
 def test_the_apps_package_is_found_through_the_import_system() -> None:
     """Not guessed from the entry string, so an installed app works like a local one."""
-    assert package_directory(SPIKE_TARGET) == Path(check_module.__file__).parent
+    assert SPIKE_TARGET.package_directory() == Path(check_module.__file__).parent
 
 
 def test_a_single_module_app_is_refused_with_the_reason() -> None:
     """A build copies a directory; a lone module has none to copy."""
-    with pytest.raises(ValueError, match="not a package"):
-        package_directory(AppTarget(entry="dataclasses:Field"))
+    with pytest.raises(EntryError, match="not a package"):
+        AppTarget(entry="dataclasses:Field").package_directory()
 
 
 def test_a_skipped_leg_is_not_a_failure() -> None:

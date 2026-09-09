@@ -19,10 +19,8 @@ people to ignore its result; a check that silently drops half its legs is worse.
 
 from __future__ import annotations
 
-import contextlib
 import dataclasses
 import enum
-import importlib.util
 import json
 import logging
 import subprocess  # textual-wasm: allow subprocess.run - runs the native leg, native-only
@@ -43,8 +41,6 @@ from textual_wasm.terminal import TMUX, capture_target
 from textual_wasm.terminal import version as tmux_version
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
-
     from textual_wasm.screen import LineDiff, RenderedScreen
     from textual_wasm.target import AppTarget
 
@@ -135,49 +131,6 @@ def _target_arguments(target: AppTarget) -> list[str]:
     return arguments
 
 
-@contextlib.contextmanager
-def _working_directory_importable() -> Generator[None]:
-    """Put the working directory on `sys.path`, as `python -m` does.
-
-    Every other leg reaches the app through `python -m` or through a build, both of which
-    make the working directory importable. A console script does not, so without this an app
-    that every leg can run is one this lookup cannot find - and the check would refuse an
-    application that works.
-    """
-    cwd = str(Path.cwd())
-    if cwd in sys.path:
-        yield
-        return
-    sys.path.insert(0, cwd)
-    try:
-        yield
-    finally:
-        sys.path.remove(cwd)
-
-
-def package_directory(target: AppTarget) -> Path:
-    """The directory of the package the app lives in, which a build has to copy.
-
-    Found through the import system rather than guessed from the entry string, so a package
-    installed anywhere works the same as one in the working directory.
-
-    Raises:
-        ValueError: If the app's top-level module is not a package. A single module has no
-            directory to copy, and the browser leg needs one to reconstruct the import path.
-    """
-    top_level = target.module_name.partition(".")[0]
-    with _working_directory_importable():
-        spec = importlib.util.find_spec(top_level)
-    search = None if spec is None else spec.submodule_search_locations
-    locations = list(search) if search is not None else []
-    if not locations:
-        raise ValueError(
-            f"{top_level!r} is not a package, so there is no directory to build from; "
-            f"put the app in a package, or pass its directory explicitly"
-        )
-    return Path(locations[0])
-
-
 def _native_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, ProbeReport | None]:
     """Run the probe in a fresh interpreter through the shipped CLI.
 
@@ -217,7 +170,7 @@ def _native_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, P
 
 def _wasm_config(target: AppTarget, size: tuple[int, int], resolve_from: Path) -> dict[str, object]:
     """Everything the Pyodide harness needs, as JSON."""
-    packages = [Path(__file__).parent, package_directory(target)]
+    packages = [Path(__file__).parent, target.package_directory()]
     mounts = [
         {"root": str(package), "point": f"{MOUNT_ROOT}/{package.name}"}
         for package in dict.fromkeys(packages)
@@ -262,7 +215,7 @@ def _browser_leg(
         built = build_site(
             BuildSpec(
                 entry=target.entry,
-                package=package_directory(target),
+                package=target.package_directory(),
                 output=Path(directory),
             )
         )
