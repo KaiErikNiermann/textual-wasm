@@ -46,6 +46,10 @@ def check(
             ),
         ),
     ] = DEFAULT_BROWSER,
+    worker: Annotated[
+        bool,
+        typer.Option("--worker", help="Build the browser leg to run Python in a Web Worker."),
+    ] = False,
     strict: Annotated[
         bool,
         typer.Option("--strict", help="Also fail if a runtime could not be checked at all."),
@@ -66,6 +70,7 @@ def check(
         resolve_target(entry, ready_marker=ready_marker, keys=keys, settled_marker=settled_marker),
         size=(width, height),
         browser=browser,
+        worker=worker,
     )
     render_check(report, console)
 

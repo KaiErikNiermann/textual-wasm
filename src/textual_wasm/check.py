@@ -232,9 +232,14 @@ def _wasm_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, Pro
 
 
 def _browser_leg(
-    target: AppTarget, size: tuple[int, int], browser: str
+    target: AppTarget, size: tuple[int, int], browser: str, *, worker: bool = False
 ) -> tuple[LegOutcome, RenderedScreen | None]:
-    """Build the app, serve it, and read the grid a real browser engine renders."""
+    """Build the app, serve it, and read the grid a real browser engine renders.
+
+    `worker` builds the page that runs Python in a Web Worker instead of on the main thread.
+    The render must come out identical either way - that is the whole claim worker mode
+    makes - so this is the same comparison, not a weaker one.
+    """
     driver_package = node.SELENIUM_PACKAGE if browser == _SAFARI else node.PLAYWRIGHT_PACKAGE
     script = "safari-check.mjs" if browser == _SAFARI else "browser-check.mjs"
     available = node.availability([driver_package])
@@ -251,6 +256,7 @@ def _browser_leg(
                     entry=target.entry,
                     package=target.package_directory(),
                     output=Path(directory),
+                    worker=worker,
                 )
             )
             _log.debug("built %s for the browser leg", built.summary)
@@ -361,6 +367,7 @@ def run_check(
     *,
     size: tuple[int, int] = DEFAULT_SIZE,
     browser: str = DEFAULT_BROWSER,
+    worker: bool = False,
 ) -> CheckReport:
     """Run `target` on every runtime this machine offers and compare the results.
 
@@ -368,13 +375,14 @@ def run_check(
         target: The application, and the text that says it is ready and settled.
         size: The grid every leg is forced to, so the renders are comparable at all.
         browser: Which engine the browser leg uses. One of :data:`BROWSERS`.
+        worker: Build the browser leg's page to run Python in a Web Worker.
 
     Returns:
         What each leg did, and the two comparisons that can be made from what ran.
     """
     native_outcome, native = _native_leg(target, size)
     wasm_outcome, wasm = _wasm_leg(target, size)
-    browser_outcome, browser_screen = _browser_leg(target, size, browser)
+    browser_outcome, browser_screen = _browser_leg(target, size, browser, worker=worker)
     terminal_outcome, terminal = _terminal_leg(target, size)
     return CheckReport(
         target=target.entry,
