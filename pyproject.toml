@@ -146,5 +146,11 @@ markers = [
     # which is the exact failure the registry exists to prevent. Deselect with
     # `-m "not slow"` when working offline.
     "slow: re-measures a claim inside a real Pyodide runtime",
+    # Needs a Playwright browser *binary*, not just the package - `pnpm exec playwright
+    # install` territory. Separate from `slow` because the two have different remedies and
+    # because CI runs them in different jobs: only the `check` matrix has engines. Deselect
+    # with `-m "not browser"`; a machine without one otherwise sees a launch failure rather
+    # than a skip, which is the honest outcome for a measurement that cannot be taken.
+    "browser: drives a real browser engine",
 ]
 filterwarnings = ["error"]
