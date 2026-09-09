@@ -33,31 +33,41 @@ GENERATED_NOTICE: Final[str] = (
 SEVERITY_HEADINGS: Final[dict[Severity, tuple[str, str]]] = {
     Severity.SILENT_WRONG: (
         "Silent and wrong",
-        "No exception is raised and the behaviour is wrong. This is the class Pyodide's own "
-        "documentation does not cover, and the reason this project exists: every other kind "
-        "of failure announces itself.",
+        (
+            "No exception is raised and the behaviour is wrong. This is the class Pyodide's own "
+            "documentation does not cover, and the reason this project exists: every other kind "
+            "of failure announces itself."
+        ),
     ),
     Severity.FATAL: (
         "Fatal",
-        "Tears down the interpreter. Not a Python exception, so nothing catches it and "
-        "nothing runs afterwards - including whatever you would have used to report it.",
+        (
+            "Tears down the interpreter. Not a Python exception, so nothing catches it and "
+            "nothing runs afterwards - including whatever you would have used to report it."
+        ),
     ),
     Severity.LOUD_UNCLEAR: (
         "Loud but misleading",
-        "Raises, and the message sends you somewhere else - a symptom, a private module, or "
-        "a generic errno rather than the actual constraint. `textual_wasm.diagnostics` "
-        "rewrites exactly these.",
+        (
+            "Raises, and the message sends you somewhere else - a symptom, a private module, or "
+            "a generic errno rather than the actual constraint. `textual_wasm.diagnostics` "
+            "rewrites exactly these."
+        ),
     ),
     Severity.UNSUPPORTED: (
         "Absent",
-        "The module is not in the build, so it fails as an ordinary `ImportError` where you "
-        "imported it. Listed because knowing *before* you deploy is the point.",
+        (
+            "The module is not in the build, so it fails as an ordinary `ImportError` where you "
+            "imported it. Listed because knowing *before* you deploy is the point."
+        ),
     ),
     Severity.LOUD_CLEAR: (
         "Already clear",
-        "Raises with a message that says what is wrong and often how to fix it. Recorded so "
-        "the runtime translator leaves them alone: replacing a good message with a generic "
-        "one would be a regression.",
+        (
+            "Raises with a message that says what is wrong and often how to fix it. Recorded so "
+            "the runtime translator leaves them alone: replacing a good message with a generic "
+            "one would be a regression."
+        ),
     ),
 }
 """Section title and preamble per severity, in the order the document presents them.
@@ -118,15 +128,19 @@ def render_matrix() -> str:
         "",
         "# Porting matrix",
         "",
-        f"What behaves differently under Pyodide {PYODIDE_VERSION}, measured rather than "
-        "transcribed. Pyodide's own documentation lists `termios`, `fcntl`, `pty` and `tty` "
-        "as removed; in this version all four import successfully. Every row below carries "
-        "the snippet used to observe it, and a characterisation test re-runs those snippets "
-        "inside a real Pyodide, so a runtime change fails the suite instead of quietly "
-        "making this page wrong.",
+        (
+            f"What behaves differently under Pyodide {PYODIDE_VERSION}, measured rather than "
+            "transcribed. Pyodide's own documentation lists `termios`, `fcntl`, `pty` and `tty` "
+            "as removed; in this version all four import successfully. Every row below carries "
+            "the snippet used to observe it, and a characterisation test re-runs those snippets "
+            "inside a real Pyodide, so a runtime change fails the suite instead of quietly "
+            "making this page wrong."
+        ),
         "",
-        "Run `textual-wasm doctor <module:App>` to find these in your own source, with a "
-        "`file:line` for each.",
+        (
+            "Run `textual-wasm doctor <module:App>` to find these in your own source, with a "
+            "`file:line` for each."
+        ),
         "",
     ]
     for severity in SEVERITY_HEADINGS:
@@ -136,16 +150,22 @@ def render_matrix() -> str:
         "",
         "Things that work, and are worth naming because they are commonly assumed not to:",
         "",
-        "- `requests` and `httpx` work in a browser. Pyodide patches httpx, and bundled "
-        "`urllib3` ships an Emscripten backend that routes through JSPI, a worker, or XHR. "
-        "CORS applies, and timeouts, certificates and proxies are not controllable.",
-        "- C-extension dependencies are no longer limited to what Pyodide bundles: a package "
-        "can publish a `pyemscripten` wasm wheel to PyPI and `micropip` installs it. The "
-        "inverse is the new constraint - a package that only exists as a Pyodide-bundled "
-        "native wheel pins you to Pyodide's version of it.",
-        "- `SharedArrayBuffer` does **not** unlock Python threads. It buys the interrupt "
-        "buffer and urllib3's streaming worker. `@work(thread=True)` is unavailable in any "
-        "configuration of this build.",
+        (
+            "- `requests` and `httpx` work in a browser. Pyodide patches httpx, and bundled "
+            "`urllib3` ships an Emscripten backend that routes through JSPI, a worker, or XHR. "
+            "CORS applies, and timeouts, certificates and proxies are not controllable."
+        ),
+        (
+            "- C-extension dependencies are no longer limited to what Pyodide bundles: a package "
+            "can publish a `pyemscripten` wasm wheel to PyPI and `micropip` installs it. The "
+            "inverse is the new constraint - a package that only exists as a Pyodide-bundled "
+            "native wheel pins you to Pyodide's version of it."
+        ),
+        (
+            "- `SharedArrayBuffer` does **not** unlock Python threads. It buys the interrupt "
+            "buffer and urllib3's streaming worker. `@work(thread=True)` is unavailable in any "
+            "configuration of this build."
+        ),
         "",
     ]
     return "\n".join(lines) + "\n"
