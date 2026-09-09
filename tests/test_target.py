@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from textual_wasm.app import HINT_TEMPLATE, MARKER, SpikeApp
@@ -52,3 +54,47 @@ def test_markers_given_on_the_command_line_win() -> None:
     resolved = resolve_target(SPIKE_ENTRY, ready_marker="something else", keys="")
     assert resolved.ready_marker == "something else"
     assert resolved.keys == ""
+
+
+def test_verify_accepts_an_app() -> None:
+    assert AppTarget(entry="tests.bare_app:BareApp").verify() is None
+
+
+def test_verify_rejects_something_that_is_not_an_app() -> None:
+    """Resolving is not enough; the name has to be runnable."""
+    with pytest.raises(EntryError, match="not a Textual App"):
+        AppTarget(entry="tests.bare_app:Static").verify()
+
+
+def test_verify_rejects_a_missing_attribute() -> None:
+    with pytest.raises(EntryError, match="has no 'Nope'"):
+        AppTarget(entry="tests.bare_app:Nope").verify()
+
+
+def test_verify_rejects_a_missing_entry_module() -> None:
+    """A module that does not exist is a typo, and typos are the point of this check."""
+    with pytest.raises(ModuleNotFoundError):
+        AppTarget(entry="no_such_module_at_all:App").verify()
+
+
+def test_verify_tolerates_a_dependency_that_only_exists_in_the_browser(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An app may import a distribution `micropip` installs at boot and this machine lacks.
+
+    Declaring one with `--requirement` is the supported way to do that, so failing the build
+    would reject a correct project - and pushing people to switch verification off wholesale
+    would lose the check for the typos it exists to catch.
+    """
+    package = tmp_path / "browser_only"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "app.py").write_text(
+        "import a_distribution_installed_by_micropip\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    note = AppTarget(entry="browser_only.app:Whatever").verify()
+
+    assert note is not None
+    assert "a_distribution_installed_by_micropip" in note

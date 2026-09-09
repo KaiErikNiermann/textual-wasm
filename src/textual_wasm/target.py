@@ -145,11 +145,15 @@ class AppTarget:
             )
         return Path(locations[0])
 
-    def load(self) -> type[App[object]]:
-        """Import the application class.
+    def resolve(self) -> object:
+        """Import the module and return whatever the entry names, unchecked.
+
+        Separate from `load` because `load` asserts the result is an application and this
+        does not. Anything that wants to *test* that claim - `verify` does - has to see the
+        value before the assertion is made, or it is only testing the assertion.
 
         Returns:
-            The class named by `entry`.
+            The attribute named by `entry`.
 
         Raises:
             EntryError: If the module imports but has no such attribute. An import failure
@@ -161,13 +165,70 @@ class AppTarget:
         with working_directory_importable():
             module = importlib.import_module(self.module_name)
         try:
-            attribute = getattr(module, self.attribute)
+            return getattr(module, self.attribute)
         except AttributeError as error:
             raise EntryError(f"{self.module_name} has no {self.attribute!r}") from error
+
+    def load(self) -> type[App[object]]:
+        """Import the application class.
+
+        Returns:
+            The class named by `entry`.
+
+        Raises:
+            EntryError: If the module imports but has no such attribute.
+        """
         # An arbitrary app is `App[Whatever]`, and nothing here reads its return value as
         # anything but an object, so this narrows a genuinely unknown parameter rather than
         # papering over one that could be inferred.
-        return cast("type[App[object]]", attribute)
+        return cast("type[App[object]]", self.resolve())
+
+    def verify(self) -> str | None:
+        """Check that this entry names something a build could actually run.
+
+        A build is a long way from its first run - the page has to be deployed, opened, and
+        several seconds of runtime booted before anything imports the entry - so an entry
+        that cannot resolve surfaces as a traceback in someone's browser rather than as an
+        error where the mistake was made. The malformed shape is already rejected when an
+        `AppTarget` is constructed; what is left is a module that does not exist, an
+        attribute that does not exist, and a name that resolves to something which is not an
+        application at all.
+
+        One import failure is not a mistake, and telling the two apart is most of the rule
+        here. An application built for the browser may depend on a distribution `micropip`
+        installs at boot and which is absent from the machine doing the build - declaring
+        one with `--requirement` is the supported way to do exactly that. So a
+        `ModuleNotFoundError` naming the entry's *own* module is a typo and fails, while one
+        naming anything else is a dependency arriving later, and means only that this check
+        could not run.
+
+        Returns:
+            None when the entry was checked and is sound, or a note saying why it could not
+            be checked - which the caller should show, because an unverified build is weaker
+            than a verified one and the difference should not be silent.
+
+        Raises:
+            EntryError: If the attribute is missing or does not name a Textual `App`.
+            ModuleNotFoundError: If the entry's own module does not exist.
+        """
+        from textual.app import App  # noqa: PLC0415 - deferred, like `load`
+
+        try:
+            target = self.resolve()
+        except ModuleNotFoundError as error:
+            if (error.name or "").partition(".")[0] == self.module_name.partition(".")[0]:
+                raise
+            return (
+                f"could not check the entry: importing {self.module_name} needs "
+                f"{error.name!r}, which is not installed here - expected if the browser "
+                f"installs it from --requirement"
+            )
+        if isinstance(target, type) and issubclass(target, App):
+            return None
+        # `type(x).__name__` on a class is its *metaclass*, which for a Textual widget reads
+        # as "_MessagePumpMeta" and sends the reader somewhere irrelevant.
+        described = f"the class {target.__name__}" if isinstance(target, type) else repr(target)
+        raise EntryError(f"{self.entry} is {described}, which is not a Textual App subclass")
 
 
 def _as_str(source: Mapping[str, object], key: str) -> str:
