@@ -78,6 +78,9 @@ class RuntimeFacts:
     eager_task_factory_accepted: bool
     """Whether the loop honoured `set_task_factory`, which `App.run_async` attempts."""
 
+    polyfills_applied: tuple[str, ...]
+    """Runtime shims this host needed, so a WASM run can never look accidentally native."""
+
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class ProbeReport:

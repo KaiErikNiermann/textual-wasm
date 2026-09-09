@@ -18,6 +18,7 @@ from textual import constants
 from textual.geometry import Size
 from textual.pilot import Pilot
 
+from textual_wasm import APPLIED_POLYFILLS
 from textual_wasm.app import EXIT_CODE, MARKER, SpikeApp
 from textual_wasm.bootstrap import DRIVER_IMPORT_PATH
 from textual_wasm.driver import DEFAULT_SIZE, CaptureDriver, active_driver
@@ -202,6 +203,7 @@ def _collect_runtime_facts(loop: asyncio.AbstractEventLoop) -> RuntimeFacts:
         event_loop=type(loop).__name__,
         threads_available=_threads_available(),
         eager_task_factory_accepted=_eager_task_factory_accepted(loop),
+        polyfills_applied=APPLIED_POLYFILLS,
     )
 
 
