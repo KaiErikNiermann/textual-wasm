@@ -76,6 +76,9 @@ jobs:
 
   github-release:
     needs: build
+    # A manual dispatch from a branch is a useful dry run of verify + build; it must not
+    # produce a release, because there is no tag for one to be named after.
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -96,6 +99,7 @@ jobs:
     # configured this job reports that it was skipped and why, which is more useful than a red
     # cross on every release.
     needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
