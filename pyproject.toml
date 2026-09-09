@@ -114,7 +114,8 @@ ignore = [
 # A Typer command's options *are* its parameters: there is no object to group them into that
 # the decorator would still read. The rule is about functions that grew too many arguments,
 # and a command with four ways to name an application and two to size a grid is not that.
-"src/textual_wasm/cli/*" = ["PLR0913"]
+# PLR0917 is the same judgement for the positional-only count, stabilised in ruff 0.16.
+"src/textual_wasm/cli/*" = ["PLR0913", "PLR0917"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
