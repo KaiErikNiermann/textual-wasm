@@ -20,6 +20,38 @@ MARKER: Final[str] = "TEXTUAL-WASM-SPIKE"
 HINT_ID: Final[str] = "hint"
 """Widget whose text reports the key-press count, so input is visible and not just asserted."""
 
+WIDTH_SAMPLES: Final[tuple[tuple[str, str], ...]] = (
+    ("ascii", "abcdef"),
+    ("box", "\u2500\u2502\u250c\u2510\u2514\u2518\u251c\u2524"),
+    ("arrows", "\u2190\u2191\u2192\u2193"),
+    ("braille", "\u2801\u2802\u2803\u2804\u2805"),
+    ("cjk", "\u4e16\u754c\u65e5\u672c\u8a9e"),
+    ("combining", "e\u0301a\u0300"),
+    ("astral", "\U0001f680\U0001f4bb"),
+)
+"""Character classes whose cell width three different tables have to agree on.
+
+Textual lays out with rich's `cell_len`, `pyte` replays with `wcwidth`, and `xterm.js` uses
+its own - none of them shared code. Each sample is followed by a terminator in
+:data:`WIDTH_TERMINATOR`, so a disagreement moves that character into a different column and
+the screen diff names the row and the column rather than merely failing.
+
+Ordered easiest-first: ASCII and box drawing are unanimous, CJK is where a naive table goes
+wrong, and astral-plane characters are where a UTF-16 emulator can miscount.
+
+Two classes are deliberately absent, and their absence is a finding rather than an
+omission. `pyte` 0.8.2 **silently discards the remainder of the line** after a zero-width
+joiner (U+200D) or a variation selector (U+FE0F): fed `"\N{WARNING SIGN}\ufe0f|"` it
+renders `"\N{WARNING SIGN}"` and the terminator is gone. `xterm.js` preserves both. So on
+emoji sequences the oracle is wrong and the browser is right, which means pyte cannot
+adjudicate them at all - including them would only measure the measuring instrument.
+Settling emoji needs a different reference, such as a real terminal captured through
+`tmux capture-pane`.
+"""
+
+WIDTH_TERMINATOR: Final[str] = "|"
+"""Marks where the preceding sample ended. A width disagreement shifts it."""
+
 EXIT_CODE: Final[int] = 7
 """Arbitrary non-zero, non-default value, so `run_async` returning it cannot be a coincidence."""
 
@@ -55,6 +87,8 @@ class SpikeApp(App[int]):
     def compose(self) -> ComposeResult:
         yield Label(MARKER, id="marker")
         yield Static(id=HINT_ID)
+        for name, sample in WIDTH_SAMPLES:
+            yield Static(f"{name:<10}{sample}{WIDTH_TERMINATOR}", classes="width-sample")
 
     def on_mount(self) -> None:
         self._refresh_hint()

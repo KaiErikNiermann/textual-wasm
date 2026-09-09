@@ -18,6 +18,7 @@ study flagged - located to the character rather than described.
 from __future__ import annotations
 
 import dataclasses
+import unicodedata
 from typing import TYPE_CHECKING
 
 import pyte
@@ -69,13 +70,19 @@ class RenderedScreen:
 
 
 def normalise(lines: tuple[str, ...]) -> tuple[str, ...]:
-    """Strip trailing blanks from each row and drop trailing blank rows.
+    """Reduce a grid to what a reader would actually see.
 
-    Emulators disagree about whether an untouched cell is a space or nothing - `pyte` pads
-    every row to full width, `xterm.js` trims - and that difference says nothing about
-    rendering. Normalising both sides is what leaves only real disagreements.
+    Two adjustments, both because a difference in how a cell is *represented* is not a
+    difference in what it renders:
+
+    * Trailing blanks go. Emulators disagree about whether an untouched cell is a space or
+      nothing - `pyte` pads every row to full width, `xterm.js` trims.
+    * Text is composed to NFC. `pyte` merges a combining mark into the cell it modifies and
+      yields the composed character; `xterm.js` hands back the codepoints it was sent. Both
+      occupy one column and paint the same glyph, so `e` + U+0301 and `é` are the same
+      render and must not be reported as a divergence.
     """
-    stripped = [line.rstrip() for line in lines]
+    stripped = [unicodedata.normalize("NFC", line).rstrip() for line in lines]
     while stripped and not stripped[-1]:
         stripped.pop()
     return tuple(stripped)
