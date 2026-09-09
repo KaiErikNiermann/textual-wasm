@@ -36,7 +36,8 @@ step "semgrep (conventions + core-utils)"
 # EIO_BACKEND=posix: without it semgrep-core fails intermittently on this machine with
 # `Unix_error: Cannot allocate memory io_uring_queue_init`, and returns an empty results
 # list - a crashed scan then looks exactly like a clean one.
-EIO_BACKEND=posix poetry run semgrep --config .semgrep --metrics=off --error --quiet src
+EIO_BACKEND=posix poetry run semgrep --config .semgrep/conventions.yml \
+  --config .semgrep/core-utils.yml --metrics=off --error --quiet src
 
 step "eslint + stylelint + principled-css"
 # Added after a stylesheet in an example shipped unlayered: the JavaScript and CSS gates

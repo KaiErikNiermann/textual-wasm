@@ -21,6 +21,16 @@ import yaml
 
 PROJECT_ROOT: Final[Path] = Path(__file__).resolve().parent.parent
 RULES_DIR: Final[Path] = PROJECT_ROOT / ".semgrep"
+RULESETS: Final[tuple[Path, ...]] = (
+    RULES_DIR / "conventions.yml",
+    RULES_DIR / "core-utils.yml",
+)
+"""This project's own rules, named rather than globbed.
+
+`.semgrep/vendor/` holds a ruleset copied from elsewhere, and it is deliberately outside this
+selftest: its rules are about markup this repository barely has, so "every rule fires on the
+positive fixture" would be false for reasons that say nothing about either rule set.
+"""
 FIXTURES: Final[Path] = Path(__file__).resolve().parent / "semgrep"
 
 SEMGREP_ENV: Final[dict[str, str]] = {
@@ -44,8 +54,7 @@ def _scan(target: Path) -> dict[str, Any]:
     completed = subprocess.run(  # noqa: S603 - fixed argv, no shell, paths are ours
         [
             SEMGREP,
-            "--config",
-            str(RULES_DIR),
+            *[argument for ruleset in RULESETS for argument in ("--config", str(ruleset))],
             "--metrics=off",
             "--json",
             "--quiet",
@@ -64,7 +73,7 @@ def _scan(target: Path) -> dict[str, Any]:
 
 def _declared_rule_ids() -> set[str]:
     ids: set[str] = set()
-    for ruleset in sorted(RULES_DIR.glob("*.yml")):
+    for ruleset in RULESETS:
         document: Any = yaml.safe_load(ruleset.read_text(encoding="utf-8"))
         ids.update(rule["id"] for rule in document["rules"])
     return ids

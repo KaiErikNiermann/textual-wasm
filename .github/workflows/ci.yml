@@ -57,7 +57,9 @@ jobs:
             exit 1
           fi
       - name: semgrep (conventions + core-utils)
-        run: poetry run semgrep --config .semgrep --metrics=off --error --quiet src
+        run: |
+          poetry run semgrep --config .semgrep/conventions.yml \
+            --config .semgrep/core-utils.yml --metrics=off --error --quiet src
       - name: eslint + stylelint + principled-css
         # A stylesheet in an example shipped unlayered because these gates existed but were
         # only ever run by hand.
