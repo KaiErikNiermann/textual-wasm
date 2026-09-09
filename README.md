@@ -1,8 +1,17 @@
 # textual-wasm
 
+[![ci](https://github.com/KaiErikNiermann/textual-wasm/actions/workflows/ci.yml/badge.svg)](https://github.com/KaiErikNiermann/textual-wasm/actions/workflows/ci.yml)
+[![docs](https://github.com/KaiErikNiermann/textual-wasm/actions/workflows/pages.yml/badge.svg)](https://kaierikniermann.github.io/textual-wasm/)
+[![python](https://img.shields.io/badge/python-3.12%2B-blue)](https://kaierikniermann.github.io/textual-wasm/installation.html)
+[![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+
 Ship one [Textual](https://github.com/Textualize/textual) application as **both** a terminal
 TUI and a fully client-side web page — same source, no server-side Python process, no fork of
 Textual.
+
+**[Documentation](https://kaierikniermann.github.io/textual-wasm/)** ·
+**[Live demos](https://kaierikniermann.github.io/textual-wasm/examples.html)** ·
+**[Porting guide](https://kaierikniermann.github.io/textual-wasm/porting.html)**
 
 ```bash
 textual-wasm build myapp.main:App myapp -o dist/   # a static directory
@@ -83,12 +92,31 @@ that import fine in 314.0.6, which is what a hand-maintained table gets you.
 
 ## Documentation
 
-- [`examples/simple-app`](./examples/simple-app) — a complete Textual app, self-contained,
-  that runs in a terminal and builds to a web page. Start here.
-- [Porting guide](./docs/porting-guide.md) — what to change, in the order you hit it.
-- [Porting matrix](./docs/porting-matrix.md) — every measured difference. Generated.
+The [documentation site](https://kaierikniermann.github.io/textual-wasm/) is itself the proof:
+every demo on it is a real build of a real Textual app, running in your browser, served as
+static files by GitHub Pages.
+
+- [Quickstart](https://kaierikniermann.github.io/textual-wasm/quickstart.html) — a new app in a
+  browser in five minutes.
+- [Porting guide](https://kaierikniermann.github.io/textual-wasm/porting.html) — moving an app
+  you already have.
+- [Embedding](https://kaierikniermann.github.io/textual-wasm/embedding.html) — custom pages,
+  and Textual inside Svelte, Vue or plain HTML.
+- [Limitations](https://kaierikniermann.github.io/textual-wasm/limitations.html) — what does
+  not work, organised by *whose* constraint each one is.
 - [Feasibility study](./textual-wasm-feasability-study.md) — the architecture audit, what the
   spike measured, and the claims it corrected.
+
+### Examples
+
+| | |
+|---|---|
+| [`simple-app`](./examples/simple-app) | A task list. The smallest complete thing. |
+| [`embedded-page`](./examples/embedded-page) | The terminal as one component of an article, driven by HTML buttons. |
+| [`svelte-app`](./examples/svelte-app) | Mounted in a Svelte 5 component, with Svelte state around it. |
+
+Each is a self-contained project with its own `pyproject.toml`, README and linting — copy one
+out and it works.
 
 ## How the pieces fit
 
