@@ -31,6 +31,8 @@ are reported as skipped, with the command that would enable them.
 
 ## The documents
 
+- [`examples/simple-app`](../examples/simple-app) - a complete, self-contained app that runs
+  both ways, with its own `pyproject.toml` and linting. The fastest way in.
 - [Porting guide](./porting-guide.md) - what to change, in the order you will hit it.
 - [Porting matrix](./porting-matrix.md) - every measured behavioural difference, generated
   from the registry the tools themselves read.

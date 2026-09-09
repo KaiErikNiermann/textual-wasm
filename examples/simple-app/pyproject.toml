@@ -1,0 +1,55 @@
+[project]
+name = "simple-app"
+version = "0.1.0"
+description = "A Textual task list that ships as a terminal app and as a web page."
+authors = [{ name = "textual-wasm example" }]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+# Textual and nothing else. The app has no idea this project exists - shipping it to a
+# browser is a build step, not a dependency.
+dependencies = ["textual (>=8.2,<9.0)"]
+
+[project.scripts]
+simple-app = "simple_app.app:main"
+
+[tool.poetry]
+packages = [{ include = "simple_app" }]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.15"
+pyright = "^1.1"
+# A path dependency because textual-wasm is not on PyPI yet. Once it is, this becomes an
+# ordinary version constraint and the example stops needing the repository around it.
+textual-wasm = { path = "../..", develop = true }
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
+
+# --- Linting ----------------------------------------------------------------
+# A deliberately small set: the rules that catch real mistakes in a Textual app, not a house
+# style. Copy it, extend it, or delete it - it is here so a copied example arrives with
+# something rather than nothing.
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # import order
+    "UP",       # pyupgrade
+    "B",        # bugbear: the mutable-default and loop-variable-capture class of bug
+    "SIM",      # simplify
+    "RUF",      # ruff's own
+    "ANN",      # annotations, so pyright has something to check
+]
+
+# Run it as `poetry run pyright`, which puts the project's interpreter on PATH. No venvPath
+# here on purpose: where Poetry puts a virtualenv is a machine setting, and hard-coding one
+# makes a copied example warn on any machine configured differently.
+[tool.pyright]
+include = ["simple_app"]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"

@@ -83,6 +83,8 @@ that import fine in 314.0.6, which is what a hand-maintained table gets you.
 
 ## Documentation
 
+- [`examples/simple-app`](./examples/simple-app) — a complete Textual app, self-contained,
+  that runs in a terminal and builds to a web page. Start here.
 - [Porting guide](./docs/porting-guide.md) — what to change, in the order you hit it.
 - [Porting matrix](./docs/porting-matrix.md) — every measured difference. Generated.
 - [Feasibility study](./textual-wasm-feasability-study.md) — the architecture audit, what the

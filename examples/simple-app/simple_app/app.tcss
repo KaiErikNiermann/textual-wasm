@@ -1,0 +1,18 @@
+/* Ordinary Textual CSS. It is here rather than in a `CSS` string so that the build has a
+   `.tcss` file to ship - the failure it guards against is a stylesheet left behind, which
+   shows up as a missing-file error at mount time in the browser and nowhere before that. */
+
+#body {
+    padding: 1 2;
+}
+
+#hint {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
+#tasks {
+    border: round $accent;
+    height: auto;
+    max-height: 1fr;
+}
