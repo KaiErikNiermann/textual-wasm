@@ -12,6 +12,44 @@ cd "${ROOT}"
 
 step() { printf '\n==> %s\n' "$1"; }
 
+step "author identity"
+# Backstop for the pre-commit hook, which `--no-verify` skips. Attribution cannot be
+# corrected once GitHub has the commit, so this is the last chance to catch it.
+#
+# The refs being pushed arrive on stdin as `<local ref> <local sha> <remote ref>
+# <remote sha>`; reading them rather than `@{upstream}` is what makes this fire on a
+# branch that has no upstream yet, which is the common case for a new topic branch.
+ZERO="0000000000000000000000000000000000000000"
+denied="$(git config --get-all identity.denyEmail 2>/dev/null || true)
+kai.niermann@googlemail.com"
+
+check_range() {
+  local range="$1" sha who bad
+  while read -r sha who; do
+    while read -r bad; do
+      [ -z "${bad}" ] && continue
+      case "${who}" in
+        *"<${bad}>"*)
+          echo "error: ${sha} carries the identity ${bad}" >&2
+          echo "       GitHub attributes it to the wrong account and contributor lists" >&2
+          echo "       cannot be edited afterwards; rewrite the commit before pushing." >&2
+          exit 1
+          ;;
+      esac
+    done <<< "${denied}"
+  done < <(git log --format='%h %an <%ae> %cn <%ce>' ${range})
+}
+
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "${local_sha}" = "${ZERO}" ] && continue          # branch deletion
+  if [ "${remote_sha}" = "${ZERO}" ]; then
+    # New branch: everything on it that no other remote ref already has.
+    check_range "${local_sha} --not --remotes=origin"
+  else
+    check_range "${remote_sha}..${local_sha}"
+  fi
+done
+
 step "ruff (lint)"
 poetry run ruff check src tests
 

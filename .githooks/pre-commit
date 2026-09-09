@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Refuse commits authored under an identity GitHub attributes to the wrong account.
+#
+# The failure this exists to stop: one address maps to a second, half-broken GitHub
+# account, so a commit made with it shows a different person as the author while the
+# committer is correct - and GitHub's contributor list cannot be edited after the fact.
+# Only a history rewrite fixes it, so it has to be caught before the object exists.
+#
+# A deny-list, not an allow-list, so this stays correct in repositories that legitimately
+# use a work identity. Extend per-machine with:
+#     git config --global --add identity.denyEmail someone@example.com
+set -euo pipefail
+
+DEFAULT_DENIED=("kai.niermann@googlemail.com")
+
+mapfile -t configured < <(git config --get-all identity.denyEmail 2>/dev/null || true)
+denied=("${DEFAULT_DENIED[@]}" ${configured+"${configured[@]}"})
+
+# `git var` resolves the identity this commit will actually use, including a `-c
+# user.email=...` override on the command line. Reading `git config user.email` would
+# miss exactly the case that caused this.
+author="$(git var GIT_AUTHOR_IDENT | sed -n 's/.*<\(.*\)>.*/\1/p')"
+committer="$(git var GIT_COMMITTER_IDENT | sed -n 's/.*<\(.*\)>.*/\1/p')"
+
+for bad in "${denied[@]}"; do
+  [ -z "${bad}" ] && continue
+  for role in author committer; do
+    value="${!role}"
+    if [ "${value}" = "${bad}" ]; then
+      cat >&2 <<MSG
+error: refusing to commit as ${value} (${role})
+
+  That address is on the identity deny-list because GitHub attributes it to the
+  wrong account, and contributor attribution cannot be corrected after pushing.
+
+  Use the configured identity instead - do not pass -c user.email on the command
+  line, which is what overrides it:
+
+      git config user.email        # -> $(git config --local user.email 2>/dev/null \
+                                     || git config --global user.email 2>/dev/null \
+                                     || echo '(unset)')
+
+  If this address is genuinely correct here, override for this repository with:
+
+      git config --local --unset-all identity.denyEmail
+MSG
+      exit 1
+    fi
+  done
+done
