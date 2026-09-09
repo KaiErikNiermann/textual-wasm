@@ -14,7 +14,9 @@ dependencies = [
 ]
 
 [project.scripts]
-textual-wasm-spike = "textual_wasm.__main__:app"
+textual-wasm = "textual_wasm.cli:app"
+# Kept so the existing scripts and docs keep working while the rename settles.
+textual-wasm-spike = "textual_wasm.cli:app"
 
 [tool.poetry]
 packages = [{ include = "textual_wasm", from = "src" }]
