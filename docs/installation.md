@@ -9,7 +9,7 @@ brings Textual, Rich and a small pure-Python closure with it, and nothing that h
 compiled.
 
 :::{note}
-Until the first PyPI release, install from the repository:
+To track unreleased work, install from the repository instead:
 
 ```console
 $ pip install git+https://github.com/KaiErikNiermann/textual-wasm

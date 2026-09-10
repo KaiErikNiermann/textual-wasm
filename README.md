@@ -1,5 +1,6 @@
 # textual-wasm
 
+[![pypi](https://img.shields.io/pypi/v/textual-wasm)](https://pypi.org/project/textual-wasm/)
 [![ci](https://github.com/KaiErikNiermann/textual-wasm/actions/workflows/ci.yml/badge.svg)](https://github.com/KaiErikNiermann/textual-wasm/actions/workflows/ci.yml)
 [![docs](https://github.com/KaiErikNiermann/textual-wasm/actions/workflows/pages.yml/badge.svg)](https://kaierikniermann.github.io/textual-wasm/)
 [![python](https://img.shields.io/badge/python-3.12%2B-blue)](https://kaierikniermann.github.io/textual-wasm/installation.html)
