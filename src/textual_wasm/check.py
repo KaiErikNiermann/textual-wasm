@@ -42,6 +42,8 @@ from textual_wasm.terminal import capture_target
 from textual_wasm.terminal import usable as terminal_usable
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from textual_wasm.screen import LineDiff, RenderedScreen
     from textual_wasm.target import AppTarget
 
@@ -186,17 +188,22 @@ def _native_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, P
         timeout=PROBE_TIMEOUT,
     )
     if not completed.stdout.strip():
-        return (
-            LegOutcome(Leg.NATIVE, LegStatus.FAILED, completed.stderr.strip()[-400:]),
-            None,
-        )
+        # The same extraction the harness legs use. Taking the last 400 characters instead
+        # produced a cell of box-drawing characters, because a Textual app that fails to
+        # start prints a *rendered* traceback and the tail of that is its bottom border.
+        return LegOutcome(Leg.NATIVE, LegStatus.FAILED, _first_lines(completed.stderr)), None
     report = ProbeReport.from_json(completed.stdout)
     detail = f"{len(report.checks)} checks, {len(report.failures)} failed"
     status = LegStatus.RAN if report.ok else LegStatus.FAILED
     return LegOutcome(Leg.NATIVE, status, detail), report
 
 
-def _wasm_config(target: AppTarget, size: tuple[int, int], resolve_from: Path) -> dict[str, object]:
+def _wasm_config(
+    target: AppTarget,
+    size: tuple[int, int],
+    resolve_from: Path,
+    requirements: tuple[str, ...] = (),
+) -> dict[str, object]:
     """Everything the Pyodide harness needs, as JSON."""
     packages = [Path(__file__).parent, target.package_directory()]
     mounts = [
@@ -206,7 +213,7 @@ def _wasm_config(target: AppTarget, size: tuple[int, int], resolve_from: Path) -
     return {
         "resolveFrom": str(resolve_from),
         "entryScript": str(node.HARNESS_DIR / "wasm_entry.py"),
-        "requirements": list(resolve_pins()),
+        "requirements": [*resolve_pins(), *requirements],
         "mounts": mounts,
         "sys_path": [MOUNT_ROOT],
         "target": dataclasses.asdict(target),
@@ -215,24 +222,39 @@ def _wasm_config(target: AppTarget, size: tuple[int, int], resolve_from: Path) -
     }
 
 
-def _wasm_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, ProbeReport | None]:
+def _wasm_leg(
+    target: AppTarget, size: tuple[int, int], requirements: tuple[str, ...] = ()
+) -> tuple[LegOutcome, ProbeReport | None]:
     """Run the same probe under Pyodide, if Node and the pyodide package are here."""
     available = node.availability([node.PYODIDE_PACKAGE])
     if not available.available or available.node is None or available.resolve_from is None:
         return LegOutcome(Leg.WASM, LegStatus.SKIPPED, available.reason), None
 
-    result = node.run_harness(
-        "pyodide-probe.mjs",
-        _wasm_config(target, size, available.resolve_from),
-        node=available.node,
-    )
+    try:
+        result = node.run_harness(
+            "pyodide-probe.mjs",
+            _wasm_config(target, size, available.resolve_from, requirements),
+            node=available.node,
+        )
+    except node.HarnessError as error:
+        # Contained for the same reason the browser leg contains its own: an app whose
+        # dependencies will not install under Pyodide is a result this command exists to
+        # report, not a crash. Without this the whole check died on a traceback and the
+        # three legs that did run were never shown.
+        return LegOutcome(Leg.WASM, LegStatus.FAILED, _first_lines(str(error))), None
+
     report = ProbeReport.from_json(json.dumps(result.payload))
     status = LegStatus.RAN if result.ok and report.ok else LegStatus.FAILED
     return LegOutcome(Leg.WASM, status, f"{len(report.failures)} check(s) failed"), report
 
 
 def _browser_leg(
-    target: AppTarget, size: tuple[int, int], browser: str, *, worker: bool = False
+    target: AppTarget,
+    size: tuple[int, int],
+    browser: str,
+    *,
+    worker: bool = False,
+    requirements: tuple[str, ...] = (),
 ) -> tuple[LegOutcome, RenderedScreen | None]:
     """Build the app, serve it, and read the grid a real browser engine renders.
 
@@ -257,6 +279,7 @@ def _browser_leg(
                     package=target.package_directory(),
                     output=Path(directory),
                     worker=worker,
+                    requirements=requirements,
                 )
             )
             _log.debug("built %s for the browser leg", built.summary)
@@ -284,7 +307,16 @@ def _browser_leg(
         # The page rendered, but it also logged errors - which is a failure of the claim
         # being made, since nobody watching a browser console is the normal case.
         return LegOutcome(Leg.BROWSER, LegStatus.FAILED, result.stderr.strip()[-400:]), screen
-    detail = f"{_engine_description(result.payload)}, {len(screen.lines)} rows rendered"
+    engine = _engine_description(result.payload)
+    if not screen.lines:
+        # The page loaded and the harness returned a grid, but nothing was drawn into it.
+        # Reporting that as a successful run is how an application that never started came
+        # to sit in a report next to the three legs that correctly said so.
+        return (
+            LegOutcome(Leg.BROWSER, LegStatus.FAILED, f"{engine} rendered nothing"),
+            screen,
+        )
+    detail = f"{engine}, {len(screen.lines)} rows rendered"
     return LegOutcome(Leg.BROWSER, LegStatus.RAN, detail), screen
 
 
@@ -293,8 +325,46 @@ _NOISE: Final[re.Pattern[str]] = re.compile(
 )
 """Lines that are the runtime talking about itself rather than about the failure."""
 
+_ANSI: Final[re.Pattern[str]] = re.compile(r"\x1b\[[0-9;]*m")
+"""Colour escapes. A harness writes to a pipe but Node colourises its own error dumps
+anyway, and the codes survive into a table cell as visible gibberish."""
+
 _BOX: Final[str] = "╔╗╚╝║═│┌┐└┘─"
 """Drivers print their advice inside a drawn box, which survives into a table cell as noise."""
+
+
+_MAX_MESSAGE_LINE: Final[int] = 200
+"""Longer than this and a line is machine output, not a message.
+
+Pyodide's runtime is a quarter of a megabyte of minified JavaScript on a handful of enormous
+lines, and an exception thrown inside a harness drags all of it into stderr. Length is the
+reliable discriminator: a first attempt keyed on "no whitespace at all" let
+`async function _createPyodideModule(moduleArg={}){var ...` straight through, because
+minified code still has spaces in its keywords. Diagnostics people write are short.
+"""
+
+_INTERESTING: Final[re.Pattern[str]] = re.compile(
+    r"(?:\w*(?:Error|Exception):\s|Traceback \(most recent call last\)|No module named"
+    r"|\berror:\s|Host system is missing|^Run\b)"
+)
+"""What a failure actually says, as opposed to what a runtime says while succeeding.
+
+The colon-and-space is load-bearing. Matching a bare "Error" also matches minified
+JavaScript, which is full of identifiers like `ModuleNotFoundError=Module[`; requiring the
+shape Python actually prints, `SomeError: message`, separates a diagnostic from a symbol
+table.
+
+`Run ...` is here because a driver that will not start prints the command that fixes it on
+the line after the complaint, and a complaint without its remedy is half an answer.
+"""
+
+_MAX_INTERESTING_LINE: Final[int] = 600
+"""A generous cap for a line that already looks like a diagnostic.
+
+`micropip` explains a version conflict in a single 260-character sentence naming both
+versions and the way out - the most useful line in a thousand - and the shorter cap used to
+reject noise threw it away.
+"""
 
 
 def _first_lines(message: str, limit: int = 4) -> str:
@@ -304,13 +374,25 @@ def _first_lines(message: str, limit: int = 4) -> str:
     command that fixes it - but says it inside a drawn box, under a Node stack trace. Dropping
     the frames and the box art is the difference between a cell someone can act on and a cell
     they skim past.
+
+    Lines that name a failure win over the first lines that survive filtering, and this is
+    the difference between a usable report and a useless one. Pointed at real applications,
+    the leading lines were `Loading micropip` and `Loaded micropip` - progress, printed
+    before the error - while the exception naming the missing module was thousands of lines
+    further down, past the whole of Pyodide's minified runtime.
     """
-    lines: list[str] = []
+    short: list[str] = []
+    interesting: list[str] = []
     for raw in message.splitlines():
-        line = raw.strip().strip(_BOX).strip()
-        if line and not _NOISE.match(raw.strip()):
-            lines.append(line)
-    return " ".join(lines[:limit])[:400]
+        line = _ANSI.sub("", raw).strip().strip(_BOX).strip()
+        if not line or _NOISE.match(raw.strip()):
+            continue
+        if _INTERESTING.search(line) and len(line) <= _MAX_INTERESTING_LINE:
+            interesting.append(line[:_MAX_INTERESTING_LINE])
+        elif len(line) <= _MAX_MESSAGE_LINE:
+            short.append(line)
+    chosen = interesting[-limit:] if interesting else short[:limit]
+    return " ".join(chosen)[:400]
 
 
 def _engine_description(payload: dict[str, object]) -> str:
@@ -362,12 +444,40 @@ def _render_comparison(
     return None if terminal is None or browser is None else compare_screens(terminal, browser)
 
 
+def _guarded[Observation](
+    leg: Leg, run: Callable[[], tuple[LegOutcome, Observation | None]]
+) -> tuple[LegOutcome, Observation | None]:
+    """Run one leg, turning any failure into a reported result rather than a crash.
+
+    Each leg drives a foreign system - another interpreter, a browser engine, a terminal
+    multiplexer - and the ways those break are not enumerable. Pointed at ten real
+    applications from GitHub, this command died three separate ways: a dependency that would
+    not install under Pyodide, a `tmux` session that had already exited, and a harness that
+    wrote no JSON. Every one printed a traceback and *no leg results at all*, discarding the
+    legs that had run perfectly well.
+
+    A failed leg is a finding. Reporting it next to the three that worked is the whole point
+    of a report with four rows in it.
+
+    The traceback is not lost, only moved: `--verbose` logs it. That is the compromise for
+    catching `Exception` here, which otherwise hides this project's own bugs.
+    """
+    try:
+        return run()
+    except Exception as error:  # see the docstring; --verbose still shows the traceback
+        _log.debug("the %s leg raised", leg.value, exc_info=True)
+        return LegOutcome(
+            leg, LegStatus.FAILED, _first_lines(f"{type(error).__name__}: {error}")
+        ), None
+
+
 def run_check(
     target: AppTarget,
     *,
     size: tuple[int, int] = DEFAULT_SIZE,
     browser: str = DEFAULT_BROWSER,
     worker: bool = False,
+    requirements: tuple[str, ...] = (),
 ) -> CheckReport:
     """Run `target` on every runtime this machine offers and compare the results.
 
@@ -376,14 +486,20 @@ def run_check(
         size: The grid every leg is forced to, so the renders are comparable at all.
         browser: Which engine the browser leg uses. One of :data:`BROWSERS`.
         worker: Build the browser leg's page to run Python in a Web Worker.
+        requirements: The application's own distributions, installed by `micropip` in the
+            two runtimes that need installing. Without these an app with any dependency
+            beyond Textual fails to import under Pyodide, which is most real applications.
 
     Returns:
         What each leg did, and the two comparisons that can be made from what ran.
     """
-    native_outcome, native = _native_leg(target, size)
-    wasm_outcome, wasm = _wasm_leg(target, size)
-    browser_outcome, browser_screen = _browser_leg(target, size, browser, worker=worker)
-    terminal_outcome, terminal = _terminal_leg(target, size)
+    native_outcome, native = _guarded(Leg.NATIVE, lambda: _native_leg(target, size))
+    wasm_outcome, wasm = _guarded(Leg.WASM, lambda: _wasm_leg(target, size, requirements))
+    browser_outcome, browser_screen = _guarded(
+        Leg.BROWSER,
+        lambda: _browser_leg(target, size, browser, worker=worker, requirements=requirements),
+    )
+    terminal_outcome, terminal = _guarded(Leg.TERMINAL, lambda: _terminal_leg(target, size))
     return CheckReport(
         target=target.entry,
         size=size,

@@ -204,6 +204,11 @@ class AppTarget:
         attribute that does not exist, and a name that resolves to something which is not an
         application at all.
 
+        An entry may name a zero-argument factory as well as an `App` subclass, because an
+        application whose `__init__` takes arguments cannot be named any other way. A class
+        that is not an `App` is still rejected: that is the typo this exists to catch, and
+        classes are callable too.
+
         One import failure is not a mistake, and telling the two apart is most of the rule
         here. An application built for the browser may depend on a distribution `micropip`
         installs at boot and which is absent from the machine doing the build - declaring
@@ -233,12 +238,25 @@ class AppTarget:
                 f"{error.name!r}, which is not installed here - expected if the browser "
                 f"installs it from --requirement"
             )
-        if isinstance(target, type) and issubclass(target, App):
+        if isinstance(target, type):
+            if issubclass(target, App):
+                return None
+            # `type(x).__name__` on a class is its *metaclass*, which for a Textual widget
+            # reads as "_MessagePumpMeta" and sends the reader somewhere irrelevant.
+            raise EntryError(
+                f"{self.entry} is the class {target.__name__}, which is not a Textual App subclass"
+            )
+        # A plain callable is a factory, and factories are how an application that takes
+        # constructor arguments is named at all. Every runtime here builds the app with
+        # `load()()`, so a zero-argument function returning an App already works - two of
+        # the ten real applications this was tested against (`frogmouth`, `toolong`) require
+        # arguments and are unreachable without it.
+        if callable(target):
             return None
-        # `type(x).__name__` on a class is its *metaclass*, which for a Textual widget reads
-        # as "_MessagePumpMeta" and sends the reader somewhere irrelevant.
-        described = f"the class {target.__name__}" if isinstance(target, type) else repr(target)
-        raise EntryError(f"{self.entry} is {described}, which is not a Textual App subclass")
+        raise EntryError(
+            f"{self.entry} is {target!r}, which is neither a Textual App subclass nor a "
+            f"factory returning one"
+        )
 
 
 def _as_str(source: Mapping[str, object], key: str) -> str:

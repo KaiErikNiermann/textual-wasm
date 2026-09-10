@@ -46,6 +46,14 @@ def check(
             ),
         ),
     ] = DEFAULT_BROWSER,
+    requirement: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--requirement",
+            "-r",
+            help="A distribution the app needs, installed by micropip. Repeatable.",
+        ),
+    ] = None,
     worker: Annotated[
         bool,
         typer.Option("--worker", help="Build the browser leg to run Python in a Web Worker."),
@@ -71,6 +79,7 @@ def check(
         size=(width, height),
         browser=browser,
         worker=worker,
+        requirements=tuple(requirement or ()),
     )
     render_check(report, console)
 
