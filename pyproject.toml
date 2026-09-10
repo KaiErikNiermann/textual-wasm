@@ -30,8 +30,6 @@ dependencies = [
 
 [project.scripts]
 textual-wasm = "textual_wasm.cli:app"
-# Kept so the existing scripts and docs keep working while the rename settles.
-textual-wasm-spike = "textual_wasm.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/KaiErikNiermann/textual-wasm"
