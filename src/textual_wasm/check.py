@@ -23,6 +23,7 @@ import dataclasses
 import enum
 import json
 import logging
+import os
 import re
 import subprocess  # textual-wasm: allow subprocess.run - runs the native leg, native-only
 import sys
@@ -186,6 +187,11 @@ def _native_leg(target: AppTarget, size: tuple[int, int]) -> tuple[LegOutcome, P
         text=True,
         check=False,
         timeout=PROBE_TIMEOUT,
+        # A plain traceback, not a rendered one. Typer draws exceptions in a box with the
+        # message wrapped across several lines, which is unreadable squeezed into a table
+        # cell and unparseable by anything looking for `SomeError: message`. This is
+        # machine-to-machine output; the pretty version helps nobody here.
+        env={**os.environ, "_TYPER_STANDARD_TRACEBACK": "1"},
     )
     if not completed.stdout.strip():
         # The same extraction the harness legs use. Taking the last 400 characters instead
@@ -329,8 +335,12 @@ _ANSI: Final[re.Pattern[str]] = re.compile(r"\x1b\[[0-9;]*m")
 """Colour escapes. A harness writes to a pipe but Node colourises its own error dumps
 anyway, and the codes survive into a table cell as visible gibberish."""
 
-_BOX: Final[str] = "╔╗╚╝║═│┌┐└┘─"
-"""Drivers print their advice inside a drawn box, which survives into a table cell as noise."""
+_BOX: Final[str] = "╔╗╚╝║═│┌┐└┘─╭╮╰╯┃┏┓┗┛"
+"""Drivers print their advice inside a drawn box, which survives into a cell as noise.
+
+Rich draws rounded corners by default, and leaving `╭╮╰╯` out of this left a rendered
+traceback's banner intact - and, being the only line that looked like a diagnostic, it
+was reported *instead of* the exception below it."""
 
 
 _MAX_MESSAGE_LINE: Final[int] = 200

@@ -44,10 +44,15 @@ server is not a deployment target.
 
 ```console
 $ textual-wasm check [--app module:App] [--ready-marker T] [--keys K] [--settled-marker T]
-                     [--width N] [--height N] [--browser ENGINE] [--worker] [--strict]
+                     [--width N] [--height N] [--browser ENGINE] [--worker]
+                     [-r DISTRIBUTION]... [--strict]
 ```
 
 Runs the app on every runtime available and compares them. See {doc}`usage`.
+
+`-r` names a distribution your app needs, installed by `micropip` in the runtimes that
+install anything. Without it an app that depends on more than Textual fails to import under
+Pyodide, which is most applications.
 
 `--worker` builds the browser leg to run Python in a Web Worker. The render must come out
 identical, so this is the same comparison rather than a weaker one — see {doc}`workers`.

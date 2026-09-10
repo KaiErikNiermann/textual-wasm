@@ -14,6 +14,31 @@ $ textual-wasm build myapp.main:App myapp -o dist/
 | `myapp` | The **package directory** to copy. A single module has no directory to copy. |
 | `-o dist/` | Where to write. |
 
+## Applications whose `__init__` takes arguments
+
+Every runtime here builds your app with `App()`. If yours needs arguments — a parsed
+command line, a file path — point the entry at a **zero-argument factory** instead of the
+class:
+
+```python
+# myapp/web.py
+from argparse import Namespace
+
+from myapp.main import Viewer
+
+
+def make_app() -> Viewer:
+    return Viewer(cli_args=Namespace(file=None))
+```
+
+```console
+$ textual-wasm build myapp.web:make_app myapp -o dist/
+```
+
+This is common: of ten Textual applications surveyed on GitHub, two took required
+constructor arguments. There is no browser command line to parse, so deciding those
+defaults is something only you can do.
+
 The output is nine files:
 
 ```
