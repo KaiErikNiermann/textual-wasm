@@ -72,6 +72,9 @@ jobs:
       - name: the porting matrix is a rendering of the registry
         run: poetry run textual-wasm matrix --check -o docs/porting-matrix.md
 
+      - name: the library support table is a rendering of the registry
+        run: poetry run textual-wasm libraries --check -o docs/library-table.md
+
   check:
     # The claim this project makes, checked rather than asserted: the same app on CPython,
     # on Pyodide, in a browser and on a real pty, compared. `--strict` is what makes it a

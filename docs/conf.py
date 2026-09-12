@@ -49,6 +49,8 @@ exclude_patterns = [
     # Included into matrix.md rather than built as a page of its own. It is generated, and
     # the generator writes a whole document; the wrapper is what gives it context.
     "porting-matrix.md",
+    # Same arrangement: included into library-support.md rather than built on its own.
+    "library-table.md",
 ]
 
 html_theme = "furo"

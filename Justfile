@@ -18,7 +18,7 @@ install-browsers *engines="chromium firefox webkit":
 # --- Lint -------------------------------------------------------------------
 
 # Every gate a push has to satisfy, in the order the pre-push hook runs them
-gates: lint fmt-check types complexity policy lint-web test matrix-check
+gates: lint fmt-check types complexity policy lint-web test matrix-check libraries-check
 
 # Ruff
 lint *paths="src tests":
@@ -100,6 +100,14 @@ matrix-check:
 # Regenerate the porting matrix from the registry
 matrix:
   poetry run textual-wasm matrix -o docs/porting-matrix.md
+
+# The add-on support table is still a faithful rendering of the ecosystem registry
+libraries-check:
+  poetry run textual-wasm libraries --check -o docs/library-table.md
+
+# Regenerate the add-on support table from the registry
+libraries:
+  poetry run textual-wasm libraries -o docs/library-table.md
 
 # --- Build ------------------------------------------------------------------
 

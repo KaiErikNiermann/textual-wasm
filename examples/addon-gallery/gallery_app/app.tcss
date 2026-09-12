@@ -1,0 +1,23 @@
+/* Layout only. Each add-on brings its own styling, and overriding it here would make the
+   example about this stylesheet rather than about the libraries. */
+
+#controls {
+    height: auto;
+    padding: 1 1 0 1;
+}
+
+.control {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+#plots {
+    height: 1fr;
+    padding: 1;
+}
+
+#static, #interactive {
+    width: 1fr;
+    border: round $primary;
+}

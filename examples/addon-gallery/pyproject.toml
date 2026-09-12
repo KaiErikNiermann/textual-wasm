@@ -1,0 +1,45 @@
+[project]
+name = "addon-gallery"
+version = "0.1.0"
+description = "A Textual app built from four third-party add-on libraries, running in a browser."
+authors = [{ name = "textual-wasm example" }]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+# The four add-ons, and nothing from this project: the app has no idea textual-wasm exists.
+# These same four names are what the build passes to micropip with `-r`.
+dependencies = [
+    "textual (>=8.2,<9.0)",
+    "textual-autocomplete (>=4.0,<5.0)",
+    "textual-plotext (>=1.0,<2.0)",
+    "textual-plot (>=0.10,<1.0)",
+    "textual-slider (>=0.2,<1.0)",
+]
+
+[project.scripts]
+addon-gallery = "gallery_app.app:main"
+
+[tool.poetry]
+packages = [{ include = "gallery_app" }]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.16"
+pyright = "^1.1"
+textual-wasm = { path = "../..", develop = true }
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 96
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+# The add-ons are not all typed, and chasing their internals is not what this example is for.
+reportMissingTypeStubs = false

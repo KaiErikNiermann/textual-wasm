@@ -88,6 +88,16 @@ $ textual-wasm matrix [-o docs/porting-matrix.md] [--check]
 Renders the {doc}`matrix` from the substitution registry. `--check` exits non-zero when the
 file on disk is out of date, which is the CI form.
 
+## `textual-wasm libraries`
+
+```console
+$ textual-wasm libraries [-o docs/library-table.md] [--check]
+```
+
+Renders {doc}`library-support` from the ecosystem registry — which third-party Textual
+add-ons work in a browser, measured by installing each into a real Pyodide and mounting its
+widgets. `--check` is the CI form, same as `matrix`.
+
 ## The individual legs
 
 `check` runs these for you; they exist separately for when you want one.

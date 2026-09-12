@@ -17,7 +17,7 @@ from rich.console import Console
 from textual_wasm import doctor as doctor_module
 from textual_wasm.cli._app import app
 from textual_wasm.cli._render import render_dependencies, render_findings
-from textual_wasm.docs import MATRIX_PATH, render_matrix
+from textual_wasm.docs import LIBRARIES_PATH, MATRIX_PATH, render_libraries, render_matrix
 from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.report import CheckId
 from textual_wasm.target import AppTarget
@@ -88,6 +88,37 @@ if __name__ == "__main__":
     app()
 
 
+def _emit(rendered: str, output: Path | None, *, verify: bool, command: str) -> None:
+    """Write a generated document, or check the one on disk against it.
+
+    Shared by `matrix` and `libraries` because the three behaviours - print, write, verify -
+    are identical for both and only the renderer differs. A second copy of this is exactly
+    the kind of thing that grows a `--check` mode on one command and not the other.
+
+    Args:
+        rendered: The document.
+        output: Where to write, or None to print.
+        verify: Compare instead of writing, for CI.
+        command: How to regenerate, named in the failure message.
+
+    Raises:
+        typer.Exit: Non-zero when `verify` is set and the file is stale.
+    """
+    if output is None:
+        typer.echo(rendered, nl=False)
+        return
+    if verify:
+        current = output.read_text(encoding="utf-8") if output.exists() else ""
+        if current != rendered:
+            typer.echo(f"{output} is out of date; run `{command} -o {output}`", err=True)
+            raise typer.Exit(1)
+        typer.echo(f"{output} is up to date")
+        return
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(rendered, encoding="utf-8")
+    typer.echo(f"wrote {output}")
+
+
 @app.command()
 def matrix(
     output: Annotated[
@@ -105,17 +136,27 @@ def matrix(
     the first thing to rot: nothing fails when the runtime changes underneath it. `--check`
     is the CI form, which turns that silence into a failure.
     """
-    rendered = render_matrix()
-    if output is None:
-        typer.echo(rendered, nl=False)
-        return
-    if verify:
-        current = output.read_text(encoding="utf-8") if output.exists() else ""
-        if current != rendered:
-            typer.echo(f"{output} is out of date; run `textual-wasm matrix -o {output}`", err=True)
-            raise typer.Exit(1)
-        typer.echo(f"{output} is up to date")
-        return
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(rendered, encoding="utf-8")
-    typer.echo(f"wrote {output}")
+    _emit(render_matrix(), output, verify=verify, command="textual-wasm matrix")
+
+
+@app.command()
+def libraries(
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output", "-o", help=f"Write here instead of stdout, e.g. {LIBRARIES_PATH}."
+        ),
+    ] = None,
+    verify: Annotated[
+        bool,
+        typer.Option("--check", help="Exit non-zero if the file on disk is out of date."),
+    ] = False,
+) -> None:
+    """Render the add-on library support table from the ecosystem registry.
+
+    Which third-party Textual widget libraries work in a browser, measured by installing
+    each one into a real Pyodide and mounting its widgets rather than by reading READMEs.
+    Generated for the same reason the porting matrix is: a compatibility table maintained by
+    hand is wrong within a release and nothing fails when it drifts.
+    """
+    _emit(render_libraries(), output, verify=verify, command="textual-wasm libraries")
