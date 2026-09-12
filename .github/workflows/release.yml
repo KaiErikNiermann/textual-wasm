@@ -53,22 +53,10 @@ jobs:
       - name: the wheel carries the page, the harnesses and the assets
         # They are not Python, and without them `build` writes an empty site and `check` has
         # no wasm or browser leg. A packaging change that drops them is silent otherwise.
-        run: |
-          python - <<'PY'
-          import zipfile, glob
-          names = zipfile.ZipFile(glob.glob("dist/*.whl")[0]).namelist()
-          required = [
-              "textual_wasm/assets/index.html",
-              "textual_wasm/assets/main.mjs",
-              "textual_wasm/assets/entry.py",
-              "textual_wasm/harness/pyodide-probe.mjs",
-              "textual_wasm/harness/browser-check.mjs",
-              "textual_wasm/harness/wasm_entry.py",
-          ]
-          missing = [name for name in required if name not in names]
-          assert not missing, f"missing from the wheel: {missing}"
-          print(f"{len(names)} files, all required assets present")
-          PY
+        #
+        # The same script the `build-verify` recipe runs, so the list of required paths is
+        # not maintained in two places that can disagree.
+        run: python scripts/verify-wheel.py
       - uses: actions/upload-artifact@v5
         with:
           name: distributions
