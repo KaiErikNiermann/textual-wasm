@@ -7,6 +7,11 @@ its dependencies can be installed there at all.
 
 Both render the same registry the runtime diagnostics raise from, so the advice a developer
 gets before running is the advice they get while running.
+
+A third question sits between them and is answered by :mod:`~textual_wasm.doctor.closure`:
+whether the requirements can coexist *with each other*. Pyodide will install a library that
+caps Textual below the version the build pins - by resolving Textual down to suit it, and
+saying nothing.
 """
 
 from __future__ import annotations
@@ -14,6 +19,8 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
+from textual_wasm.doctor import closure as closure_module
+from textual_wasm.doctor.closure import ClosureConflict, ClosureReport
 from textual_wasm.doctor.deps import (
     DEFAULT_LOCKFILE,
     Catalogue,
@@ -45,6 +52,13 @@ class DoctorReport:
 
     findings: tuple[Finding, ...]
     dependencies: tuple[Dependency, ...]
+    closure: ClosureReport = dataclasses.field(default_factory=ClosureReport)
+    """What the requirements say about each other, as opposed to about Pyodide.
+
+    Its own field rather than more `dependencies`, because it is a different question with a
+    different answer: a cap conflict is between two things the developer chose, and neither
+    of them is individually wrong.
+    """
 
     @property
     def blocking_findings(self) -> tuple[Finding, ...]:
@@ -61,7 +75,7 @@ class DoctorReport:
 
     @property
     def ok(self) -> bool:
-        return not self.blocking_findings and not self.blocking_dependencies
+        return not self.blocking_findings and not self.blocking_dependencies and self.closure.ok
 
 
 def run(
@@ -92,6 +106,7 @@ def run(
             sorted(findings, key=lambda f: (order.index(f.substitution.severity), f.line))
         ),
         dependencies=dependencies,
+        closure=closure_module.check(requirements) if requirements else ClosureReport(),
     )
 
 
@@ -99,6 +114,8 @@ __all__ = [
     "BLOCKING",
     "DEFAULT_LOCKFILE",
     "Catalogue",
+    "ClosureConflict",
+    "ClosureReport",
     "Dependency",
     "DependencyState",
     "DoctorReport",

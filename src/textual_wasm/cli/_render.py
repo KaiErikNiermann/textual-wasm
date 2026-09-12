@@ -199,3 +199,32 @@ def render_dependencies(report: doctor_module.DoctorReport, console: Console) ->
             dependency.guidance,
         )
     console.print(table)
+
+
+def render_closure(report: doctor_module.DoctorReport, console: Console) -> None:
+    """Print requirements that contradict each other, if any were checked.
+
+    A separate table from the dependency one because the fix differs in kind: a blocking
+    dependency is something Pyodide cannot provide, while this is two choices the developer
+    made that cannot both hold - and neither of them is individually wrong.
+    """
+    closure = report.closure
+    if closure.conflicts:
+        table = Table(title="requirement conflicts", title_justify="left")
+        for column in ("package", "requires", "build installs", "notes"):
+            table.add_column(column)
+        for conflict in closure.conflicts:
+            table.add_row(
+                f"[bold red]{conflict.dependent}[/]",
+                conflict.declared,
+                f"{conflict.dependency}=={conflict.pinned}",
+                conflict.guidance,
+            )
+        console.print(table)
+    if closure.unexpanded:
+        # Named rather than counted: the fix is to install one of them and re-run, which
+        # needs to know which. Dim, because it is a gap in what was checked and not a finding.
+        console.print(
+            "[dim]not expanded (install locally to check their requirements): "
+            f"{', '.join(closure.unexpanded)}[/]"
+        )

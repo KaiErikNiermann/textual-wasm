@@ -23,6 +23,8 @@ import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
+from textual_wasm.doctor import closure
+from textual_wasm.doctor.closure import ClosureConflict
 from textual_wasm.doctor.deps import Dependency, DependencyState, load_catalogue
 from textual_wasm.pins import resolve_pins
 from textual_wasm.target import AppTarget, importable_from
@@ -268,23 +270,42 @@ class DependencyCheck:
     conflicts: tuple[Dependency, ...] = ()
     """Requirements Pyodide cannot install. Non-empty means the build must not proceed."""
 
+    closure_conflicts: tuple[ClosureConflict, ...] = ()
+    """Requirements that contradict each other rather than the runtime."""
+
     notes: tuple[str, ...] = ()
     """Requirements that work, at a version the application does not get to choose."""
 
+    @property
+    def blocks(self) -> bool:
+        return bool(self.conflicts or self.closure_conflicts)
+
 
 class UnsatisfiableRequirementsError(RuntimeError):
-    """The resolved closure contains something Pyodide cannot install.
+    """The resolved closure cannot be installed as written.
 
     Raised before the site is written, because the alternative is a directory that looks
     like a successful build and fails at `micropip.install` in the browser. The message
     carries every offender rather than the first: a closure with three bad pins should take
     one build to diagnose, not three.
+
+    Two unrelated causes share it. A `Dependency` is something Pyodide cannot provide at the
+    version asked for. A `ClosureConflict` is worse behaved: micropip *will* install it, by
+    resolving a shared dependency down to suit, so the build succeeds and the application
+    runs against a Textual it was not written for.
     """
 
-    def __init__(self, conflicts: Sequence[Dependency]) -> None:
+    def __init__(
+        self,
+        conflicts: Sequence[Dependency] = (),
+        closure_conflicts: Sequence[ClosureConflict] = (),
+    ) -> None:
         self.conflicts = tuple(conflicts)
-        detail = "; ".join(f"{item.name}{item.specifier}: {item.guidance}" for item in conflicts)
-        super().__init__(f"{len(self.conflicts)} requirement(s) cannot be installed - {detail}")
+        self.closure_conflicts = tuple(closure_conflicts)
+        parts = [f"{item.name}{item.specifier}: {item.guidance}" for item in self.conflicts]
+        parts += [f"{item.dependent}: {item.guidance}" for item in self.closure_conflicts]
+        total = len(self.conflicts) + len(self.closure_conflicts)
+        super().__init__(f"{total} requirement(s) cannot be installed - {'; '.join(parts)}")
 
 
 def _check_dependencies(requirements: Sequence[str]) -> DependencyCheck:
@@ -303,11 +324,19 @@ def _check_dependencies(requirements: Sequence[str]) -> DependencyCheck:
     try:
         catalogue = load_catalogue()
     except FileNotFoundError:
-        return DependencyCheck(checked=False)
+        # No package set to classify against, but the requirements can still be checked
+        # against each other - that half is offline and needs nothing from Pyodide.
+        return DependencyCheck(
+            checked=False, closure_conflicts=closure.check(requirements).conflicts
+        )
     classified = [catalogue.classify(requirement) for requirement in requirements]
+    # Checked whatever the lock file says, because it needs no lock file: it compares the
+    # closure's own pins against what each distribution declares. A build with no vendored
+    # Pyodide still gets this half.
     return DependencyCheck(
         checked=True,
         conflicts=tuple(item for item in classified if item.blocks),
+        closure_conflicts=closure.check(requirements).conflicts,
         notes=tuple(
             f"{item.name} is bundled by Pyodide at {item.pyodide_version}; the build cannot "
             "choose a different version"
@@ -354,8 +383,10 @@ def build(spec: BuildSpec) -> BuildResult:
     dependency_check = (
         _check_dependencies(requirements) if spec.check_dependencies else DependencyCheck(False)
     )
-    if dependency_check.conflicts:
-        raise UnsatisfiableRequirementsError(dependency_check.conflicts)
+    if dependency_check.blocks:
+        raise UnsatisfiableRequirementsError(
+            dependency_check.conflicts, dependency_check.closure_conflicts
+        )
     notes = (*notes, *dependency_check.notes)
 
     spec.output.mkdir(parents=True, exist_ok=True)

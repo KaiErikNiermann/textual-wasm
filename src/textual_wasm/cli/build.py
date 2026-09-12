@@ -35,12 +35,16 @@ def _report_conflicts(error: UnsatisfiableRequirementsError, console: Console) -
     whose fix is a decision per dependency, and a paragraph of three of them is unreadable
     in a terminal.
     """
-    console.print("[bold red]cannot build[/]: the closure cannot be installed by Pyodide")
+    console.print("[bold red]cannot build[/]: the closure cannot be installed as written")
     for conflict in error.conflicts:
         console.print(
             f"  [bold]{escape(conflict.name + conflict.specifier)}[/] - "
             f"{escape(conflict.guidance)}",
             emoji=False,
+        )
+    for clash in error.closure_conflicts:
+        console.print(
+            f"  [bold]{escape(clash.dependent)}[/] - {escape(clash.guidance)}", emoji=False
         )
     console.print(
         "[dim]run `textual-wasm doctor` with -r for each requirement to see the whole "

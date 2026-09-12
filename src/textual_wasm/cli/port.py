@@ -16,7 +16,7 @@ from rich.console import Console
 
 from textual_wasm import doctor as doctor_module
 from textual_wasm.cli._app import app
-from textual_wasm.cli._render import render_dependencies, render_findings
+from textual_wasm.cli._render import render_closure, render_dependencies, render_findings
 from textual_wasm.docs import LIBRARIES_PATH, MATRIX_PATH, render_libraries, render_matrix
 from textual_wasm.pins import REQUIREMENTS_FILENAME, write_pins
 from textual_wasm.report import CheckId
@@ -56,11 +56,16 @@ def doctor(
     report = doctor_module.run(_source_of(source), requirements=requirement or ())
     render_findings(report, console)
     render_dependencies(report, console)
+    render_closure(report, console)
 
     if report.ok:
         console.print("[bold green]no blocking issues[/]")
         raise typer.Exit(0)
-    blocking = len(report.blocking_findings) + len(report.blocking_dependencies)
+    blocking = (
+        len(report.blocking_findings)
+        + len(report.blocking_dependencies)
+        + len(report.closure.conflicts)
+    )
     console.print(f"[bold red]{blocking} blocking issue(s)[/]")
     raise typer.Exit(1)
 

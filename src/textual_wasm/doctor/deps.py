@@ -216,11 +216,11 @@ class Catalogue:
             return Dependency(requirement, DependencyState.UNKNOWN)
 
         specifier = str(parsed.specifier)
-        if not _applies_under_emscripten(parsed, self.version):
+        if not applies_under_emscripten(parsed, self.version):
             return Dependency(parsed.name, DependencyState.PLATFORM_EXCLUDED, specifier=specifier)
 
         extras = tuple(sorted(parsed.extras))
-        normalised = _normalise(parsed.name)
+        normalised = normalise(parsed.name)
         bundled = self.packages.get(normalised)
         if bundled is None:
             installed = _classify_installed(normalised)
@@ -233,8 +233,11 @@ class Catalogue:
         return dataclasses.replace(bundled, state=state, specifier=specifier, extras=extras)
 
 
-def _applies_under_emscripten(parsed: Requirement, python_version: str) -> bool:
+def applies_under_emscripten(parsed: Requirement, python_version: str) -> bool:
     """Whether a requirement's environment marker is true for a Pyodide install.
+
+    Public for `doctor.closure`, which has to make the same judgement about the requirements
+    it expands out of a distribution's metadata.
 
     An undefined marker name is treated as applying rather than as excluded: guessing
     "not needed" about a requirement whose marker cannot be evaluated is the direction that
@@ -283,8 +286,13 @@ def _classify_installed(name: str) -> Dependency:
     return Dependency(name, state)
 
 
-def _normalise(name: str) -> str:
-    """PEP 503 name normalisation, so `typing_extensions` and `typing-extensions` agree."""
+def normalise(name: str) -> str:
+    """PEP 503 name normalisation, so `typing_extensions` and `typing-extensions` agree.
+
+    Public because `doctor.closure` compares names against this module's keys and must
+    normalise them the same way; two normalisers is one more than the number that can be
+    correct.
+    """
     return name.lower().replace("_", "-")
 
 
@@ -319,7 +327,7 @@ def load_catalogue(lockfile: Path | None = None) -> Catalogue:
     info = document.get("info", {})
     packages: dict[str, Dependency] = {}
     for entry in document.get("packages", {}).values():
-        name = _normalise(str(entry["name"]))
+        name = normalise(str(entry["name"]))
         packages[name] = Dependency(
             name=name,
             state=_state_for(str(entry["file_name"])),
