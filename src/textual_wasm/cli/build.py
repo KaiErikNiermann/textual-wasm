@@ -14,13 +14,75 @@ import typer
 from rich.console import Console
 from rich.markup import escape
 
-from textual_wasm.bundler import PYODIDE_VERSION, BuildSpec
+from textual_wasm.bundler import (
+    PYODIDE_VERSION,
+    BuildResult,
+    BuildSpec,
+    UnsatisfiableRequirementsError,
+)
 from textual_wasm.bundler import build as build_site
 from textual_wasm.bundler import serve as serve_site
 from textual_wasm.cli._app import app
 from textual_wasm.target import EntryError
 
 DEFAULT_PORT: int = 8000
+
+
+def _report_conflicts(error: UnsatisfiableRequirementsError, console: Console) -> None:
+    """Name every unsatisfiable requirement, one per line.
+
+    Listed rather than wrapped into the exception's single sentence: this is the one failure
+    whose fix is a decision per dependency, and a paragraph of three of them is unreadable
+    in a terminal.
+    """
+    console.print("[bold red]cannot build[/]: the closure cannot be installed by Pyodide")
+    for conflict in error.conflicts:
+        console.print(
+            f"  [bold]{escape(conflict.name + conflict.specifier)}[/] - "
+            f"{escape(conflict.guidance)}",
+            emoji=False,
+        )
+    console.print(
+        "[dim]run `textual-wasm doctor` with -r for each requirement to see the whole "
+        "picture, or --no-check-dependencies to build anyway[/]"
+    )
+
+
+def _report_entry_failure(error: Exception, console: Console, entry: str) -> None:
+    """Report a mistake in what the user typed, without a traceback through our own frames.
+
+    Both halves are user input, and Rich rewrites two different things in it. `escape`
+    handles square brackets; emoji shortcodes are a separate pass that it does not touch, so
+    an entry of `pkg.mod:X` prints as `pkg.mod` plus an emoji unless it is turned off here.
+    """
+    console.print(f"[bold red]cannot build[/] {escape(entry)}: {escape(str(error))}", emoji=False)
+    if isinstance(error, ModuleNotFoundError):
+        console.print(
+            "[dim]the app is imported to check the entry resolves; pass "
+            "--no-verify-entry if it can only be imported inside Pyodide[/]"
+        )
+
+
+def _report_success(result: BuildResult, console: Console, *, worker: bool) -> None:
+    """Say what was built, and on what terms.
+
+    The terms matter as much as the result: a build that could not classify its dependencies
+    is weaker than one that could, and this is the only place that can tell the user which
+    of the two they just got.
+    """
+    for note in result.notes:
+        console.print(f"[bold yellow]warning[/] {escape(note)}", emoji=False)
+    console.print(f"[bold green]built[/] {result.output} - {result.summary}")
+    console.print(f"[dim]packages: {', '.join(result.packages)}[/]")
+    console.print(f"[dim]pyodide {PYODIDE_VERSION} from CDN[/]")
+    if worker:
+        console.print("[dim]python runs in a Web Worker; no COOP/COEP headers required[/]")
+    if not result.dependencies_checked:
+        console.print(
+            "[dim]dependencies not classified: no local Pyodide runtime to read a package "
+            "set from (`pnpm add -D pyodide` enables the check)[/]"
+        )
+    console.print(f"[dim]serve it with: textual-wasm dev {result.output}[/]")
 
 
 @app.command()
@@ -52,6 +114,13 @@ def build(
             "import inside Pyodide.",
         ),
     ] = True,
+    check_dependencies: Annotated[
+        bool,
+        typer.Option(
+            "--check-dependencies/--no-check-dependencies",
+            help="Refuse to build a closure Pyodide cannot install. Off skips the check.",
+        ),
+    ] = True,
 ) -> None:
     """Build a Textual app into a static site.
 
@@ -79,24 +148,17 @@ def build(
                 template=template,
                 worker=worker,
                 verify_entry=verify_entry,
+                check_dependencies=check_dependencies,
             )
         )
     except (EntryError, ModuleNotFoundError) as error:
         # A mistake in what the user typed, not a fault in this program, and a sixty-line
         # traceback through our own frames buries the one line naming the wrong word.
         # Anything unexpected still propagates and still gets its traceback.
-        #
-        # Both halves are user input, and Rich rewrites two different things in it. `escape`
-        # handles square brackets; emoji shortcodes are a separate pass that it does not
-        # touch, so an entry of `pkg.mod:X` prints as `pkg.mod❌` unless emoji is off here.
-        console.print(
-            f"[bold red]cannot build[/] {escape(entry)}: {escape(str(error))}", emoji=False
-        )
-        if isinstance(error, ModuleNotFoundError):
-            console.print(
-                "[dim]the app is imported to check the entry resolves; pass "
-                "--no-verify-entry if it can only be imported inside Pyodide[/]"
-            )
+        _report_entry_failure(error, console, entry)
+        raise typer.Exit(2) from error
+    except UnsatisfiableRequirementsError as error:
+        _report_conflicts(error, console)
         raise typer.Exit(2) from error
     except (FileNotFoundError, NotADirectoryError) as error:
         # The exception carries only the path, so the message has to supply what it was.
@@ -106,14 +168,7 @@ def build(
         console.print(f"[bold red]cannot build[/]: the package directory {package} {problem}")
         console.print("[dim]name the directory holding the app's Python package[/]")
         raise typer.Exit(2) from error
-    for note in result.notes:
-        console.print(f"[bold yellow]warning[/] {escape(note)}", emoji=False)
-    console.print(f"[bold green]built[/] {result.output} - {result.summary}")
-    console.print(f"[dim]packages: {', '.join(result.packages)}[/]")
-    console.print(f"[dim]pyodide {PYODIDE_VERSION} from CDN[/]")
-    if worker:
-        console.print("[dim]python runs in a Web Worker; no COOP/COEP headers required[/]")
-    console.print(f"[dim]serve it with: textual-wasm dev {result.output}[/]")
+    _report_success(result, console, worker=worker)
 
 
 @app.command()

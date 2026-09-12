@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from textual_wasm import bundler
+from textual_wasm.doctor.deps import load_catalogue
 from textual_wasm.target import EntryError
 
 ENTRY = "textual_wasm.app:SpikeApp"
@@ -277,3 +278,44 @@ def test_the_app_need_not_be_importable_from_the_working_directory(
 
     assert result.notes == ()
     assert (result.output / bundler.MANIFEST_NAME).exists()
+
+
+def test_a_closure_pyodide_cannot_install_is_refused_before_the_site_is_written(
+    tmp_path: Path,
+) -> None:
+    """The failure this prevents is a build that reports success and dies in someone's browser.
+
+    `pandas<=2.2.3` is not hypothetical - it is `textual-pandas`, which fails under micropip
+    for exactly this reason, and Pyodide's pandas is 3.0.2.
+    """
+    try:
+        load_catalogue()
+    except FileNotFoundError:
+        pytest.skip("no vendored Pyodide runtime to classify against")
+
+    output = tmp_path / "site"
+    spec = dataclasses.replace(_spec(tmp_path), requirements=("pandas<=2.2.3",))
+    with pytest.raises(bundler.UnsatisfiableRequirementsError) as caught:
+        bundler.build(spec)
+    assert [item.name for item in caught.value.conflicts] == ["pandas"]
+    # Nothing at all, not merely no manifest: the check needs no part of the build to have
+    # run, so a refusal that scatters assets around is a directory someone has to clean up.
+    assert not output.exists(), f"a refused build left files behind: {list(output.iterdir())}"
+
+
+def test_the_check_can_be_turned_off(tmp_path: Path) -> None:
+    """An escape hatch, because the check reads a lock file that may not describe the runtime
+    a given build actually loads."""
+    result = bundler.build(
+        dataclasses.replace(
+            _spec(tmp_path), requirements=("pandas<=2.2.3",), check_dependencies=False
+        )
+    )
+    assert not result.dependencies_checked
+    assert (result.output / bundler.MANIFEST_NAME).exists()
+
+
+def test_an_unchecked_build_says_so_rather_than_reporting_a_clean_one(tmp_path: Path) -> None:
+    """`dependencies_checked` is the difference between "nothing wrong" and "nothing looked"."""
+    result = bundler.build(dataclasses.replace(_spec(tmp_path), check_dependencies=False))
+    assert not result.dependencies_checked

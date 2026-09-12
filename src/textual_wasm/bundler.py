@@ -23,6 +23,7 @@ import threading
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
+from textual_wasm.doctor.deps import Dependency, DependencyState, load_catalogue
 from textual_wasm.pins import resolve_pins
 from textual_wasm.target import AppTarget, importable_from
 
@@ -137,6 +138,20 @@ class BuildSpec:
     main thread, so `@work(thread=True)` remains unavailable either way.
     """
 
+    check_dependencies: bool = True
+    """Classify the resolved closure against Pyodide's lock file before writing the site.
+
+    On by default because the failure it prevents is the worst-shaped one this tool can
+    produce: a build that reports success, deploys, and then dies during `micropip.install`
+    in someone else's browser, with the reason in a console nobody is watching. A native
+    dependency pinned to a version Pyodide does not have is knowable here, offline, in
+    milliseconds.
+
+    Turn it off for a build whose Pyodide runtime is not the vendored one - the check reads
+    `node_modules/pyodide/pyodide-lock.json`, and a missing lock file is reported as an
+    unchecked build rather than a failed one.
+    """
+
     template: Path | None = None
     """A directory of files copied over the default page, or None for the default.
 
@@ -163,6 +178,14 @@ class BuildResult:
 
     A build that could not verify its entry is weaker than one that could, and the caller
     is the only place that can tell the user which of the two they just got.
+    """
+
+    dependencies_checked: bool = False
+    """Whether the closure was classified against Pyodide's package set.
+
+    Not a note, because the usual reason it is False - no vendored Pyodide runtime to read a
+    lock file from - is neither the user's mistake nor a weakness in their app. But it does
+    change what "built" means, so the caller is told rather than left to assume.
     """
 
     @property
@@ -224,6 +247,63 @@ def _measure(output: Path) -> tuple[int, int]:
     return len(files), sum(path.stat().st_size for path in files)
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class DependencyCheck:
+    """What the pre-flight dependency classification found, if it ran."""
+
+    checked: bool
+    conflicts: tuple[Dependency, ...] = ()
+    """Requirements Pyodide cannot install. Non-empty means the build must not proceed."""
+
+    notes: tuple[str, ...] = ()
+    """Requirements that work, at a version the application does not get to choose."""
+
+
+class UnsatisfiableRequirementsError(RuntimeError):
+    """The resolved closure contains something Pyodide cannot install.
+
+    Raised before the site is written, because the alternative is a directory that looks
+    like a successful build and fails at `micropip.install` in the browser. The message
+    carries every offender rather than the first: a closure with three bad pins should take
+    one build to diagnose, not three.
+    """
+
+    def __init__(self, conflicts: Sequence[Dependency]) -> None:
+        self.conflicts = tuple(conflicts)
+        detail = "; ".join(f"{item.name}{item.specifier}: {item.guidance}" for item in conflicts)
+        super().__init__(f"{len(self.conflicts)} requirement(s) cannot be installed - {detail}")
+
+
+def _check_dependencies(requirements: Sequence[str]) -> DependencyCheck:
+    """Classify the closure, separating what blocks from what merely constrains.
+
+    Args:
+        requirements: The resolved closure, as PEP 508 strings.
+
+    Returns:
+        The outcome, including whether the check ran at all. A missing lock file is not a
+        warning: the vendored runtime exists in this repository and wherever someone ran
+        `pnpm add pyodide`, and nowhere else, so most builds legitimately cannot check. It is
+        reported as `checked=False` so the CLI can say so without calling it a defect - what
+        must never happen is an unchecked closure reported as a clean one.
+    """
+    try:
+        catalogue = load_catalogue()
+    except FileNotFoundError:
+        return DependencyCheck(checked=False)
+    classified = [catalogue.classify(requirement) for requirement in requirements]
+    return DependencyCheck(
+        checked=True,
+        conflicts=tuple(item for item in classified if item.blocks),
+        notes=tuple(
+            f"{item.name} is bundled by Pyodide at {item.pyodide_version}; the build cannot "
+            "choose a different version"
+            for item in classified
+            if item.state is DependencyState.BUNDLED_NATIVE
+        ),
+    )
+
+
 def build(spec: BuildSpec) -> BuildResult:
     """Produce a self-contained static site for `spec`.
 
@@ -254,6 +334,17 @@ def build(spec: BuildSpec) -> BuildResult:
             note = AppTarget(entry=spec.entry).verify()
         notes = () if note is None else (note,)
 
+    # Before the output directory is touched. The closure is knowable without writing
+    # anything, and a refused build that has already scattered assets around is a build
+    # people have to clean up after.
+    requirements = (*resolve_pins(), *spec.requirements)
+    dependency_check = (
+        _check_dependencies(requirements) if spec.check_dependencies else DependencyCheck(False)
+    )
+    if dependency_check.conflicts:
+        raise UnsatisfiableRequirementsError(dependency_check.conflicts)
+    notes = (*notes, *dependency_check.notes)
+
     spec.output.mkdir(parents=True, exist_ok=True)
     _copy_assets(spec.output, spec.template)
 
@@ -264,7 +355,6 @@ def build(spec: BuildSpec) -> BuildResult:
     }
     (spec.output / SOURCES_NAME).write_text(json.dumps(sources), encoding="utf-8")
 
-    requirements = (*resolve_pins(), *spec.requirements)
     manifest = {
         "entry": spec.entry,
         "title": spec.title or spec.entry.partition(":")[2],
@@ -283,6 +373,7 @@ def build(spec: BuildSpec) -> BuildResult:
         notes=notes,
         requirements=requirements,
         packages=tuple(sources),
+        dependencies_checked=dependency_check.checked,
         file_count=file_count,
         total_bytes=total_bytes,
     )

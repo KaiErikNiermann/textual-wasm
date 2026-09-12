@@ -23,13 +23,21 @@ time.sleep(0.5)  # textual-wasm: allow time.sleep - CLI-only path, never reached
 ## `textual-wasm build`
 
 ```console
-$ textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR] [--worker] [-r DIST]...
+$ textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR]
+                     [--worker] [--no-check-dependencies] [-r DIST]...
 ```
 
 Writes a self-contained static site. See {doc}`usage` and {doc}`embedding`.
 
 `--worker` runs the interpreter in a Web Worker so a slow call does not freeze the page. It
 needs no special headers and deploys to the same static hosts. See {doc}`workers`.
+
+The build **classifies its resolved closure against Pyodide's package set and refuses** rather
+than writing a site that will die during `micropip.install` in someone else's browser. The
+case this catches is a native dependency pinned to a version Pyodide does not have —
+`pandas<=2.2.3` against its bundled 3.0.2, say. `--no-check-dependencies` skips it, for a
+build whose runtime is not the vendored one. Where no local Pyodide exists to read a package
+set from, the build says it did not check rather than reporting a clean result.
 
 ## `textual-wasm dev`
 
