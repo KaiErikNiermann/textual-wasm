@@ -66,6 +66,10 @@ class Support(enum.StrEnum):
     it quietly satisfies the cap by fetching an older Textual, and the failure surfaces later
     as missing widgets or changed APIs. Asked to coexist with Textual 8.2.8 it refuses
     outright. Nothing about WASM - the same cap binds a terminal install.
+
+    `textual-wasm doctor` reports these now, and `build` refuses them: the survey is what
+    showed the doctor could not see this class at all, because it classified each requirement
+    on its own and the conflict is between two of them.
     """
 
     BLOCKED = "blocked"

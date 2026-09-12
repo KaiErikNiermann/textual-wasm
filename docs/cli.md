@@ -9,7 +9,10 @@ $ textual-wasm doctor <module:App | path> [-r DISTRIBUTION]...
 ```
 
 Reports what will behave differently under Pyodide, before you run it there: imports, **call
-sites** for the failures that raise nothing, and dependency classification. Exits non-zero on
+sites** for the failures that raise nothing, dependency classification, and whether the
+requirements can coexist *with each other*. That last one catches the quietest failure in the
+add-on ecosystem: a library that caps Textual below your version installs perfectly well,
+because micropip resolves Textual *down* to suit it. Exits non-zero on
 anything blocking — a silent failure, a fatal call, an absent module, or a dependency with no
 wasm build. Things that raise honestly are reported but do not fail the run; the app will tell
 you about those itself.
@@ -36,12 +39,17 @@ needs no special headers and deploys to the same static hosts. See {doc}`workers
 what `textual_wasm.storage` writes into. Off by default: it adds a round trip to boot, and an
 app that writes nothing should not ask a user's browser for storage. See {doc}`storage`.
 
-The build **classifies its resolved closure against Pyodide's package set and refuses** rather
-than writing a site that will die during `micropip.install` in someone else's browser. The
-case this catches is a native dependency pinned to a version Pyodide does not have —
-`pandas<=2.2.3` against its bundled 3.0.2, say. `--no-check-dependencies` skips it, for a
-build whose runtime is not the vendored one. Where no local Pyodide exists to read a package
-set from, the build says it did not check rather than reporting a clean result.
+The build **checks its resolved closure and refuses** rather than writing a site that will
+die during `micropip.install` in someone else's browser. Two different failures:
+
+- a native dependency pinned to a version Pyodide does not have — `pandas<=2.2.3` against its
+  bundled 3.0.2. This half reads Pyodide's package set, so it needs the vendored runtime.
+- a requirement that contradicts another in the closure — an add-on capping `textual<6.0.0`
+  against a build pinning 8.2.8. This half needs no lock file and always runs. It is the more
+  important of the two, because micropip would otherwise *succeed* by downgrading Textual.
+
+`--no-check-dependencies` skips the first. Where no local Pyodide exists to read a package set
+from, the build says it did not check rather than reporting a clean result.
 
 ## `textual-wasm dev`
 

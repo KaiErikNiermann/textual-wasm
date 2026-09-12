@@ -67,7 +67,9 @@ def _report_entry_failure(error: Exception, console: Console, entry: str) -> Non
         )
 
 
-def _report_success(result: BuildResult, console: Console, *, worker: bool, storage: bool) -> None:
+def _report_success(
+    result: BuildResult, console: Console, *, worker: bool, storage: bool, asked_to_check: bool
+) -> None:
     """Say what was built, and on what terms.
 
     The terms matter as much as the result: a build that could not classify its dependencies
@@ -87,10 +89,15 @@ def _report_success(result: BuildResult, console: Console, *, worker: bool, stor
             "textual_wasm.storage.Store.flush() to make writes durable[/]"
         )
     if not result.dependencies_checked:
-        console.print(
-            "[dim]dependencies not classified: no local Pyodide runtime to read a package "
-            "set from (`pnpm add -D pyodide` enables the check)[/]"
+        # Two different reasons, and saying the wrong one is worse than saying nothing: a
+        # build that skipped the check on request must not be told to install a runtime.
+        reason = (
+            "no local Pyodide runtime to read a package set from (`pnpm add -D pyodide` "
+            "enables the check)"
+            if asked_to_check
+            else "--no-check-dependencies was passed"
         )
+        console.print(f"[dim]dependencies not classified against Pyodide: {reason}[/]")
     console.print(f"[dim]serve it with: textual-wasm dev {result.output}[/]")
 
 
@@ -189,7 +196,9 @@ def build(
         console.print(f"[bold red]cannot build[/]: the package directory {package} {problem}")
         console.print("[dim]name the directory holding the app's Python package[/]")
         raise typer.Exit(2) from error
-    _report_success(result, console, worker=worker, storage=storage)
+    _report_success(
+        result, console, worker=worker, storage=storage, asked_to_check=check_dependencies
+    )
 
 
 @app.command()

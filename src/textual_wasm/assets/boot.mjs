@@ -129,6 +129,56 @@ export function installPackages(pyodide, packages) {
 }
 
 /**
+ * Rewrite micropip's install failures into something that names the actual cause.
+ *
+ * Three shapes come out of a failed `micropip.install`, and the first is actively
+ * misleading. "Can't find a pure Python 3 wheel for tree-sitter>=0.25.0" reads as "nobody
+ * has built this for wasm", when the far more common truth is that Pyodide *has* built it
+ * and bundled a version your pin excludes - tree-sitter is bundled at 0.23.2. The two cases
+ * have completely different fixes and the message distinguishes neither.
+ *
+ * This runs at boot, where there is no package set to consult, so it cannot say which of
+ * the two applies. What it can do is name both and point at the command that does know -
+ * `textual-wasm doctor -r <requirement>` reads Pyodide's lock file and answers exactly this.
+ *
+ * @param {unknown} error the failure from `micropip.install`
+ * @returns {string} a message for the page's status line
+ */
+export function explainInstallFailure(error) {
+  const text = String(error?.message ?? error);
+
+  const missing = /Can't find a pure Python 3 wheel for '([^']+)'/.exec(text);
+  if (missing !== null) {
+    return (
+      `cannot install ${missing[1]}: either nothing has built it for WebAssembly, or ` +
+      "Pyodide bundles it as a native wheel at a version your requirement excludes - a " +
+      "native wheel cannot be fetched from PyPI at any other version. Run " +
+      `\`textual-wasm doctor -r "${missing[1]}"\` to find out which, before the next build.`
+    );
+  }
+
+  const unknown = /Can't fetch metadata for '([^']+)'/.exec(text);
+  if (unknown !== null) {
+    return (
+      `cannot install ${unknown[1]}: PyPI has no distribution under that name. micropip ` +
+      "installs from PyPI or a URL and has no path to a git repository, so a library that " +
+      "only exists as a repository has to be vendored into your own package instead."
+    );
+  }
+
+  const clash = /Requested '([^']+)', but ([^ ]+) is already installed/.exec(text);
+  if (clash !== null) {
+    return (
+      `cannot install ${clash[1]}: it contradicts ${clash[2]}, which is already in this ` +
+      "build's closure. One of the two has to move; `textual-wasm doctor` reports which " +
+      "requirement declared the conflicting constraint."
+    );
+  }
+
+  return `cannot install this build's packages: ${text}`;
+}
+
+/**
  * Read a build manifest and resolve the URLs inside it.
  *
  * The manifest's relative URLs are relative to the manifest, not to the document. That is
@@ -203,7 +253,14 @@ export async function boot({ manifest, host, loadPyodide, onStatus }) {
 
   onStatus("booting", `installing ${manifest.requirements.length} package(s)…`);
   await pyodide.loadPackage("micropip");
-  await pyodide.pyimport("micropip").install(manifest.requirements);
+  try {
+    await pyodide.pyimport("micropip").install(manifest.requirements);
+  } catch (error) {
+    // Rethrown rather than reported and swallowed: the application cannot run without its
+    // packages, and a boot that continues from here fails later with something unrelated.
+    // The original is kept as `cause` so the console still has the full traceback.
+    throw new Error(explainInstallFailure(error), { cause: error });
+  }
   const sources = await fetch(manifest.sourcesUrl);
   installPackages(pyodide, await sources.json());
 
