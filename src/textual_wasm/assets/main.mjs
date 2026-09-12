@@ -10,7 +10,7 @@
  */
 
 
-import { boot, importPyodide, readManifest } from "./boot.mjs";
+import { boot, flushQuietly, importPyodide, readManifest } from "./boot.mjs";
 
 /**
  * Everything the page needs to know about the app it is hosting, written by
@@ -207,6 +207,30 @@ async function loadTerminalDependencies(manifest) {
  *   it - `resolve(finished)` would make this wait for the application to exit rather than
  *   to start, which is a hang with no error attached to it.
  */
+/**
+ * Flush persistent storage when the tab is going away.
+ *
+ * `pagehide` rather than `beforeunload`: on mobile Safari and on any backgrounded tab the
+ * browser may discard the page without ever firing `beforeunload`, and `pagehide` is the
+ * event that survives that. `visibilitychange` is watched as well because a tab can be
+ * frozen while hidden and never come back, so the last consistent moment is when it is
+ * hidden rather than when it is closed.
+ *
+ * Both handlers are best-effort by construction: `syncfs` is asynchronous and nothing can
+ * await it here. That is why `textual_wasm.storage.flush()` exists for application code -
+ * this is the safety net for the writes an app did not know were its last.
+ *
+ * @param {() => void} flush
+ */
+function flushOnHide(flush) {
+  addEventListener("pagehide", flush);
+  addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flush();
+    }
+  });
+}
+
 async function bootInWorker(manifest, host) {
   const worker = new Worker(new URL("worker.mjs", import.meta.url), { type: "module" });
 
@@ -282,6 +306,12 @@ async function bootInWorker(manifest, host) {
   host.onData((data) => worker.postMessage({ type: "input", data }));
   host.onResize((cols, rows) => worker.postMessage({ type: "resize", cols, rows }));
 
+  if (manifest.storage) {
+    // The worker owns the interpreter and therefore the mount, but only this thread can
+    // hear the page going away. So the event crosses the boundary, not the filesystem.
+    flushOnHide(() => worker.postMessage({ type: "flush" }));
+  }
+
   worker.postMessage({
     type: "start",
     manifest,
@@ -301,7 +331,10 @@ async function bootInWorker(manifest, host) {
  */
 async function bootHere(manifest, host) {
   const loadPyodide = await importPyodide(manifest);
-  const { finished } = await boot({ manifest, host, loadPyodide, onStatus: setStatus });
+  const { pyodide, finished } = await boot({ manifest, host, loadPyodide, onStatus: setStatus });
+  if (manifest.storage) {
+    flushOnHide(() => void flushQuietly(pyodide));
+  }
   return { finished };
 }
 

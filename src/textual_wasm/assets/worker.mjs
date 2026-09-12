@@ -27,7 +27,7 @@
  *         | {type:"open-url", url, newTab} | {type:"deliver-file", href, filename}
  */
 
-import { boot, importPyodide } from "./boot.mjs";
+import { boot, flushQuietly, importPyodide } from "./boot.mjs";
 
 /**
  * Batch terminal output into one message per macrotask turn.
@@ -157,12 +157,15 @@ async function run(message, host) {
   // has open.
   try {
     const loadPyodide = await importPyodide(message.manifest);
-    const { finished } = await boot({
+    const { pyodide, finished } = await boot({
       manifest: message.manifest,
       host,
       loadPyodide,
       onStatus: report,
     });
+    // Kept so a `flush` message arriving later has an interpreter to flush. The page sends
+    // one when the tab is hidden or closed, which it can hear and this thread cannot.
+    state.pyodide = pyodide;
     postMessage({ type: "running" });
     await finished;
     postMessage({ type: "exited" });
@@ -176,7 +179,7 @@ async function run(message, host) {
  * inside the message listener - and because "the bridge is not built yet" is a real state
  * that input arriving early has to be able to see.
  */
-const state = { bridge: null };
+const state = { bridge: null, pyodide: null };
 
 addEventListener("message", ({ data }) => {
   switch (data.type) {
@@ -194,6 +197,15 @@ addEventListener("message", ({ data }) => {
     }
     case "resize": {
       state.bridge?.resize(data.cols, data.rows);
+      break;
+    }
+    // Best-effort, and unawaited by construction: the page is already going away, so there
+    // is nobody left to report to. A flush before the interpreter exists has nothing to
+    // write and is correctly a no-op.
+    case "flush": {
+      if (state.pyodide !== null) {
+        void flushQuietly(state.pyodide);
+      }
       break;
     }
     default: {

@@ -1,0 +1,24 @@
+/* A real stylesheet file rather than a CSS string: a .tcss the build leaves behind fails at
+   mount time in the browser and nowhere earlier, so shipping one is part of what the
+   example demonstrates. */
+
+#banner {
+    width: 100%;
+    padding: 0 1;
+    background: $panel;
+    color: $text-muted;
+}
+
+#entry {
+    height: auto;
+    padding: 1;
+}
+
+#body {
+    width: 1fr;
+}
+
+#notes {
+    border: round $primary;
+    margin: 0 1 1 1;
+}

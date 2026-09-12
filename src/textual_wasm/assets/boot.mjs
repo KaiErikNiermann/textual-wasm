@@ -26,6 +26,74 @@ export const SITE_PACKAGES = "/lib/python3.14/site-packages";
 export const HOST_MODULE = "textual_wasm_host";
 
 /**
+ * Name the storage object is registered under, and where IDBFS is mounted.
+ *
+ * `textual_wasm.storage` resolves the module by this name and reads `mountPoint` from it, so
+ * these two strings are the whole contract between the page and Python. Duplicated in
+ * `textual_wasm/storage.py` as `STORAGE_MODULE` and `DEFAULT_MOUNT`; a test asserts the two
+ * agree, because a silent disagreement would present as "this build has no storage".
+ */
+export const STORAGE_MODULE = "textual_wasm_storage";
+export const STORAGE_MOUNT = "/persist";
+
+/**
+ * Mount a persistent filesystem and hand Python the one call it cannot make itself.
+ *
+ * IDBFS rather than `localStorage`: measured across Chromium and Firefox, `localStorage` is
+ * absent from a Web Worker's global scope - `js.localStorage` raises `AttributeError` there -
+ * while IndexedDB is present in both contexts. Since a worker build is the one worth
+ * recommending, a store that only works on the main thread is not a store.
+ *
+ * The initial `syncfs(true)` is a *load*, not a save: it populates the in-memory filesystem
+ * from IndexedDB. Without it the mount is empty and the first read of a file written in a
+ * previous session reports that it does not exist.
+ *
+ * @param {object} pyodide
+ * @returns {Promise<void>}
+ */
+export async function mountStorage(pyodide) {
+  pyodide.FS.mkdirTree(STORAGE_MOUNT);
+  pyodide.FS.mount(pyodide.FS.filesystems.IDBFS, {}, STORAGE_MOUNT);
+  await syncfs(pyodide, true);
+  pyodide.registerJsModule(STORAGE_MODULE, {
+    mountPoint: STORAGE_MOUNT,
+    flush: () => syncfs(pyodide, false),
+  });
+}
+
+/**
+ * Write the mounted filesystem back to IndexedDB, reporting failure rather than raising.
+ *
+ * The callers are page-lifecycle handlers - `pagehide`, `visibilitychange`, a `flush`
+ * message - which are synchronous and have nobody left to report to: the tab is on its way
+ * out. So this swallows the error into the console deliberately, and is the only place that
+ * does; `textual_wasm.storage.flush()` still propagates to application code that awaited it.
+ *
+ * @param {object} pyodide
+ * @returns {Promise<void>}
+ */
+export async function flushQuietly(pyodide) {
+  try {
+    await syncfs(pyodide, false);
+  } catch (error) {
+    console.error("storage flush failed", error);
+  }
+}
+
+/**
+ * Promisify Emscripten's callback-style `syncfs`.
+ *
+ * @param {object} pyodide
+ * @param {boolean} populate true to load from IndexedDB, false to write back to it.
+ * @returns {Promise<void>}
+ */
+export function syncfs(pyodide, populate) {
+  return new Promise((resolve, reject) => {
+    pyodide.FS.syncfs(populate, (error) => (error ? reject(error) : resolve()));
+  });
+}
+
+/**
  * Write Python sources into Pyodide's filesystem.
  *
  * Sources rather than wheels, so a development server can serve straight from disk and an
@@ -126,6 +194,12 @@ export async function boot({ manifest, host, loadPyodide, onStatus }) {
     env: { COLUMNS: String(host.cols), LINES: String(host.rows), TERM: "xterm-256color" },
   });
   pyodide.setStdin({ stdin: () => null, isatty: true });
+
+  // Before the packages, so that a package whose import reads a config file finds one.
+  if (manifest.storage) {
+    onStatus("booting", "opening persistent storage…");
+    await mountStorage(pyodide);
+  }
 
   onStatus("booting", `installing ${manifest.requirements.length} package(s)…`);
   await pyodide.loadPackage("micropip");

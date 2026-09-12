@@ -24,13 +24,17 @@ time.sleep(0.5)  # textual-wasm: allow time.sleep - CLI-only path, never reached
 
 ```console
 $ textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR]
-                     [--worker] [--no-check-dependencies] [-r DIST]...
+                     [--worker] [--storage] [--no-check-dependencies] [-r DIST]...
 ```
 
 Writes a self-contained static site. See {doc}`usage` and {doc}`embedding`.
 
 `--worker` runs the interpreter in a Web Worker so a slow call does not freeze the page. It
 needs no special headers and deploys to the same static hosts. See {doc}`workers`.
+
+`--storage` mounts a persistent filesystem (IndexedDB, via IDBFS) at `/persist`, which is
+what `textual_wasm.storage` writes into. Off by default: it adds a round trip to boot, and an
+app that writes nothing should not ask a user's browser for storage. See {doc}`storage`.
 
 The build **classifies its resolved closure against Pyodide's package set and refuses** rather
 than writing a site that will die during `micropip.install` in someone else's browser. The

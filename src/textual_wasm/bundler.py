@@ -138,6 +138,19 @@ class BuildSpec:
     main thread, so `@work(thread=True)` remains unavailable either way.
     """
 
+    storage: bool = False
+    """Mount a persistent filesystem in the browser, at `textual_wasm.storage`'s mount point.
+
+    Off by default because it is not free and not always wanted: it adds an IndexedDB round
+    trip to boot, and an application that writes nothing should not ask a user's browser for
+    storage. A build without it still runs an app that uses `textual_wasm.storage` - the
+    store reports itself `EPHEMERAL` and writes to MEMFS, rather than raising - so turning it
+    on is a deployment decision rather than a code change.
+
+    Native runs need nothing here: `storage.location()` finds a real directory through
+    platformdirs whatever this is set to.
+    """
+
     check_dependencies: bool = True
     """Classify the resolved closure against Pyodide's lock file before writing the site.
 
@@ -360,6 +373,7 @@ def build(spec: BuildSpec) -> BuildResult:
         "title": spec.title or spec.entry.partition(":")[2],
         "requirements": list(requirements),
         "worker": spec.worker,
+        "storage": spec.storage,
         **ASSET_URLS,
         "sourcesUrl": f"./{SOURCES_NAME}",
         "entryUrl": f"./{ENTRY_NAME}",

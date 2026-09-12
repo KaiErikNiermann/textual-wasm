@@ -63,7 +63,7 @@ def _report_entry_failure(error: Exception, console: Console, entry: str) -> Non
         )
 
 
-def _report_success(result: BuildResult, console: Console, *, worker: bool) -> None:
+def _report_success(result: BuildResult, console: Console, *, worker: bool, storage: bool) -> None:
     """Say what was built, and on what terms.
 
     The terms matter as much as the result: a build that could not classify its dependencies
@@ -77,6 +77,11 @@ def _report_success(result: BuildResult, console: Console, *, worker: bool) -> N
     console.print(f"[dim]pyodide {PYODIDE_VERSION} from CDN[/]")
     if worker:
         console.print("[dim]python runs in a Web Worker; no COOP/COEP headers required[/]")
+    if storage:
+        console.print(
+            "[dim]persistent storage mounted at /persist (IndexedDB); call "
+            "textual_wasm.storage.Store.flush() to make writes durable[/]"
+        )
     if not result.dependencies_checked:
         console.print(
             "[dim]dependencies not classified: no local Pyodide runtime to read a package "
@@ -105,6 +110,13 @@ def build(
     worker: Annotated[
         bool,
         typer.Option("--worker/--main-thread", help="Run Python in a Web Worker."),
+    ] = False,
+    storage: Annotated[
+        bool,
+        typer.Option(
+            "--storage/--no-storage",
+            help="Mount a persistent browser filesystem for textual_wasm.storage to use.",
+        ),
     ] = False,
     verify_entry: Annotated[
         bool,
@@ -135,6 +147,10 @@ def build(
     `--worker` moves the interpreter off the main thread, so a slow call stops freezing the
     tab. It needs no special headers and deploys to the same static hosts. It does not make
     threads available: Pyodide has none in either mode.
+
+    `--storage` mounts a persistent filesystem, which is what `textual_wasm.storage` writes
+    into. Without it an app that uses the module still runs, reporting its store as
+    ephemeral rather than raising.
     """
     console = Console()
     try:
@@ -147,6 +163,7 @@ def build(
                 title=title,
                 template=template,
                 worker=worker,
+                storage=storage,
                 verify_entry=verify_entry,
                 check_dependencies=check_dependencies,
             )
@@ -168,7 +185,7 @@ def build(
         console.print(f"[bold red]cannot build[/]: the package directory {package} {problem}")
         console.print("[dim]name the directory holding the app's Python package[/]")
         raise typer.Exit(2) from error
-    _report_success(result, console, worker=worker)
+    _report_success(result, console, worker=worker, storage=storage)
 
 
 @app.command()

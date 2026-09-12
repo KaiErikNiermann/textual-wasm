@@ -280,6 +280,17 @@ def test_the_app_need_not_be_importable_from_the_working_directory(
     assert (result.output / bundler.MANIFEST_NAME).exists()
 
 
+def test_storage_is_off_unless_asked(built: bundler.BuildResult) -> None:
+    """An app that writes nothing should not ask a user's browser for storage."""
+    assert _manifest(built)["storage"] is False
+
+
+def test_the_storage_flag_reaches_the_page(tmp_path: Path) -> None:
+    """The page reads this to decide whether to mount IDBFS, so it is the whole switch."""
+    result = bundler.build(dataclasses.replace(_spec(tmp_path), storage=True))
+    assert _manifest(result)["storage"] is True
+
+
 def test_a_closure_pyodide_cannot_install_is_refused_before_the_site_is_written(
     tmp_path: Path,
 ) -> None:

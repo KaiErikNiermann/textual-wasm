@@ -1,0 +1,41 @@
+[project]
+name = "persistent-notes"
+version = "0.1.0"
+description = "A Textual notebook whose SQLite database persists in a terminal and in a browser."
+authors = [{ name = "textual-wasm example" }]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+# Unlike `simple-app`, this one *does* depend on textual-wasm at runtime: `storage.Store` is
+# the thing being demonstrated, and it is imported by the application rather than applied to
+# it by a build step. That is the only difference between the two examples' dependency lists,
+# and it is the honest one - persistence is the single capability that cannot be added from
+# outside the app.
+dependencies = ["textual (>=8.2,<9.0)", "textual-wasm (>=0.1,<1.0)"]
+
+[project.scripts]
+persistent-notes = "notes_app.app:main"
+
+[tool.poetry]
+packages = [{ include = "notes_app" }]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.16"
+pyright = "^1.1"
+# A path dependency so the example builds against the working tree rather than the release.
+textual-wasm = { path = "../..", develop = true }
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 96
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pyright]
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
