@@ -321,10 +321,18 @@ def render_libraries() -> str:
             "**`textual[syntax]` does not install under Pyodide "
             f"{PYODIDE_VERSION}.** Textual's syntax extra needs `tree-sitter>=0.25.0`; Pyodide "
             "bundles 0.23.2 as a native wheel, which cannot be fetched from PyPI at another "
-            "version. So `TextArea` syntax highlighting is unavailable, and so is anything "
-            "depending on it. This was found by way of `textual-textarea` but is not specific "
-            "to it. micropip's message - \"can't find a pure Python wheel for tree-sitter\" - "
-            "is misleading: it exists, one minor version too old."
+            "version. Found by way of `textual-textarea`, but not specific to it. micropip's "
+            'message - "can\'t find a pure Python wheel for tree-sitter" - is misleading: it '
+            "exists, one minor version too old."
+        ),
+        "",
+        (
+            "A plain `TextArea` was never affected. For highlighting the whole gap is one "
+            "class, so `textual_wasm.treesitter` supplies it and "
+            "`TextArea.code_editor(language=...)` works for the three grammars Pyodide "
+            "bundles - **python, go and java**. Measured in Chromium and Firefox: 14 and 13 "
+            "distinct colours painted, typing still reparsing, no console errors. The other "
+            "twelve languages in the extra have no Pyodide recipe at all."
         ),
         ":::",
         "",

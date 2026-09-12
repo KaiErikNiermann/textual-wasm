@@ -9,7 +9,9 @@ Measured in four tiers, because no single one of them is a verdict: `micropip` i
 Two results are worth reading before the table. On the first run of this survey the static scan produced **no findings at all**, across every library - which was a gap in the rules, not a clean bill of health. The two failures the runtime tier had already found showed where, and both now have registry entries that fire on the exact lines responsible. And the most-downloaded package here, `textual-serve`, installs and imports cleanly while being the one thing on this page you definitely should not use with it.
 
 :::{warning}
-**`textual[syntax]` does not install under Pyodide 314.0.6.** Textual's syntax extra needs `tree-sitter>=0.25.0`; Pyodide bundles 0.23.2 as a native wheel, which cannot be fetched from PyPI at another version. So `TextArea` syntax highlighting is unavailable, and so is anything depending on it. This was found by way of `textual-textarea` but is not specific to it. micropip's message - "can't find a pure Python wheel for tree-sitter" - is misleading: it exists, one minor version too old.
+**`textual[syntax]` does not install under Pyodide 314.0.6.** Textual's syntax extra needs `tree-sitter>=0.25.0`; Pyodide bundles 0.23.2 as a native wheel, which cannot be fetched from PyPI at another version. Found by way of `textual-textarea`, but not specific to it. micropip's message - "can't find a pure Python wheel for tree-sitter" - is misleading: it exists, one minor version too old.
+
+A plain `TextArea` was never affected. For highlighting the whole gap is one class, so `textual_wasm.treesitter` supplies it and `TextArea.code_editor(language=...)` works for the three grammars Pyodide bundles - **python, go and java**. Measured in Chromium and Firefox: 14 and 13 distinct colours painted, typing still reparsing, no console errors. The other twelve languages in the extra have no Pyodide recipe at all.
 :::
 
 Ordered by monthly PyPI downloads within each group, so the rows people are most likely to want come first. Run `textual-wasm doctor <module:App> -r <dist>` to check your own dependencies the same way.
