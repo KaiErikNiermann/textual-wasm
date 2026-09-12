@@ -1,6 +1,6 @@
 # Examples
 
-Three complete projects, each self-contained enough to copy out of the repository and use.
+Five complete projects, each self-contained enough to copy out of the repository and use.
 The demos below are **live**: every one is a real build of the app beside it, running in your
 browser on this static site.
 
@@ -93,6 +93,64 @@ single `input()` call in one direction.
 
 The same shape works in Vue's `onMounted` or React's `useEffect`; nothing about it is
 Svelte-specific.
+
+---
+
+## Storage that survives a reload
+
+[`examples/persistent-notes`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/examples/persistent-notes)
+— a notebook backed by a real **SQLite** database, with a real schema and real queries,
+persisting across page reloads.
+
+**What it shows.** That a browser needs no storage abstraction. Pyodide can mount IndexedDB
+*as a filesystem*, so `sqlite3.connect(...)` works in a page and persists — and a `Store`
+protocol with two backends would be a worse reimplementation of that, without SQL.
+
+What genuinely differs is *when* a write becomes durable, so the app calls one extra method:
+
+```python
+store = Store.open("persistent-notes")
+connection = sqlite3.connect(store.path("notes.db"))   # the one line that differs
+...
+await store.flush()                                     # no-op natively
+```
+
+```console
+$ textual-wasm build notes_app.app:Notes notes_app -o dist/ --storage --worker
+```
+
+Build it *without* `--storage` and the app says so in its own banner rather than silently
+forgetting. Measured across Chromium and Firefox, main thread and Web Worker: a note written,
+the page reloaded, the note still there — in all four combinations. {doc}`storage` is the
+full account, including why `localStorage` is the wrong answer (a Web Worker does not have
+it).
+
+---
+
+## Four third-party libraries in one page
+
+[`examples/addon-gallery`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/examples/addon-gallery)
+— a signal explorer built from `textual-autocomplete`, `textual-plotext`, `textual-plot` and
+`textual-slider`.
+
+**What it shows.** That the add-on ecosystem works, and that **none of these libraries knows
+it is in a browser** — no shim, no conditional import, no vendored fork. Four packages off
+PyPI, installed by `micropip` at boot.
+
+The part that makes it work is not in the application at all:
+
+```console
+$ textual-wasm build gallery_app.app:Gallery gallery_app -o dist/ --worker \
+    -r textual-autocomplete -r textual-plotext -r textual-plot -r textual-slider
+```
+
+A missing `-r` produces a page that fetches a 10 MB interpreter, boots it, and *then* fails on
+the first import — so `textual-wasm doctor -r <dist>` belongs before the build, not after the
+deploy.
+
+Two plotting libraries side by side on identical data, because they are the two options in
+the ecosystem. {doc}`library-support` is the survey these four were picked from: 37 libraries
+installed into a real Pyodide and mounted, of which 23 can be shipped today.
 
 ---
 

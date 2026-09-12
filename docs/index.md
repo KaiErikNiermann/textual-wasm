@@ -106,6 +106,7 @@ usage
 porting
 embedding
 workers
+storage
 examples
 ```
 
@@ -116,6 +117,7 @@ examples
 limitations
 browsers
 matrix
+library-support
 cli
 study
 ```

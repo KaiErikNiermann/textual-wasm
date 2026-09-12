@@ -31,7 +31,7 @@ Textual itself is untouched. The extension point is a public one —
 | | |
 |---|---|
 | `textual-wasm doctor <module:App>` | What will break, with a `file:line`. Reads imports, **call sites**, and dependencies. |
-| `textual-wasm build <module:App> <package> -o dist/` | A static site. Bare page by default; `--title` and `--template` if you want otherwise. |
+| `textual-wasm build <module:App> <package> -o dist/` | A static site. Bare page by default; `--title` and `--template` if you want otherwise. `--storage` for a persistent filesystem. Refuses a closure Pyodide cannot install. |
 | `textual-wasm dev dist/` | Serve it locally. Standard library only. |
 | `textual-wasm check --app <module:App>` | Run it on every runtime available and compare. |
 
@@ -107,6 +107,11 @@ static files by GitHub Pages.
   not work, organised by *whose* constraint each one is.
 - [Browser support](https://kaierikniermann.github.io/textual-wasm/browsers.html) — measured
   across three engines, and what that measurement does not cover.
+- [Managing persistent storage](https://kaierikniermann.github.io/textual-wasm/storage.html) —
+  why `localStorage` is the wrong answer (a Web Worker does not have it) and why you need no
+  storage abstraction at all.
+- [Library support](https://kaierikniermann.github.io/textual-wasm/library-support.html) — 37
+  Textual add-ons installed into a real Pyodide and mounted; 23 can be shipped today.
 - [Feasibility study](./textual-wasm-feasability-study.md) — the architecture audit, what the
   spike measured, and the claims it corrected.
 
@@ -117,6 +122,8 @@ static files by GitHub Pages.
 | [`simple-app`](./examples/simple-app) | A task list. The smallest complete thing. |
 | [`embedded-page`](./examples/embedded-page) | The terminal as one component of an article, driven by HTML buttons. |
 | [`svelte-app`](./examples/svelte-app) | Mounted in a Svelte 5 component, with Svelte state around it. |
+| [`persistent-notes`](./examples/persistent-notes) | A SQLite database that survives a page reload. One code path, one extra `flush()`. |
+| [`addon-gallery`](./examples/addon-gallery) | Four third-party Textual libraries, none of which knows it is in a browser. |
 
 Each is a self-contained project with its own `pyproject.toml`, README and linting — copy one
 out and it works.

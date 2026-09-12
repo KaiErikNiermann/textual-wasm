@@ -52,6 +52,15 @@ streaming worker. Contingent on: a forked Pyodide build. Nothing less.
 thread. It returns the right answer, so nothing fails — the page just freezes for the duration.
 This project turns it into a warning naming the substitute.
 
+**`textual[syntax]` does not install, so `TextArea` syntax highlighting is unavailable.**
+Textual's syntax extra requires `tree-sitter>=0.25.0`; Pyodide bundles 0.23.2 as a native
+wheel, which cannot be fetched from PyPI at another version. Measured directly:
+`micropip.install("textual[syntax]")` fails and `micropip.install("textual")` succeeds. A
+plain `TextArea` works; `TextArea.code_editor` and any `language=` argument do not. This is
+the same trap as the next entry, reached through an extra rather than a direct dependency —
+and micropip's message for it ("can't find a pure Python wheel for tree-sitter") is
+misleading, since it exists, one minor version too old.
+
 **A package bundled as a native wheel pins you to Pyodide's version of it.** `cryptography` is
 three majors behind PyPI; `polars`, eleven minors. Since Pyodide 314 a package can also publish
 a `pyemscripten` wasm wheel to PyPI, which has no such constraint — `doctor` reports which of
