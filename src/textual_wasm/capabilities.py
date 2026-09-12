@@ -67,6 +67,16 @@ class Capabilities:
     """`errno.ENOENT`. Emscripten uses its own table where this is 44, not 2, so code that
     compares a caught errno against a literal silently stops matching."""
 
+    syntax_highlighting: str
+    """Whether `TextArea` can highlight here, and on what terms.
+
+    Reported because it is the one capability whose answer differs between a developer's
+    machine and the browser for a reason neither of them can see: Pyodide bundles a
+    tree-sitter older than the one Textual's `syntax` extra asks for, and
+    `textual_wasm.treesitter` closes the gap. Without this field, highlighting working or
+    not working is invisible until someone looks at a rendered screen.
+    """
+
     @property
     def threads_available(self) -> bool:
         """Whether `@work(thread=True)` and thread pools can work here at all."""
@@ -149,4 +159,17 @@ def detect() -> Capabilities:
         cross_origin_isolated=_cross_origin_isolated(),
         in_worker=_in_worker(),
         enoent=errno.ENOENT,
+        syntax_highlighting=_syntax_highlighting(),
     )
+
+
+def _syntax_highlighting() -> str:
+    """What the tree-sitter shim concluded, as a one-line summary.
+
+    Read from the report the package import already produced rather than re-running the
+    check: `install()` mutates `tree_sitter`, and a second call would report `not_needed`
+    about a module the first call is the reason for.
+    """
+    from textual_wasm import TREE_SITTER_SHIM  # noqa: PLC0415 - avoids a circular import
+
+    return TREE_SITTER_SHIM.summary
