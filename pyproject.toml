@@ -1,6 +1,6 @@
 [project]
 name = "textual-wasm"
-version = "0.1.0"
+version = "0.1.1"
 description = "Ship a Textual TUI as both a terminal app and a client-side web page."
 authors = [{ name = "KaiErikNiermann", email = "61298289+KaiErikNiermann@users.noreply.github.com" }]
 readme = "README.md"
