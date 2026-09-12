@@ -14,6 +14,14 @@ Textual.
 **[Live demos](https://kaierikniermann.github.io/textual-wasm/examples.html)** ·
 **[Porting guide](https://kaierikniermann.github.io/textual-wasm/porting.html)**
 
+> [!IMPORTANT]
+> **Early development.** This project is pre-1.0 and classified `Development Status :: 3 -
+> Alpha`. Best efforts are made to keep it stable — every release runs the full gate suite,
+> and behaviour is measured across Chromium, Firefox and WebKit rather than assumed — but
+> the public API, the CLI flags and the generated page's contract are all still subject to
+> change between releases. Pin a version if you depend on it, and read the release notes
+> before upgrading.
+
 ```bash
 textual-wasm build myapp.main:App myapp -o dist/   # a static directory
 textual-wasm dev dist/                             # http://127.0.0.1:8000
