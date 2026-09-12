@@ -50,6 +50,11 @@ DEFAULT_POLICIES: Final[Mapping[str, GuardPolicy]] = {
     "os.kill.suspend": GuardPolicy.WARN,
     "time.sleep": GuardPolicy.WARN,
     "asyncio.run_in_executor": GuardPolicy.WARN,
+    # WARN rather than RAISE: a library that probes the terminal usually has a fallback for
+    # the case where the probe fails, and raising here would take that path away. What the
+    # developer needs is to know the probe is about to answer nothing, before the read that
+    # follows it blocks forever.
+    "termios.tcsetattr": GuardPolicy.WARN,
 }
 """Per-substitution policy. Overridable at `install()` for a project that wants a strict run."""
 
@@ -123,6 +128,48 @@ def _guard_socket_connect() -> Callable[[], None]:
     return lambda: setattr(socket.socket, "connect", original)
 
 
+def _guard_terminal_mode() -> Callable[[], None]:
+    """Putting the terminal into cbreak or raw mode succeeds here and changes nothing.
+
+    Worth a guard precisely because nothing fails: the call is only ever made in order to
+    write a query escape sequence and read the terminal's reply, and the read is what hangs.
+    Reporting at the mode change names the library responsible while there is still a stack
+    to attribute it to - by the time the read blocks, the traceback is a bare `os.read`.
+
+    `tty.setcbreak` and `tty.setraw` are wrapped rather than only `termios.tcsetattr` because
+    they are what callers actually write; `tty` calls into `termios` but a wrapper installed
+    on `termios` alone would attribute the report to the standard library.
+    """
+    import termios  # noqa: PLC0415 - native-only modules, imported where they are wrapped
+    import tty  # noqa: PLC0415
+
+    originals = {
+        (tty, "setcbreak"): tty.setcbreak,
+        (tty, "setraw"): tty.setraw,
+        (termios, "tcsetattr"): termios.tcsetattr,
+    }
+
+    def wrap(module: Any, name: str, original: Any) -> Any:
+        def guarded(*args: Any, **kwargs: Any) -> Any:
+            _report(
+                "termios.tcsetattr",
+                f"{module.__name__}.{name}() succeeds here and changes nothing; a read of "
+                "the terminal's reply will not return",
+            )
+            return original(*args, **kwargs)
+
+        return guarded
+
+    for (module, name), original in originals.items():
+        setattr(module, name, wrap(module, name, original))
+
+    def undo() -> None:
+        for (module, name), original in originals.items():
+            setattr(module, name, original)
+
+    return undo
+
+
 def _guard_os_kill() -> Callable[[], None]:
     """`SIGKILL` destroys the interpreter; `SIGTSTP` silently does nothing."""
     original = os.kill
@@ -192,6 +239,7 @@ _GUARDS: Final[Sequence[Callable[[], Callable[[], None]]]] = (
     _guard_socket_connect,
     _guard_os_kill,
     _guard_run_in_executor,
+    _guard_terminal_mode,
 )
 
 

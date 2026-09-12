@@ -28,6 +28,10 @@ PLANTED: Final[frozenset[str]] = frozenset(
         "threading.thread",
         "concurrent.thread_pool",
         "curses",
+        "termios.tcsetattr",
+        "fcntl.ioctl",
+        "pty.openpty",
+        "socket.bind",
     }
 )
 """Every problem deliberately written into the fixture."""

@@ -284,6 +284,98 @@ SUBSTITUTIONS: Final[tuple[Substitution, ...]] = (
     ),
     # --- ENV_DIVERGENT ------------------------------------------------------------------
     Substitution(
+        id="termios.tcsetattr",
+        severity=Severity.SILENT_WRONG,
+        detect=(
+            DetectionRule(DetectionKind.CALL, "tty.setcbreak"),
+            DetectionRule(DetectionKind.CALL, "tty.setraw"),
+            DetectionRule(DetectionKind.CALL, "termios.tcsetattr"),
+        ),
+        observed=(
+            "Succeeds and changes nothing. The call that follows it is the problem: putting a "
+            "terminal into cbreak mode is what code does before writing a query escape "
+            "sequence and reading the terminal's reply, and no reply ever comes - so the read "
+            "blocks forever on the only thread there is."
+        ),
+        guidance=(
+            "There is no terminal to interrogate. Take the size from the driver, which already "
+            "has it, and choose rendering modes from a configuration value rather than by "
+            "asking. `textual_wasm.capabilities` reports what this runtime can do without "
+            "probing for it."
+        ),
+        env_divergent=True,
+        reference="https://github.com/lnqs/textual-image",
+    ),
+    Substitution(
+        id="fcntl.ioctl",
+        severity=Severity.LOUD_UNCLEAR,
+        detect=(DetectionRule(DetectionKind.CALL, "fcntl.ioctl"),),
+        observed=(
+            "Raises `OSError: [Errno 59] Not a tty`, identically under Node and in a browser. "
+            "Errno 59 is not ENOTTY, which is 25, so code matching on the number rather than "
+            "on the exception sees an unrelated error."
+        ),
+        guidance=(
+            "`TIOCGWINSZ` is the usual reason to reach for this, and the size is already "
+            "available: the driver is told it by the host and `os.environ['COLUMNS']` is set "
+            "before the application starts."
+        ),
+        native_message="Not a tty",
+        probe=(
+            "import array, fcntl, sys, termios; "
+            'fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, array.array("H", [0, 0, 0, 0]))'
+        ),
+    ),
+    Substitution(
+        id="pty.openpty",
+        severity=Severity.LOUD_UNCLEAR,
+        detect=(
+            DetectionRule(DetectionKind.CALL, "pty.openpty"),
+            DetectionRule(DetectionKind.CALL, "pty.fork"),
+            DetectionRule(DetectionKind.CALL, "pty.spawn"),
+        ),
+        observed=(
+            "Raises `OSError: out of pty devices`, which reads as exhaustion - as though "
+            "waiting or closing something would help. There are none and there will be none."
+        ),
+        guidance=(
+            "A pseudo-terminal needs a kernel. Anything that would drive a child program "
+            "through one needs a server; there is no in-page substitute."
+        ),
+        native_message="out of pty devices",
+        probe="import pty; pty.openpty()",
+        reference="https://github.com/mitosch/textual-terminal",
+    ),
+    Substitution(
+        id="socket.bind",
+        severity=Severity.LOUD_UNCLEAR,
+        detect=(
+            DetectionRule(DetectionKind.CALL, "socketserver.TCPServer"),
+            DetectionRule(DetectionKind.CALL, "socketserver.ThreadingTCPServer"),
+            DetectionRule(DetectionKind.CALL, "http.server.HTTPServer"),
+            DetectionRule(DetectionKind.CALL, "web.run_app"),
+            DetectionRule(DetectionKind.CALL, "aiohttp.web.run_app"),
+            DetectionRule(DetectionKind.CALL, "uvicorn.run"),
+        ),
+        observed=(
+            "In a browser, `OSError: [Errno 138] Not supported` - which says that something is "
+            "unsupported without saying that it is listening. **Under Node the same code "
+            "succeeds silently**, binds, listens, and accepts nothing, so a check run only on "
+            "the Node leg reports a server that works and a browser then refuses it."
+        ),
+        guidance=(
+            "A page cannot listen for connections; nothing in the sandbox can. An application "
+            "that wants to be reached from outside needs a server, which is the architecture "
+            "this project is an alternative to rather than a component of."
+        ),
+        # The browser's text, not Node's - Node raises nothing at all here. Errno 138 is
+        # Emscripten's ENOTSUP; the number is included because "Not supported" on its own is
+        # generic enough to match errors this has nothing to do with.
+        native_message="[Errno 138] Not supported",
+        env_divergent=True,
+        reference="https://github.com/Textualize/textual-serve",
+    ),
+    Substitution(
         id="os.system",
         severity=Severity.SILENT_WRONG,
         detect=(DetectionRule(DetectionKind.CALL, "os.system"),),

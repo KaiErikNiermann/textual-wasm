@@ -11,12 +11,15 @@ actually decides a port - every `Widget` subclass it defines was constructed and
 running Textual application under the capture driver. The four tiers disagree often enough
 that any one of them alone would mislead:
 
-* `textual-serve` passes install, import and the static scan, and is nonetheless the wrong
-  answer: it is the server-side architecture this project is an alternative to.
+* `textual-serve` passes install and import, and is nonetheless the wrong answer: it is the
+  server-side architecture this project is an alternative to.
 * Five libraries install cleanly *by silently pulling an older Textual*, which the install
   tier cannot see and the mount tier reports immediately.
-* Nothing in the ecosystem tripped a single static-scan finding, which says more about the
-  scan's coverage of widget libraries than about the libraries.
+* On the first run of this survey the static scan produced **no findings at all**, across
+  every library. That was a gap in the rules rather than a clean bill of health, and the two
+  failures the runtime tier had already found showed where: `textual-image` interrogating the
+  terminal, and `textual-serve` binding a socket. Both now have registry entries, both fire
+  on those exact lines, and neither fires on a library that is fine.
 
 **What was not measured.** WebKit would not launch on the machine that ran this, so every
 verdict is Chromium and Firefox. Widgets needing constructor arguments were given real ones
@@ -142,7 +145,10 @@ LIBRARIES: Final[tuple[Library, ...]] = (
         summary="images via Sixel and the Terminal Graphics Protocol",
         observed=(
             "`textual_image.widget.Image(pil_image)` - the backend-selecting widget - mounted "
-            "and rendered 9115 characters. Pillow is bundled by Pyodide, so it resolves."
+            "and rendered 9115 characters. Pillow is bundled by Pyodide, so it resolves. The "
+            "doctor now reports three findings in its source: `fcntl.ioctl` and two "
+            "`termios.tcsetattr` calls in `_posix.py`, which is the terminal interrogation "
+            "behind the hang below."
         ),
         widgets=("Image",),
         guidance=(
@@ -538,8 +544,10 @@ LIBRARIES: Final[tuple[Library, ...]] = (
         downloads=1128421,
         summary="serve a Textual app over HTTP from a Python server",
         observed=(
-            "Installs and imports under Pyodide and passes the static scan, which is precisely "
-            "why the install tier alone is not a verdict."
+            "Installs and imports under Pyodide, which is precisely why the install tier alone "
+            "is not a verdict. The doctor now flags `web.run_app` at `server.py:229` - and "
+            "that call is the divergent kind: silently fine under Node, `OSError 138` in a "
+            "browser, so a Node-only check would have passed it."
         ),
         guidance=(
             "It is the *other* architecture: a server runs Python and streams the terminal to a "

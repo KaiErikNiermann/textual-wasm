@@ -307,12 +307,13 @@ def render_libraries() -> str:
         ),
         "",
         (
-            "Two results are worth reading before the table. **Not one library in the "
-            "ecosystem tripped a single static-scan finding**, which says more about what the "
-            "scan covers than about the libraries - so a clean `doctor` run on a dependency "
-            "is not evidence. And the most-downloaded package here, `textual-serve`, passes "
-            "install, import and the scan while being the one thing on this page you "
-            "definitely should not use with it."
+            "Two results are worth reading before the table. On the first run of this survey "
+            "the static scan produced **no findings at all**, across every library - which was "
+            "a gap in the rules, not a clean bill of health. The two failures the runtime tier "
+            "had already found showed where, and both now have registry entries that fire on "
+            "the exact lines responsible. And the most-downloaded package here, "
+            "`textual-serve`, installs and imports cleanly while being the one thing on this "
+            "page you definitely should not use with it."
         ),
         "",
         ":::{warning}",

@@ -184,7 +184,18 @@ def test_unprobeable_substitutions_say_why() -> None:
     misbehaves in a browser and this harness runs under Node.
     """
     exempt = {s.id for s in SUBSTITUTIONS} - {s.id for s in PROBEABLE}
-    assert exempt == {"socket.connect", "os.kill.terminate", "os.system"}
+    assert exempt == {
+        "socket.connect",
+        "os.kill.terminate",
+        "os.system",
+        # Both measured in a real browser rather than reasoned about, and both diverge from
+        # the Node harness in a way that would make a probe assert the wrong thing:
+        # `tty.setcbreak` raises under Node's default stdin and succeeds silently in the
+        # browser (where the driver sets `isatty`), and a socket bind is the reverse -
+        # silently fine under Node, `OSError 138` in a browser.
+        "termios.tcsetattr",
+        "socket.bind",
+    }
     for substitution in SUBSTITUTIONS:
         if substitution.probe is None:
             assert substitution.env_divergent or substitution.severity is Severity.FATAL, (
