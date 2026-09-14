@@ -27,7 +27,7 @@ jobs:
         # syntax this project would otherwise adopt without noticing.
         python: ["3.12", "3.14"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
@@ -91,7 +91,7 @@ jobs:
         browser: [chromium, firefox, webkit]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
@@ -176,7 +176,7 @@ jobs:
       run:
         working-directory: examples/${{ matrix.directory }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
@@ -209,7 +209,7 @@ jobs:
     # that only runs at release time is a docs build that is broken at release time.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
