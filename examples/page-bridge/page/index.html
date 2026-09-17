@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mixer</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='14' font-family='monospace'%3E%26gt;_%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles/index.css" />
+    <link rel="stylesheet" href="./styles/mixer.css" />
+  </head>
+  <body class="page article">
+    <article class="prose">
+      <h1>Two views of one value</h1>
+      <p>
+        The sliders are HTML. The meters are a Textual application compiled to WebAssembly and
+        running in this tab. Neither owns the levels: move a slider and the meter follows,
+        press the arrow keys in the terminal and the slider follows.
+      </p>
+
+      <div class="embed">
+        <div class="terminal-frame">
+          <div id="terminal" class="terminal-mount"></div>
+        </div>
+
+        <!-- Every control names the channel it speaks on. The application binds the same
+             three names to three reactives, and nothing else is arranged between them. -->
+        <form class="desk" id="desk">
+          <fieldset class="levels">
+            <legend>Levels</legend>
+            <label class="level">
+              <span class="level-name">gain</span>
+              <input type="range" min="0" max="100" step="5" value="40" data-channel="gain" />
+              <output data-for="gain">40</output>
+            </label>
+            <label class="level">
+              <span class="level-name">bass</span>
+              <input type="range" min="0" max="100" step="5" value="30" data-channel="bass" />
+              <output data-for="bass">30</output>
+            </label>
+            <label class="level">
+              <span class="level-name">treble</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value="55"
+                data-channel="treble"
+              />
+              <output data-for="treble">55</output>
+            </label>
+          </fieldset>
+
+          <!-- Driven only by the application. There is no control here that could set it,
+               which is the half of the channel a keystroke has never been able to do. -->
+          <p class="clipping" id="clipping" data-state="quiet">nothing is clipping</p>
+
+          <label class="note">
+            <span>Send a note to the app</span>
+            <input type="text" id="note" placeholder="anything at all" />
+          </label>
+        </form>
+      </div>
+
+      <p id="status" class="status" data-state="booting">starting&hellip;</p>
+
+      <h2>What crosses</h2>
+      <p>
+        Three channels carrying numbers, one carrying an object the page never sends on, one
+        carrying raw text. The page half is four lines:
+      </p>
+      <pre><code>const { bridge } = globalThis.textualWasm;
+
+bridge.on("gain", (value) =&gt; { slider.value = value; });
+slider.addEventListener("input", () =&gt; bridge.send("gain", Number(slider.value)));</code></pre>
+      <p>
+        and the application half is one, once per value:
+        <code>self.bridge.bind("gain", self, "gain")</code>. The same code runs in a terminal,
+        where there is no page and the channel is inert.
+      </p>
+    </article>
+    <script type="module" src="./main.mjs"></script>
+    <script type="module" src="./controls.mjs"></script>
+  </body>
+</html>

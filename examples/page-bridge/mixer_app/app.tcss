@@ -1,0 +1,47 @@
+/* Ordinary Textual CSS, in a file rather than a `CSS` string so the build has a `.tcss` to
+   ship. A stylesheet left behind fails at mount time in the browser and nowhere earlier. */
+
+#panel {
+    padding: 1 2;
+}
+
+#meters {
+    height: auto;
+}
+
+Meter {
+    border: round $panel;
+    height: auto;
+    padding: 0 1;
+    width: 1fr;
+}
+
+/* Read from a class the app sets on the widget, so which meter is selected is a fact the
+   DOM holds rather than something painted over it. */
+Meter.selected {
+    border: round $accent;
+}
+
+Meter.hot {
+    border: round $warning;
+}
+
+Meter.hot .meter-name {
+    color: $warning;
+}
+
+.meter-name {
+    text-style: bold;
+}
+
+#note {
+    color: $text-muted;
+    height: auto;
+    padding-top: 1;
+}
+
+#link {
+    color: $text-muted;
+    height: auto;
+    text-style: italic;
+}
