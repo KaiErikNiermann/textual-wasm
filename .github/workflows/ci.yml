@@ -60,9 +60,10 @@ jobs:
         run: |
           poetry run semgrep --config .semgrep/conventions.yml \
             --config .semgrep/core-utils.yml --metrics=off --error --quiet src
-      - name: eslint + stylelint + principled-css
+      - name: eslint + stylelint + principled-css + tsc
         # A stylesheet in an example shipped unlayered because these gates existed but were
-        # only ever run by hand.
+        # only ever run by hand. `lint:ts` type-checks the page-bridge page against the
+        # channel declarations its application generates.
         run: pnpm lint:all
       - name: pytest
         # Browser-driving tests are deselected here and required in the `check` matrix,
@@ -74,6 +75,14 @@ jobs:
 
       - name: the library support table is a rendering of the registry
         run: poetry run textual-wasm libraries --check -o docs/library-table.md
+
+      - name: the example page's declarations are a rendering of its channels
+        # `lint:all` type-checks the page against this file; this checks the file itself is
+        # current. Without both, a page can type-check green against channels the
+        # application stopped sending, which reads as proof and is not.
+        run: |
+          poetry run textual-wasm channels mixer_app.channels \
+            --path examples/page-bridge --check -o examples/page-bridge/page/channels.d.ts
 
   check:
     # The claim this project makes, checked rather than asserted: the same app on CPython,
