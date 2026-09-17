@@ -24,7 +24,13 @@ from textual.reactive import reactive
 from textual.widgets import Static
 
 from textual_wasm import bridge
-from textual_wasm.bridge import BRIDGE_MODULE, Bridge, BridgeMessage, JsonCodec
+from textual_wasm.bridge import (
+    BRIDGE_MODULE,
+    Bridge,
+    BridgeMessage,
+    BridgePayloadError,
+    JsonCodec,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -100,8 +106,34 @@ def test_a_value_the_codec_cannot_render_fails_without_a_page() -> None:
     """Encoding happens whether or not anyone is listening, which costs a `json.dumps` on a
     terminal and buys the thing worth having: a bad payload fails in every runtime rather
     than only in a browser, where nobody is looking at the console."""
-    with pytest.raises(TypeError):
+    with pytest.raises(BridgePayloadError, match="channel 'levels'"):
         Bridge(Mixer()).send("levels", object())
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_a_float_json_cannot_represent_is_refused_at_the_sender(value: float) -> None:
+    """`json.dumps` writes the bare token `NaN`, which is not JSON: measured,
+    `JSON.parse("NaN")` throws `SyntaxError: "NaN" is not valid JSON`.
+
+    Left at the `json` default, an application that divided by zero would send a payload
+    that fails inside a page listener, in a console nobody is reading, with nothing pointing
+    back at what sent it. This is the one place the codec is stricter than the standard
+    library, and the reason is that the other side is not Python.
+    """
+    with pytest.raises(BridgePayloadError, match="channel 'levels'"):
+        Bridge(Mixer()).send("levels", value)
+
+
+def test_an_error_names_the_channel_it_came_from() -> None:
+    """In a browser the only diagnostic is a console nobody has open, so an error that does
+    not say which channel produced it costs an afternoon."""
+    message = BridgeMessage("levels", "{not json", JsonCodec())
+    with pytest.raises(BridgePayloadError) as caught:
+        _ = message.data
+    assert "levels" in str(caught.value)
+    assert isinstance(caught.value.__cause__, json.JSONDecodeError), (
+        "the original must survive, so a caller can still tell what kind of failure it was"
+    )
 
 
 def test_connect_without_a_registered_module_yields_an_unavailable_bridge() -> None:
@@ -167,7 +199,7 @@ def test_a_malformed_payload_raises_where_it_is_read_rather_than_where_it_arrive
     a handler that wants to recover has something to recover from."""
     message = BridgeMessage("levels", "{not json", JsonCodec())
     assert message.text == "{not json"
-    with pytest.raises(json.JSONDecodeError):
+    with pytest.raises(BridgePayloadError):
         _ = message.data
 
 

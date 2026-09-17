@@ -68,6 +68,19 @@ application annotating its own payloads should not have to restate it.
 """
 
 
+class BridgePayloadError(ValueError):
+    """A value could not cross a channel, in either direction.
+
+    One class for both because the question an operator asks is the same - *which channel,
+    and what was wrong with it* - and because the original is kept as `__cause__` for
+    anyone who needs to tell a `JSONDecodeError` from a `TypeError`.
+
+    Naming the channel is the whole point. In a browser the only diagnostic is a console
+    nobody has open, and `Expecting value: line 1 column 1 (char 0)` on its own does not say
+    which of an application's channels produced it.
+    """
+
+
 class BridgeHost(Protocol):
     """The contract a page satisfies to give an application a data channel.
 
@@ -108,14 +121,22 @@ class JsonCodec:
 
     Chosen because it is the one format both runtimes already have, which means a page
     author writes no encoder and an application adds no dependency. Non-serialisable values
-    raise `TypeError` out of `json.dumps` rather than being coerced - a payload the page
-    cannot read should fail where it was written.
+    raise rather than being coerced - a payload the page cannot read should fail where it
+    was written.
+
+    `allow_nan=False`, which is not the `json` default and is the one place this codec is
+    stricter than the standard library. `json.dumps(float("nan"))` produces the bare token
+    `NaN`, which is not JSON: measured, `JSON.parse("NaN")` throws `SyntaxError: "NaN" is
+    not valid JSON`. Left at the default, an application that divided by zero somewhere
+    would send a payload that fails inside a page listener, in a console nobody is reading,
+    with nothing pointing back at the sender. The page has the same gap in reverse -
+    `JSON.stringify(NaN)` is `null` - but that direction at least arrives.
     """
 
     __slots__ = ()
 
     def encode(self, value: object) -> str:
-        return json.dumps(value)
+        return json.dumps(value, allow_nan=False)
 
     def decode(self, text: str) -> object:
         return cast("object", json.loads(text))
@@ -152,11 +173,17 @@ class BridgeMessage(Message):
         by reaching past this to `text` and handing that to a codec that returns a model.
 
         Raises:
-            Whatever the codec raises for text it cannot read. The pipe does not pretend a
-            malformed payload is an empty one.
+            BridgePayloadError: If the codec cannot read the text. The pipe does not pretend
+                a malformed payload is an empty one; `text` survives for a handler that
+                wants to recover, and the original error is the `__cause__`.
         """
         if self._decoded is _UNDECODED:
-            self._decoded = self._codec.decode(self.text)
+            try:
+                self._decoded = self._codec.decode(self.text)
+            except Exception as error:
+                raise BridgePayloadError(
+                    f"could not decode the payload on channel {self.channel!r}: {error}"
+                ) from error
         return self._decoded
 
     def __rich_repr__(self) -> rich.repr.Result:
@@ -176,19 +203,39 @@ class _Binding:
     send the value straight back to the page that just sent it. The loop terminates anyway -
     the page sets its control to a value it already has - but the traffic is real and a
     channel that echoes everything is hard to read in a console.
+
+    Also holds the validator, for the reason below.
     """
 
-    __slots__ = ("attribute", "channel", "node", "suppressed")
+    __slots__ = ("attribute", "channel", "node", "suppressed", "validate", "warned")
 
-    def __init__(self, channel: str, node: DOMNode, attribute: str) -> None:
+    def __init__(
+        self,
+        channel: str,
+        node: DOMNode,
+        attribute: str,
+        validate: Callable[[object], object] | None,
+    ) -> None:
         self.channel = channel
         self.node = node
         self.attribute = attribute
+        self.validate = validate
         self.suppressed = False
+        self.warned = False
 
     def apply(self, value: object) -> None:
-        """Assign `value` to the bound attribute without sending it back."""
-        if getattr(self.node, self.attribute) == value:
+        """Assign `value` to the bound attribute without sending it back.
+
+        Raises:
+            Whatever the validator raises. Caught by the caller, which logs it and leaves
+            the attribute alone, because this runs inside a JavaScript callback.
+        """
+        current = getattr(self.node, self.attribute)
+        if self.validate is None:
+            self._warn_on_type_change(current, value)
+        else:
+            value = self.validate(value)
+        if current == value:
             # Textual does not fire a watcher for an unchanged value, so this is not the
             # guard - it is the cheaper path that avoids arming one.
             return
@@ -197,6 +244,36 @@ class _Binding:
             setattr(self.node, self.attribute, value)
         finally:
             self.suppressed = False
+
+    def _warn_on_type_change(self, current: object, value: object) -> None:
+        """Say so, once, when the page changes what *type* an attribute holds.
+
+        Textual's reactives do not type-check at runtime, so a `reactive[int]` sent the
+        string `"loud"` simply holds `"loud"` afterwards and the failure surfaces wherever
+        the application next does arithmetic on it - a long way from the channel that caused
+        it. Without a validator this is the only warning anyone gets, and silence here is
+        how a page quietly redefines an application's state.
+
+        Once per binding rather than per message: a slider dragged across a type boundary
+        would otherwise fill the console with the same line sixty times a second.
+
+        `None` is exempt in both directions because it is how an unset reactive starts and
+        how an application spells "no value", not a type the page imposed.
+        """
+        if self.warned or current is None or value is None:
+            return
+        if type(current) is type(value):
+            return
+        self.warned = True
+        _log.warning(
+            "channel %r: the page changed %s.%s from %s to %s. Reactives are not checked at "
+            "runtime, so this sticks. Pass validate= to bind() to convert or reject it.",
+            self.channel,
+            type(self.node).__name__,
+            self.attribute,
+            type(current).__name__,
+            type(value).__name__,
+        )
 
 
 class Bridge:
@@ -270,10 +347,28 @@ class Bridge:
         Encoding happens even when there is no page, which costs a `json.dumps` on a
         terminal and buys the thing worth having: a value the codec cannot render fails in
         every runtime rather than only in a browser.
-        """
-        self.send_text(channel, self.codec.encode(value))
 
-    def bind(self, channel: str, node: DOMNode, attribute: str, *, initial: bool = True) -> None:
+        Raises:
+            BridgePayloadError: If the codec cannot render `value`. Raised here rather than
+                left to surface on the page, because the page cannot say what sent it.
+        """
+        try:
+            text = self.codec.encode(value)
+        except Exception as error:
+            raise BridgePayloadError(
+                f"could not encode a value for channel {channel!r}: {error}"
+            ) from error
+        self.send_text(channel, text)
+
+    def bind(
+        self,
+        channel: str,
+        node: DOMNode,
+        attribute: str,
+        *,
+        initial: bool = True,
+        validate: Callable[[object], object] | None = None,
+    ) -> None:
         """Keep a reactive attribute and a channel in step, in both directions.
 
         The slider case in one line: the page's control and the application's state are two
@@ -287,11 +382,28 @@ class Bridge:
             initial: Whether to send the current value immediately, so a page that loads
                 against a running app starts in step rather than in whatever state its
                 markup happened to declare.
+            validate: Called with each inbound value; its return is what gets assigned, and
+                raising rejects the update. **Pass one for anything a page can reach**, and
+                read the paragraph below before deciding not to.
 
         Binding a channel does not consume it: a :class:`BridgeMessage` is still posted, so
-        an application can bind a value *and* react to its arrival.
+        an application can bind a value *and* react to its arrival - including one a
+        validator rejected, since the raw text is still there.
+
+        Without a validator the page decides the *type* of the attribute, not just its
+        value. Textual's reactives do not type-check at runtime, so a `reactive[int]` sent
+        the string `"loud"` holds `"loud"` afterwards, and the failure surfaces wherever the
+        application next does arithmetic on it - measured, not theorised. `validate=int` is
+        the whole fix for the common case:
+
+            self.bridge.bind("gain", self, "gain", validate=int)
+
+        Anything callable works, so `float`, a function that clamps to a range, or
+        `TypeAdapter(Levels).validate_python` all fit without this module knowing about
+        them. A rejected value is logged with the channel name and the attribute is left
+        alone.
         """
-        binding = _Binding(channel, node, attribute)
+        binding = _Binding(channel, node, attribute, validate)
         self._bindings[channel] = binding
 
         def on_change(value: object) -> None:
@@ -339,12 +451,31 @@ class Bridge:
         regardless. The raw text survives either way, and an application that wants to know
         can read `text` and decode it itself.
         """
+        if not isinstance(text, str):
+            # Reachable from JavaScript, where `bridge.sendText("note")` with the argument
+            # forgotten sends `undefined` and arrives here as None. Rejected rather than
+            # coerced: `String(undefined)` is the string "undefined", which is data that
+            # looks real. The page-side `sendText` refuses it too; this is for a host that
+            # is not the shipped one.
+            _log.error(
+                "channel %r: expected text, got %s; the message was dropped",
+                channel,
+                type(text).__name__,
+            )
+            return
+
         binding = self._bindings.get(channel)
         if binding is not None:
             try:
                 binding.apply(self.codec.decode(text))
             except Exception:
-                _log.exception("could not apply %r to %s", channel, binding.attribute)
+                _log.exception(
+                    "channel %r: could not apply the payload to %s.%s; it was %.200r",
+                    channel,
+                    type(binding.node).__name__,
+                    binding.attribute,
+                    text,
+                )
         self._app.post_message(BridgeMessage(channel, text, self.codec))
 
 

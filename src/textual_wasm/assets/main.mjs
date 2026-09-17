@@ -155,9 +155,27 @@ function createBridge() {
     },
     api: {
       send(channel, value) {
-        relay.push(channel, codec.encode(value));
+        const text = codec.encode(value);
+        if (typeof text !== "string") {
+          // `JSON.stringify(undefined)` is `undefined`, not a string - so a forgotten
+          // argument or a value made only of `undefined` puts a non-string on the wire and
+          // arrives in Python as None. Refused here, where the stack still points at the
+          // caller, rather than in a log line the page author never reads.
+          throw new TypeError(
+            `[textual-wasm] the codec produced ${typeof text} for channel "${channel}"; ` +
+              "a value of undefined has no JSON form. Use sendText, or send null.",
+          );
+        }
+        relay.push(channel, text);
       },
       sendText(channel, text) {
+        if (typeof text !== "string") {
+          // Coercing would be worse than throwing: `String(undefined)` is the string
+          // "undefined", which is data that looks real all the way into the application.
+          throw new TypeError(
+            `[textual-wasm] sendText("${channel}", …) needs a string, got ${typeof text}`,
+          );
+        }
         relay.push(channel, text);
       },
       on: (channel, callback) => subscribe(channel, callback, true),
