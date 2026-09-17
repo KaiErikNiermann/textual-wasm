@@ -23,7 +23,7 @@ app rather than a web app that happens to be written in Python.
 
 from __future__ import annotations
 
-from typing import ClassVar, Final
+from typing import ClassVar, Final, cast
 
 from textual.app import App, ComposeResult
 from textual.binding import BindingType
@@ -32,16 +32,7 @@ from textual.reactive import reactive
 from textual.widgets import Footer, Header, Label, ProgressBar, Static
 from textual_wasm.bridge import Bridge, BridgeMessage
 
-LEVELS: Final[tuple[str, ...]] = ("gain", "bass", "treble")
-"""The bound channels. One name per reactive, used on both sides of the boundary - the page
-listens on exactly these, so the tuple is the contract rather than a convenience."""
-
-CLIP_CHANNEL: Final[str] = "clipping"
-"""Application to page only. Nothing on the page sends on it."""
-
-NOTE_CHANNEL: Final[str] = "note"
-"""Page to application only, and read as raw text rather than through the codec, so the
-example shows both layers rather than only the convenient one."""
+from mixer_app.channels import CLIPPING, LEVELS, NOTE, Clipping, LevelName
 
 CLIP_AT: Final[int] = 85
 """Where the mixer calls a level too hot. Arbitrary, and the arbitrariness is the point: it
@@ -101,20 +92,20 @@ class Mixer(App[None]):
         yield Header()
         with Vertical(id="panel"):
             with Horizontal(id="meters"):
-                for name in LEVELS:
-                    yield Meter(name)
+                for channel in LEVELS:
+                    yield Meter(channel.name)
             yield Static("", id="note")
             yield Static("", id="link")
         yield Footer()
 
     def on_mount(self) -> None:
         self.bridge = Bridge.connect(self)
-        for name in LEVELS:
+        for channel in LEVELS:
             # One line per shared value, and the same line whether the page is driving it or
             # the keyboard is. Sending the current value immediately is what lets a page that
             # loads against a running app start in step rather than at whatever its markup
             # happened to declare.
-            self.bridge.bind(name, self, name)
+            self.bridge.bind(channel.name, self, channel.name)
         self.query_one("#link", Static).update(
             "page connected" if self.bridge.available else "no page: running in a terminal"
         )
@@ -140,7 +131,7 @@ class Mixer(App[None]):
         does not consume it - so this only has to deal with the one channel that has no
         binding behind it.
         """
-        if message.channel == NOTE_CHANNEL:
+        if NOTE.matches(message):
             # `text` rather than `data`: the page is sending a line of prose, and running it
             # through a JSON decoder would be ceremony around a string.
             self.query_one("#note", Static).update(message.text)
@@ -151,7 +142,7 @@ class Mixer(App[None]):
         The page hears about this because the level is bound, and it hears about it without
         having asked - no polling, and nothing scraping the rendered grid.
         """
-        name = LEVELS[self.selected]
+        name = LEVELS[self.selected].name
         setattr(self, name, max(0, min(100, int(getattr(self, name)) + direction * STEP)))
 
     def action_select(self, direction: int) -> None:
@@ -163,10 +154,10 @@ class Mixer(App[None]):
         self._report_clipping()
 
     def _refresh_meters(self) -> None:
-        for index, name in enumerate(LEVELS):
-            for meter in self.query(f"#meter-{name}").results(Meter):
+        for index, channel in enumerate(LEVELS):
+            for meter in self.query(f"#meter-{channel.name}").results(Meter):
                 meter.set_class(index == self.selected, "selected")
-                meter.level = int(getattr(self, name))
+                meter.level = int(getattr(self, channel.name))
 
     def _report_clipping(self) -> None:
         """Tell the page which levels are too hot.
@@ -176,8 +167,15 @@ class Mixer(App[None]):
         reason about than one carrying edges. `Bridge.send` on a terminal encodes and drops,
         which is why this needs no `if self.bridge.available` around it.
         """
-        hot = [name for name in LEVELS if int(getattr(self, name)) >= CLIP_AT]
-        self.bridge.send(CLIP_CHANNEL, {"threshold": CLIP_AT, "hot": hot})
+        hot: list[LevelName] = [
+            cast("LevelName", channel.name)
+            for channel in LEVELS
+            if int(getattr(self, channel.name)) >= CLIP_AT
+        ]
+        report: Clipping = {"threshold": CLIP_AT, "hot": hot}
+        # Through the channel rather than the bridge, so the payload is checked against the
+        # same declaration the page's `.d.ts` was generated from.
+        CLIPPING.send(self.bridge, report)
 
 
 def main() -> None:

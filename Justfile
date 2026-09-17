@@ -18,7 +18,7 @@ install-browsers *engines="chromium firefox webkit":
 # --- Lint -------------------------------------------------------------------
 
 # Every gate a push has to satisfy, in the order the pre-push hook runs them
-gates: lint fmt-check types complexity policy lint-web test matrix-check libraries-check
+gates: lint fmt-check types complexity policy lint-web test matrix-check libraries-check channels-check
 
 # Ruff
 lint *paths="src tests":
@@ -59,7 +59,7 @@ policy:
   EIO_BACKEND=posix poetry run semgrep --config .semgrep/conventions.yml \
     --config .semgrep/core-utils.yml --metrics=off --error --quiet src
 
-# eslint + stylelint + the principled-css rules, over the CSS and the examples
+# eslint + stylelint + the principled-css rules over the CSS, and tsc over the example page
 lint-web:
   pnpm lint:all
 
@@ -104,6 +104,16 @@ matrix:
 # The add-on support table is still a faithful rendering of the ecosystem registry
 libraries-check:
   poetry run textual-wasm libraries --check -o docs/library-table.md
+
+# The example page's TypeScript declarations still match the channels the app declares
+channels-check:
+  poetry run textual-wasm channels mixer_app.channels --path examples/page-bridge \
+    --check -o examples/page-bridge/page/channels.d.ts
+
+# Regenerate them
+channels:
+  poetry run textual-wasm channels mixer_app.channels --path examples/page-bridge \
+    -o examples/page-bridge/page/channels.d.ts
 
 # Regenerate the add-on support table from the registry
 libraries:

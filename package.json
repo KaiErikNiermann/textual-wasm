@@ -6,9 +6,10 @@
   "description": "JavaScript runtime dependencies for the textual-wasm cross-runtime check.",
   "scripts": {
     "check": "poetry run textual-wasm check",
-    "lint:all": "pnpm lint:css && pnpm lint:style",
+    "lint:all": "pnpm lint:css && pnpm lint:style && pnpm lint:ts",
     "lint:css": "eslint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" && stylelint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\"",
-    "lint:style": "EIO_BACKEND=posix poetry run semgrep --config .semgrep/vendor/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets examples"
+    "lint:style": "EIO_BACKEND=posix poetry run semgrep --config .semgrep/vendor/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets examples",
+    "lint:ts": "tsc --noEmit -p examples/page-bridge"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
@@ -31,6 +32,7 @@
     "stylelint-config-standard": "^40.0.0",
     "stylelint-declaration-strict-value": "^1.12.1",
     "stylelint-order": "^8.1.1",
-    "tailwind-csstree": "^0.4.0"
+    "tailwind-csstree": "^0.4.0",
+    "typescript": "^5.9.0"
   }
 }
