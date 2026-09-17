@@ -570,6 +570,12 @@ export interface Bridge {
   send<K extends ChannelName>(channel: K, value: Channels[K]): void;
   /** Send as-is, with no codec in the way. Any name: the pipe has no schema. */
   sendText(channel: string, text: string): void;
+  /**
+   * Send at most one value per channel per frame, keeping the newest and dropping the rest.
+   * Right for state a control produces faster than the application can consume it; wrong
+   * for anything where every message matters.
+   */
+  sendLatest<K extends ChannelName>(channel: K, value: Channels[K]): void;
   /** Receive decoded. Returns an unsubscribe function. */
   on<K extends ChannelName>(channel: K, callback: (value: Channels[K]) => void): () => void;
   /** Receive raw. Returns an unsubscribe function. */

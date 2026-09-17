@@ -147,6 +147,19 @@ jobs:
         # the part most likely to differ between them: it is the only mode whose output
         # crosses a thread boundary.
         run: poetry run textual-wasm check --strict --worker --browser ${{ matrix.browser }}
+      - name: the data channel behaves the same on both transports
+        # Chromium only: this compares main-thread against worker, which is a fact about
+        # where the interpreter runs rather than about how an engine paints.
+        if: matrix.browser == 'chromium'
+        run: poetry run pytest tests/test_bridge_browser.py -v
+
+      - name: the data channel survives what a page should not send
+        # Per engine, unlike the two above, because this is exactly where the two runtimes'
+        # type systems meet - a payload that behaves differently in one browser is what a
+        # single-engine suite cannot see. The suite drives both itself, so it is run once.
+        if: matrix.browser == 'chromium'
+        run: poetry run pytest tests/test_bridge_errors.py -v
+
       - name: a worker keeps the page responsive, and the main thread does not
         # The measurement worker mode exists for, and the one thing the render comparison
         # above cannot see. Chromium only: this is a fact about where the interpreter runs,

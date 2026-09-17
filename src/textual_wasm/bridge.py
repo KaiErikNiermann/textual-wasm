@@ -60,6 +60,15 @@ Duplicated in `boot.mjs` as `BRIDGE_MODULE`; a test asserts the two agree, becau
 disagreement would present as an application whose messages vanish.
 """
 
+type Validator = Callable[[Any], object]
+"""Converts or rejects one inbound value, for :meth:`Bridge.bind`.
+
+The parameter is `Any` rather than `object`, and that is the difference between the
+documented one-liner working and not: `int` does not satisfy `Callable[[object], object]`,
+because none of its overloads accepts a bare `object`. So `validate=int` - the fix this
+argument exists for - would be a type error, which is the worst possible place to be strict.
+"""
+
 type JsonValue = str | int | float | bool | list[JsonValue] | dict[str, JsonValue] | None
 """What :class:`JsonCodec` accepts and produces.
 
@@ -214,7 +223,7 @@ class _Binding:
         channel: str,
         node: DOMNode,
         attribute: str,
-        validate: Callable[[object], object] | None,
+        validate: Validator | None,
     ) -> None:
         self.channel = channel
         self.node = node
@@ -367,7 +376,7 @@ class Bridge:
         attribute: str,
         *,
         initial: bool = True,
-        validate: Callable[[object], object] | None = None,
+        validate: Validator | None = None,
     ) -> None:
         """Keep a reactive attribute and a channel in step, in both directions.
 
@@ -442,8 +451,12 @@ class Bridge:
         self._proxy = create_proxy(self._deliver)
         return self._proxy
 
-    def _deliver(self, channel: str, text: str) -> None:
+    def _deliver(self, channel: str, text: object) -> None:
         """Hand one inbound message to the application.
+
+        `text` is typed `object` rather than `str` because JavaScript is what calls this,
+        and JavaScript will call it with whatever it has. Narrowing here is the boundary
+        check; a `str` annotation would be a claim about a caller that cannot be held to it.
 
         Called by JavaScript, which means an exception raised here lands in the browser
         console rather than anywhere the application can see - so a decode failure in a

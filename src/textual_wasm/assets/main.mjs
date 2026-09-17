@@ -101,6 +101,8 @@ function createBridge() {
   const relay = createRelay();
   const listeners = new Map();
   const undelivered = new Map();
+  const coalesced = new Map();
+  let isFlushScheduled = false;
   let codec = { encode: (value) => JSON.stringify(value), decode: (text) => JSON.parse(text) };
 
   /**
@@ -124,6 +126,43 @@ function createBridge() {
     }
     for (const listener of subscribed) {
       listener(text);
+    }
+  };
+
+  /**
+   * Send at most one value per channel per frame, keeping the newest.
+   *
+   * There is no backpressure anywhere in this channel - `send` returns as soon as the value
+   * is queued, and the queue lives in the receiving runtime. Measured in Chromium: a page
+   * can push 200,000 messages in 162ms and the application needs 2.7 seconds to consume
+   * them, so a burst builds a backlog roughly seventeen times longer than it took to send.
+   *
+   * For a channel carrying *state* that is the wrong trade entirely - the application will
+   * render the last value and every earlier one was work nobody sees. Coalescing keeps the
+   * newest and drops the rest, which is a lie for an event stream and exactly right for a
+   * slider. Hence the separate name: `send` never drops anything.
+   *
+   * A frame rather than a microtask, because a frame is the rate at which anything drawn
+   * from this value can actually change. A hidden tab gets no frames, so a timeout stands
+   * in - without it a value sent just before the tab was hidden would never leave.
+   */
+  const flushCoalesced = () => {
+    isFlushScheduled = false;
+    for (const [channel, text] of coalesced) {
+      relay.push(channel, text);
+    }
+    coalesced.clear();
+  };
+
+  const scheduleFlush = () => {
+    if (isFlushScheduled) {
+      return;
+    }
+    isFlushScheduled = true;
+    if (document.visibilityState === "hidden") {
+      setTimeout(flushCoalesced, 0);
+    } else {
+      requestAnimationFrame(flushCoalesced);
     }
   };
 
@@ -177,6 +216,17 @@ function createBridge() {
           );
         }
         relay.push(channel, text);
+      },
+      sendLatest(channel, value) {
+        const text = codec.encode(value);
+        if (typeof text !== "string") {
+          throw new TypeError(
+            `[textual-wasm] the codec produced ${typeof text} for channel "${channel}"; ` +
+              "a value of undefined has no JSON form.",
+          );
+        }
+        coalesced.set(channel, text);
+        scheduleFlush();
       },
       on: (channel, callback) => subscribe(channel, callback, true),
       onText: (channel, callback) => subscribe(channel, callback, false),

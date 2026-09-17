@@ -27,7 +27,7 @@ from textual_wasm.bundler import BuildSpec, background_server, build
 
 pytestmark = [pytest.mark.slow, pytest.mark.browser]
 
-HARNESS: Final[str] = "bridge.mjs"
+HARNESS: Final[str] = "bridge-round-trip.mjs"
 HARNESS_DIR: Final[Path] = Path(__file__).parent / "harness"
 BRIDGE_APP: Final[str] = "tests.bridge_app:BridgeApp"
 PACKAGE: Final[Path] = Path(__file__).parent
