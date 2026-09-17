@@ -34,7 +34,7 @@ deploying it to install.
 Textual itself is untouched. The extension point is a public one —
 `TEXTUAL_DRIVER=module:Symbol` (`textual/app.py:1585`) — so there is no patch to rebase.
 
-## The four commands
+## The five commands
 
 | | |
 |---|---|
@@ -42,6 +42,7 @@ Textual itself is untouched. The extension point is a public one —
 | `textual-wasm build <module:App> <package> -o dist/` | A static site. Bare page by default; `--title` and `--template` if you want otherwise. `--storage` for a persistent filesystem. Refuses a closure Pyodide cannot install. |
 | `textual-wasm dev dist/` | Serve it locally. Standard library only. |
 | `textual-wasm check --app <module:App>` | Run it on every runtime available and compare. |
+| `textual-wasm channels <module>` | TypeScript declarations for the app's data channels, so the page type-checks against them. `--check` gates the committed copy. |
 
 ## What `check` actually checks
 
@@ -111,6 +112,8 @@ static files by GitHub Pages.
   you already have.
 - [Embedding](https://kaierikniermann.github.io/textual-wasm/embedding.html) — custom pages,
   and Textual inside Svelte, Vue or plain HTML.
+- [The data channel](https://kaierikniermann.github.io/textual-wasm/bridge.html) — live values
+  between the app and the page in both directions, what it costs, and where it stops.
 - [Limitations](https://kaierikniermann.github.io/textual-wasm/limitations.html) — what does
   not work, organised by *whose* constraint each one is.
 - [Browser support](https://kaierikniermann.github.io/textual-wasm/browsers.html) — measured
