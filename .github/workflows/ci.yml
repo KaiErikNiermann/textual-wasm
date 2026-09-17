@@ -154,10 +154,16 @@ jobs:
         run: poetry run pytest tests/test_bridge_browser.py -v
 
       - name: the data channel survives what a page should not send
-        # Per engine, unlike the two above, because this is exactly where the two runtimes'
-        # type systems meet - a payload that behaves differently in one browser is what a
-        # single-engine suite cannot see. The suite drives both itself, so it is run once.
-        if: matrix.browser == 'chromium'
+        # On every leg, with the leg's own engine, because this is exactly where the two
+        # runtimes' type systems meet and a payload that behaves differently in one browser
+        # is what a single-engine suite cannot see.
+        #
+        # The variable is what keeps the suite from carrying an engine axis of its own: each
+        # leg installs only `matrix.browser`, so a suite that iterated engines internally
+        # would reach for a binary this runner was never given. Locally it drives the
+        # engines a developer machine has; here the matrix decides.
+        env:
+          TEXTUAL_WASM_BROWSER: ${{ matrix.browser }}
         run: poetry run pytest tests/test_bridge_errors.py -v
 
       - name: a worker keeps the page responsive, and the main thread does not

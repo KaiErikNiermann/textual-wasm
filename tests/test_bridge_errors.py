@@ -7,13 +7,19 @@ a reactive setter before anything notices, and an exception at any of those poin
 a browser console rather than anywhere an application can see.
 
 So one run per engine, asserting that the application is still drawing at the end and that
-every failure said something an operator could act on. Chromium and Firefox both, because a
-case that behaves differently between engines is exactly what a single-engine suite cannot
-see - and this channel is the one place the two runtimes' type systems meet.
+every failure said something an operator could act on. Every engine, because a case that
+behaves differently between two of them is exactly what a single-engine suite cannot see -
+and this channel is the one place the two runtimes' type systems meet.
+
+`TEXTUAL_WASM_BROWSER` narrows that to one, which is how CI runs it: each leg of the check
+matrix installs only its own engine, so the leg *is* the engine axis and this suite has no
+business carrying a second one. Unset - the local case - it drives the engines a developer
+machine can be expected to have.
 """
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 from typing import Final, cast
@@ -30,9 +36,31 @@ HARNESS_DIR: Final[Path] = Path(__file__).parent / "harness"
 ERRORS_APP: Final[str] = "tests.bridge_errors_app:ErrorApp"
 PACKAGE: Final[Path] = Path(__file__).parent
 
-ENGINES: Final[tuple[str, ...]] = ("chromium", "firefox")
-"""Both engines this suite can drive headlessly. WebKit is covered by `safari.yml`, which
-runs weekly against a real Safari rather than Playwright's port."""
+ENGINE_VARIABLE: Final[str] = "TEXTUAL_WASM_BROWSER"
+"""Names one engine to drive, instead of all of them.
+
+CI sets it per matrix leg, because each leg installs only its own engine - a suite that
+iterated engines internally would be duplicating an axis the matrix already has, and would
+reach for a binary the runner it is on was never given. Unset, which is the local case, every
+engine runs.
+"""
+
+DEFAULT_ENGINES: Final[tuple[str, ...]] = ("chromium", "firefox")
+"""What a local run drives, and no more.
+
+WebKit is deliberately absent from the *default* rather than from the suite. Playwright's
+WebKit needs system libraries a non-Debian host does not have - this project's own `check`
+fails the same way on the same machine - so defaulting to it would make `just test-browser`
+fail for a reason that has nothing to do with the channel. CI names it explicitly on the leg
+that installed it, which is where the answer for WebKit actually comes from.
+"""
+
+
+def _engines() -> tuple[str, ...]:
+    """Which engines this run should drive."""
+    chosen = os.environ.get(ENGINE_VARIABLE, "").strip()
+    return (chosen,) if chosen else DEFAULT_ENGINES
+
 
 HOSTILE_TEXT: Final[str] = "\x1b[31m \x00 \u202e \U0001f600 done"
 """What the harness puts on the raw pipe. Chosen so that anything which decodes, re-encodes
@@ -86,7 +114,7 @@ def browser_available() -> None:
         pytest.skip(f"{available.reason} {node.BROWSER_HINT}")
 
 
-@pytest.fixture(params=ENGINES, scope="module")
+@pytest.fixture(params=_engines(), scope="module")
 def observed(request: pytest.FixtureRequest, browser_available: None) -> dict[str, object]:
     """One full hostile-input run, per engine."""
     return _run(str(request.param))
