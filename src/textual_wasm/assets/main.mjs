@@ -5,12 +5,21 @@
  * under wasm32-emscripten; this proves the byte stream it produces is a real terminal
  * stream that a browser emulator renders correctly, cell widths included.
  *
- * The page's entire contract with Python is the four-member object below, which is what
- * `textual_wasm.browser.TerminalHost` declares.
+ * The page's contract with Python is two objects and nothing else: the four-member terminal
+ * `textual_wasm.browser.TerminalHost` declares, and the two-member data channel
+ * `textual_wasm.bridge.BridgeHost` declares. Both are assembled here and both are satisfied
+ * identically whether the interpreter runs on this thread or in a worker.
  */
 
 
-import { boot, flushQuietly, importPyodide, readManifest } from "./boot.mjs";
+import {
+  RELAY_LIMIT,
+  boot,
+  createRelay,
+  flushQuietly,
+  importPyodide,
+  readManifest,
+} from "./boot.mjs";
 
 /**
  * Everything the page needs to know about the app it is hosting, written by
@@ -70,6 +79,99 @@ function readScreen(terminal) {
     lines.push(line === undefined ? "" : line.translateToString(true));
   }
   return { columns: terminal.cols, rows: terminal.rows, lines };
+}
+
+/**
+ * Build the page's end of the data channel.
+ *
+ * Deliberately transport-agnostic, which is the whole reason it is one function rather than
+ * two: on the main thread `host` is registered straight into the interpreter, and in a
+ * worker the identical `deliver`/`relay` pair is wired to `postMessage` instead. The page's
+ * API - `send`, `on` and their text-level twins - is assembled once and behaves the same
+ * either way, so a build flag cannot change what a page can say.
+ *
+ * The codec is a property rather than a parameter because it is the page's choice and the
+ * page is the thing that changes: a project speaking msgpack replaces `bridge.codec` and
+ * nothing else in this file knows.
+ *
+ * @returns {{host: object, api: object, deliver: (channel: string, text: string) => void,
+ *            relay: object}}
+ */
+function createBridge() {
+  const relay = createRelay();
+  const listeners = new Map();
+  const undelivered = new Map();
+  let codec = { encode: (value) => JSON.stringify(value), decode: (text) => JSON.parse(text) };
+
+  /**
+   * Hand one inbound payload to every listener on its channel, keeping it if there are none.
+   *
+   * A page subscribes after `globalThis.textualWasm` appears, which is necessarily after the
+   * application has started - so an application that publishes its state on mount publishes
+   * it into an empty room. Holding the payload is what makes `bind`'s initial send arrive.
+   *
+   * @param {string} channel
+   * @param {string} text
+   */
+  const deliver = (channel, text) => {
+    const subscribed = listeners.get(channel);
+    if (subscribed === undefined || subscribed.size === 0) {
+      // One channel cannot starve another, and the newest value is the one a late
+      // listener wants, so the oldest goes.
+      const kept = [...(undelivered.get(channel) ?? []), text];
+      undelivered.set(channel, kept.slice(-RELAY_LIMIT));
+      return;
+    }
+    for (const listener of subscribed) {
+      listener(text);
+    }
+  };
+
+  /**
+   * @param {string} channel
+   * @param {(payload: unknown) => void} callback
+   * @param {boolean} decoded whether to run the payload through the codec first
+   * @returns {() => void} unsubscribe
+   */
+  const subscribe = (channel, callback, decoded) => {
+    const listener = decoded ? (text) => callback(codec.decode(text)) : callback;
+    const subscribed = listeners.get(channel) ?? new Set();
+    subscribed.add(listener);
+    listeners.set(channel, subscribed);
+    const waiting = undelivered.get(channel) ?? [];
+    for (const text of waiting) {
+      listener(text);
+    }
+    undelivered.delete(channel);
+    return () => {
+      subscribed.delete(listener);
+    };
+  };
+
+  return {
+    host: {
+      send: (channel, text) => deliver(channel, text),
+      subscribe: (callback) => relay.attach(callback),
+    },
+    api: {
+      send(channel, value) {
+        relay.push(channel, codec.encode(value));
+      },
+      sendText(channel, text) {
+        relay.push(channel, text);
+      },
+      on: (channel, callback) => subscribe(channel, callback, true),
+      onText: (channel, callback) => subscribe(channel, callback, false),
+      get codec() {
+        return codec;
+      },
+      set codec(replacement) {
+        codec = replacement;
+      },
+    },
+    deliver,
+    relay,
+  };
 }
 
 const statusElement = document.querySelector("#status");
@@ -231,7 +333,7 @@ function flushOnHide(flush) {
   });
 }
 
-async function bootInWorker(manifest, host) {
+async function bootInWorker(manifest, host, bridge) {
   const worker = new Worker(new URL("worker.mjs", import.meta.url), { type: "module" });
 
   const {promise: running, resolve: onRunning, reject: onFailed} = Promise.withResolvers();
@@ -285,6 +387,13 @@ async function bootInWorker(manifest, host) {
         open(data.url, data.newTab ? "_blank" : "_self");
         break;
       }
+      // The data channel. Everything above is this page talking to its own terminal; this
+      // is the application talking to the page, and the only reason it needs a case here is
+      // that a worker cannot reach the document itself.
+      case "bridge": {
+        bridge.deliver(data.channel, data.text);
+        break;
+      }
       case "deliver-file": {
         const anchor = document.createElement("a");
         anchor.href = data.href;
@@ -305,6 +414,7 @@ async function bootInWorker(manifest, host) {
 
   host.onData((data) => worker.postMessage({ type: "input", data }));
   host.onResize((cols, rows) => worker.postMessage({ type: "resize", cols, rows }));
+  bridge.relay.attach((channel, text) => worker.postMessage({ type: "bridge", channel, text }));
 
   if (manifest.storage) {
     // The worker owns the interpreter and therefore the mount, but only this thread can
@@ -329,9 +439,15 @@ async function bootInWorker(manifest, host) {
  * @returns {Promise<{finished: Promise<unknown>}>} wrapped for the same reason as above:
  *   returning a bare promise from an async function adopts it.
  */
-async function bootHere(manifest, host) {
+async function bootHere(manifest, host, bridge) {
   const loadPyodide = await importPyodide(manifest);
-  const { pyodide, finished } = await boot({ manifest, host, loadPyodide, onStatus: setStatus });
+  const { pyodide, finished } = await boot({
+    manifest,
+    host,
+    bridge: bridge.host,
+    loadPyodide,
+    onStatus: setStatus,
+  });
   if (manifest.storage) {
     flushOnHide(() => void flushQuietly(pyodide));
   }
@@ -350,8 +466,9 @@ async function main() {
   await layoutSettled();
   fit();
 
+  const bridge = createBridge();
   const { finished } = await (
-    manifest.worker ? bootInWorker(manifest, host) : bootHere(manifest, host)
+    manifest.worker ? bootInWorker(manifest, host, bridge) : bootHere(manifest, host, bridge)
   );
 
   setStatus("ready", `running at ${host.cols}x${host.rows}`);
@@ -371,6 +488,11 @@ async function main() {
     input: (data) => terminal.input(data),
     finished,
     worker: Boolean(manifest.worker),
+    // The data channel, for everything the keyboard is the wrong shape for. Published
+    // beside `input` rather than instead of it: a button that means "press 2" is still
+    // better served by sending the keystroke, and this is for the values that have no
+    // keystroke. See `textual_wasm.bridge`.
+    bridge: bridge.api,
   };
 
   // Attached rather than awaited, and that distinction is the whole embedding story: a

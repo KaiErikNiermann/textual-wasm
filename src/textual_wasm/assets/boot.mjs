@@ -37,6 +37,79 @@ export const STORAGE_MODULE = "textual_wasm_storage";
 export const STORAGE_MOUNT = "/persist";
 
 /**
+ * Name the data channel is registered under.
+ *
+ * `textual_wasm.bridge` resolves the module by this name, so the string is the whole
+ * contract between a page's channel object and Python's. Duplicated in
+ * `textual_wasm/bridge.py` as `BRIDGE_MODULE`; a test asserts the two agree, because a
+ * silent disagreement would present as an application whose messages vanish.
+ *
+ * Registered unconditionally, unlike storage: an application that never sends anything pays
+ * nothing for the object existing, so there is no flag and therefore no build that has the
+ * page half of a channel without the Python half.
+ */
+export const BRIDGE_MODULE = "textual_wasm_bridge";
+
+/**
+ * How many messages a relay holds for a receiver that has not arrived yet.
+ *
+ * Small on purpose. The queue exists to survive the gap between a page sending and an
+ * application subscribing - a few hundred milliseconds while Textual mounts - not to be a
+ * durable buffer. A page that fills it is talking to something that is never going to
+ * answer, and the honest response to that is one warning, not unbounded memory.
+ */
+export const RELAY_LIMIT = 128;
+
+/**
+ * A one-receiver channel that holds what it is given until a receiver exists.
+ *
+ * The race is real rather than theoretical, and it runs in both directions. `boot` registers
+ * the bridge before Python starts, so the page can send before the application has called
+ * `Bridge.connect`; the worker likewise receives page messages while its interpreter is
+ * still downloading. Dropping those is how a slider's first value - the one that says what
+ * state the page loaded in - goes missing on a fast machine and arrives on a slow one.
+ *
+ * The oldest is dropped on overflow, not the newest: every channel this ships with carries
+ * state rather than events, and for state the last value is the one worth keeping.
+ *
+ * @returns {{attach: (receive: (channel: string, text: string) => void) => void,
+ *            push: (channel: string, text: string) => void}}
+ */
+export function createRelay() {
+  const queued = [];
+  let receiver = null;
+  let hasWarned = false;
+
+  return {
+    attach(receive) {
+      receiver = receive;
+      // Spliced rather than iterated: a receiver that sends while draining would otherwise
+      // append to the array being walked.
+      for (const [channel, text] of queued.splice(0)) {
+        receive(channel, text);
+      }
+    },
+    push(channel, text) {
+      if (receiver !== null) {
+        receiver(channel, text);
+        return;
+      }
+      if (queued.length >= RELAY_LIMIT) {
+        queued.shift();
+        if (!hasWarned) {
+          hasWarned = true;
+          console.warn(
+            `[textual-wasm] over ${RELAY_LIMIT} messages queued with nothing subscribed; ` +
+              "the oldest are being dropped. Is the application calling Bridge.connect()?",
+          );
+        }
+      }
+      queued.push([channel, text]);
+    },
+  };
+}
+
+/**
  * Mount a persistent filesystem and hand Python the one call it cannot make itself.
  *
  * IDBFS rather than `localStorage`: measured across Chromium and Firefox, `localStorage` is
@@ -227,13 +300,14 @@ export async function importPyodide(manifest) {
  * @param {object} options
  * @param {object} options.manifest a manifest from `readManifest`
  * @param {object} options.host an object satisfying `textual_wasm.browser.TerminalHost`
+ * @param {object} options.bridge an object satisfying `textual_wasm.bridge.BridgeHost`
  * @param {Function} options.loadPyodide from `importPyodide`
  * @param {(state: string, message: string) => void} options.onStatus progress reporting
  * @returns {Promise<{pyodide: object, finished: Promise<unknown>}>} `finished` settles when
  *   the application exits. It is deliberately not awaited here: a module whose top-level
  *   evaluation waits for the application to exit never finishes evaluating.
  */
-export async function boot({ manifest, host, loadPyodide, onStatus }) {
+export async function boot({ manifest, host, bridge, loadPyodide, onStatus }) {
   onStatus("booting", "starting Python…");
   const pyodide = await loadPyodide({
     indexURL: manifest.pyodideIndexUrl,
@@ -267,6 +341,12 @@ export async function boot({ manifest, host, loadPyodide, onStatus }) {
   // Registered before the entry module is executed, because that module imports the driver
   // and the driver resolves the host at import time.
   pyodide.registerJsModule(HOST_MODULE, host);
+  if (bridge) {
+    // Omitting it is allowed and means what a terminal means: no page on the other end, so
+    // `Bridge.available` is False and the application's sends go nowhere. Registering an
+    // inert object instead would make that state indistinguishable from a live channel.
+    pyodide.registerJsModule(BRIDGE_MODULE, bridge);
+  }
 
   onStatus("booting", "starting the app…");
   const entry = await fetch(manifest.entryUrl);

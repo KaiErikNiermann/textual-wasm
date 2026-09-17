@@ -22,12 +22,19 @@
  * The contract with `main.mjs` is this module's whole interface:
  *
  *   in:   {type:"start", manifest, cols, rows} | {type:"input", data} | {type:"resize", cols, rows}
+ *         | {type:"flush"} | {type:"bridge", channel, text}
  *   out:  {type:"write", data} | {type:"status", state, message} | {type:"running"}
  *         | {type:"exited"} | {type:"crashed", error}
  *         | {type:"open-url", url, newTab} | {type:"deliver-file", href, filename}
+ *         | {type:"bridge", channel, text}
+ *
+ * `bridge` is the one message type that travels in both directions with the same shape,
+ * because it is the same channel seen from its two ends - `textual_wasm.bridge`. It carries
+ * text rather than a structured clone so that a channel behaves identically here and on the
+ * main thread, where the same call would hand Python a live proxy instead.
  */
 
-import { boot, flushQuietly, importPyodide } from "./boot.mjs";
+import { boot, createRelay, flushQuietly, importPyodide } from "./boot.mjs";
 
 /**
  * Batch terminal output into one message per macrotask turn.
@@ -136,6 +143,29 @@ function createHost(grid) {
 }
 
 /**
+ * Build the worker's end of the data channel.
+ *
+ * The same two members `textual_wasm.bridge.BridgeHost` requires, satisfied by a message
+ * instead of a call. Inbound payloads go through a relay for the reason the main thread's do:
+ * the page's terminal is live from the first frame and can send long before this thread has
+ * an interpreter, let alone an application that has called `Bridge.connect`.
+ *
+ * @returns {{host: object, deliver: (channel: string, text: string) => void}}
+ */
+function createBridge() {
+  const relay = createRelay();
+  return {
+    host: {
+      send: (channel, text) => postMessage({ type: "bridge", channel, text }),
+      subscribe: (callback) => relay.attach(callback),
+    },
+    deliver(channel, text) {
+      relay.push(channel, text);
+    },
+  };
+}
+
+/**
 @param {string} state @param {string} message
 */
 function report(state, message) {
@@ -149,8 +179,9 @@ function report(state, message) {
  *
  * @param {object} message the `start` message
  * @param {object} host
+ * @param {object} bridge the object satisfying `textual_wasm.bridge.BridgeHost`
  */
-async function run(message, host) {
+async function run(message, host, bridge) {
   // One try around the whole sequence, so a failure to boot is reported the same way as a
   // failure to run. A worker that throws without posting anything leaves the page waiting
   // on a message that will never come, with the reason visible only in a console nobody
@@ -160,6 +191,7 @@ async function run(message, host) {
     const { pyodide, finished } = await boot({
       manifest: message.manifest,
       host,
+      bridge,
       loadPyodide,
       onStatus: report,
     });
@@ -175,28 +207,39 @@ async function run(message, host) {
 }
 
 /**
- * The worker's single piece of mutable state, held in an object because it is assigned from
- * inside the message listener - and because "the bridge is not built yet" is a real state
- * that input arriving early has to be able to see.
+ * The worker's mutable state, held in an object because it is assigned from inside the
+ * message listener - and because "the terminal is not built yet" is a real state that input
+ * arriving early has to be able to see.
+ *
+ * The channel is built before the terminal rather than with it, so that a page message
+ * arriving in the seconds before `start` has somewhere to queue. Its relay holds those until
+ * the application subscribes.
  */
-const state = { bridge: null, pyodide: null };
+const state = { terminal: null, channel: createBridge(), pyodide: null };
 
 addEventListener("message", ({ data }) => {
   switch (data.type) {
     case "start": {
-      state.bridge = createHost({ cols: data.cols, rows: data.rows });
-      void run(data, state.bridge.host);
+      state.terminal = createHost({ cols: data.cols, rows: data.rows });
+      void run(data, state.terminal.host, state.channel.host);
       break;
     }
     // Input and resize can arrive before the interpreter exists - the page's terminal is
     // live from the first frame. Dropping them is correct: there is no application yet to
     // deliver them to, and the size is read from the `start` message anyway.
     case "input": {
-      state.bridge?.feedInput(data.data);
+      state.terminal?.feedInput(data.data);
       break;
     }
     case "resize": {
-      state.bridge?.resize(data.cols, data.rows);
+      state.terminal?.resize(data.cols, data.rows);
+      break;
+    }
+    // Unlike input, a channel message is *not* dropped when it arrives early: it carries
+    // state the page is entitled to assume the application received, and the relay is what
+    // makes that true across the seconds Pyodide spends downloading.
+    case "bridge": {
+      state.channel.deliver(data.channel, data.text);
       break;
     }
     // Best-effort, and unawaited by construction: the page is already going away, so there
