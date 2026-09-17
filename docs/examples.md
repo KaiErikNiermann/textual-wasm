@@ -84,20 +84,19 @@ bridge.on("gain", (value) => { slider.value = value; });
 slider.addEventListener("input", () => bridge.send("gain", Number(slider.value)));
 ```
 
-The orange line under the sliders has no control behind it — the application sends it when a
-level goes over 85, which is the direction that did not exist when the keyboard was the only
-seam. The text field uses the raw pipe rather than the JSON codec, because a line of prose is
-already a string. See {doc}`bridge`.
+The orange line under the sliders has no control behind it. The application sends it when a
+level goes over 85 — the direction that did not exist while the keyboard was the only seam.
+The text field uses the raw pipe instead of the JSON codec, because a line of prose is already
+a string. See {doc}`bridge`.
 
-This demo is built with `--worker`, so the interpreter is in a Web Worker and every value
+The demo is built with `--worker`, so the interpreter runs in a Web Worker and every value
 above crosses a `postMessage` boundary. Nothing in the app or the page is written differently
 because of it.
 
 **The page is type-checked against the app.** `mixer_app/channels.py` declares what each
-channel carries; `page/channels.d.ts` is generated from it and committed, and `tsc` checks
-`page/controls.mjs` against that. A channel name the application does not declare is a type
-error on the page, and a payload that gained a field fails the drift gate until the
-declarations are regenerated.
+channel carries. `page/channels.d.ts` is generated from it and committed, and `tsc` checks
+`page/controls.mjs` against it. An undeclared channel name is a type error on the page, and a
+payload that gains a field fails the drift gate until the declarations are regenerated.
 
 ```console
 $ textual-wasm build mixer_app.app:Mixer mixer_app -o dist/ --template page --worker

@@ -96,8 +96,8 @@ That is xterm's own *user input* entry point. The application receives a keystro
 tell a button from a keyboard, so a page can do anything a user could do — with no JavaScript
 API on the app's side, no protocol, and no awareness that a page is involved.
 
-That covers control and stops at data. A slider has no keyboard spelling and an application
-has no keystroke to send back, which is what {doc}`bridge` is for.
+That covers control and stops at data. A slider has no keyboard spelling, and an application
+has no keystroke to send back. {doc}`bridge` covers those.
 
 `globalThis.textualWasm` appears once the app is driving the terminal and carries:
 
@@ -151,10 +151,10 @@ $ textual-wasm build palette_app.app:Palette palette_app -o public/terminal
 $ vite build
 ```
 
-## Level 4 — values, not keystrokes
+## Level 4 — sending values
 
-A button is a keystroke. A slider is not, and neither is the app telling the page that
-something changed. Both are one channel:
+A button maps cleanly onto a keystroke. A slider does not, and neither does the application
+telling the page that something changed. One channel handles both:
 
 ```python
 self.bridge = Bridge.connect(self)
@@ -167,9 +167,10 @@ bridge.on("gain", (value) => { slider.value = value; });
 slider.addEventListener("input", () => bridge.send("gain", Number(slider.value)));
 ```
 
-The channel carries text on named channels and puts a JSON codec on top of that, so anything
-with its own framing can use the layer underneath. It works the same on the main thread and
-in a worker. {doc}`bridge` is the chapter; `examples/page-bridge` is the working page.
+The channel carries text on named channels, with a JSON codec layered on top, so anything
+that brings its own framing can use the layer underneath. It behaves the same on the main
+thread and in a worker. {doc}`bridge` is the full chapter, and `examples/page-bridge` is a
+working page.
 
 ### Two things a host page should define
 

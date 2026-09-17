@@ -96,14 +96,13 @@ when the application tries to open a link.
 
 ## The data channel crosses either way
 
-{doc}`bridge` behaves identically in both modes: on the main thread Python calls the page
-directly, and here the same two-member contract is satisfied by a `postMessage`. Nothing in
-an application or a page changes when `--worker` is added, and
-`tests/test_bridge_browser.py` asserts that by running one harness against both builds and
-comparing the results to each other.
+{doc}`bridge` behaves identically in both modes. On the main thread Python calls the page
+directly; here the same two-member contract is satisfied by a `postMessage`. Adding `--worker`
+changes nothing in an application or a page, and `tests/test_bridge_browser.py` proves it by
+running one harness against both builds and comparing the two sets of results.
 
-The channel carries text rather than arbitrary values for exactly this reason. On the main
+The channel carries text, and not arbitrary values, for exactly this reason. On the main
 thread Python could be handed a live `JsProxy`; here the identical call arrives as a
-structured clone, and the two differ in proxy lifetime, in whether a mutation is visible
-across the boundary, and in whether a function survives the trip. A channel whose semantics
-depend on a build flag would make `--worker` an API decision rather than a performance one.
+structured clone. The two differ in proxy lifetime, in whether a mutation is visible across
+the boundary, and in whether a function survives the trip. A channel whose semantics depended
+on a build flag would turn `--worker` from a performance decision into an API decision.

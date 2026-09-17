@@ -17,7 +17,7 @@ The sliders are HTML `<input type="range">`. The meters are the Textual app. Nei
 levels: drag a slider and the meter follows, press the arrow keys in the terminal and the
 slider follows.
 
-That is the thing [`embedded-page`](../embedded-page) cannot do. Its integration is
+[`embedded-page`](../embedded-page) cannot do this. Its whole integration is
 `terminal.input("2")` — a keystroke, which is exactly right for a button meaning "press 2"
 and no answer at all for a value. There is no keyboard spelling of "gain is now 63", and no
 keystroke the application can send back when it changes a level itself.
@@ -38,26 +38,28 @@ slider.addEventListener("input", () => bridge.send("gain", Number(slider.value))
 
 A value the page just sent is not echoed back to it, so those two do not fight.
 
-**The application talks first.** The `clipping` channel has no control behind it — nothing on
-the page can send on it. It is the app saying "gain is over 85", which before the bridge could
-only be had by scraping the rendered grid. `bind(initial=True)` publishes each level on mount,
-which is *before* a page polling for `globalThis.textualWasm` can have subscribed; the page's
-relay holds those until a listener appears, which is why the sliders snap into step on load
-rather than sitting at whatever the markup declared.
+**The application talks first.** The `clipping` channel has no control behind it; nothing on
+the page can send on it. It carries the app saying "gain is over 85", which before the bridge
+was only available by scraping the rendered grid.
 
-**Both layers.** The levels and the clipping report travel through the codec (JSON by
-default). The `note` field uses `sendText`/`message.text` — the pipe with nothing on top,
-because a line of prose is already a string and JSON-encoding it so the other side can decode
-it back is ceremony.
+`bind(initial=True)` publishes each level on mount, *before* a page polling for
+`globalThis.textualWasm` can have subscribed. The page's queue holds those values until a
+listener appears, so the sliders snap into step on load instead of sitting at whatever the
+markup declared.
 
-**It still runs in a terminal.** `poetry run mixer-app` is the same source with no branch in
-it. `Bridge.connect` on a runtime with no page returns a bridge whose `available` is False and
-whose sends go nowhere; the app prints "no page: running in a terminal" and works.
+**Both layers.** The levels and the clipping report travel through the codec, JSON by
+default. The `note` field uses `sendText` and `message.text` — the pipe with nothing on top,
+because a line of prose is already a string, and encoding it as JSON so the other side can
+decode it back adds a step with no purpose.
 
-**The mode does not matter.** This builds with `--worker`, so the interpreter runs in a Web
-Worker and the channel crosses a `postMessage` boundary instead of a direct call. Drop the
-flag and nothing in `mixer_app/` or `page/` changes — that parity is asserted in
-`tests/test_bridge_browser.py`, which runs one harness against both builds and compares them.
+**It still runs in a terminal.** `poetry run mixer-app` runs the same source with no branch
+in it. On a runtime with no page, `Bridge.connect` returns a bridge whose `available` is False
+and whose sends go nowhere. The app prints "no page: running in a terminal" and works.
+
+**The mode does not matter.** The build above passes `--worker`, so the interpreter runs in
+a Web Worker and the channel crosses a `postMessage` boundary instead of a direct call. Drop
+the flag and nothing in `mixer_app/` or `page/` changes. `tests/test_bridge_browser.py` proves
+that parity by running one harness against both builds and comparing them.
 
 ## The page is checked against the application
 
@@ -69,8 +71,8 @@ $ textual-wasm channels mixer_app.channels --path . -o page/channels.d.ts
 ```
 
 `page/controls.mjs` imports those types in JSDoc and `pnpm lint:ts` checks it, so the
-generated file is a checker rather than a document nobody is obliged to agree with. Typo a
-channel name and tsc says so:
+generated file enforces the contract instead of merely describing it. Mistype a channel name
+and tsc says so:
 
 ```text
 error TS2345: Argument of type '"clippping"' is not assignable to parameter of

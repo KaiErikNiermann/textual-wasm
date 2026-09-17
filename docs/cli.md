@@ -116,9 +116,9 @@ Renders TypeScript declarations for every channel an application declares, so th
 be type-checked against the same source the application sends from. See
 {doc}`bridge` for the declaration side.
 
-`--path` points at a directory to import from, for an application package that is not
-installed — the same package `build` reads straight off disk. `--schema` emits JSON Schema
-instead, off the same walk, for runtime validation or a different generator. `--check` is the
+`--path` names a directory to import from, for an application package that is not installed —
+the same package `build` reads straight off disk. `--schema` emits JSON Schema instead, from
+the same walk of the types, for runtime validation or a different generator. `--check` is the
 CI form, same as `matrix`.
 
 ## The individual legs
