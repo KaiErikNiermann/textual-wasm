@@ -106,6 +106,21 @@ Renders {doc}`library-support` from the ecosystem registry — which third-party
 add-ons work in a browser, measured by installing each into a real Pyodide and mounting its
 widgets. `--check` is the CI form, same as `matrix`.
 
+## `textual-wasm channels`
+
+```console
+$ textual-wasm channels MODULE [-o page/channels.d.ts] [--path DIR] [--schema] [--check]
+```
+
+Renders TypeScript declarations for every channel an application declares, so the page can
+be type-checked against the same source the application sends from. See
+{doc}`bridge` for the declaration side.
+
+`--path` points at a directory to import from, for an application package that is not
+installed — the same package `build` reads straight off disk. `--schema` emits JSON Schema
+instead, off the same walk, for runtime validation or a different generator. `--check` is the
+CI form, same as `matrix`.
+
 ## The individual legs
 
 `check` runs these for you; they exist separately for when you want one.

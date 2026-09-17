@@ -59,6 +59,27 @@ Worker and the channel crosses a `postMessage` boundary instead of a direct call
 flag and nothing in `mixer_app/` or `page/` changes — that parity is asserted in
 `tests/test_bridge_browser.py`, which runs one harness against both builds and compares them.
 
+## The page is checked against the application
+
+`mixer_app/channels.py` declares what each channel carries. `page/channels.d.ts` is generated
+from it and committed:
+
+```console
+$ textual-wasm channels mixer_app.channels --path . -o page/channels.d.ts
+```
+
+`page/controls.mjs` imports those types in JSDoc and `pnpm lint:ts` checks it, so the
+generated file is a checker rather than a document nobody is obliged to agree with. Typo a
+channel name and tsc says so:
+
+```text
+error TS2345: Argument of type '"clippping"' is not assignable to parameter of
+type 'keyof Channels'.
+```
+
+Add a field in Python and `just channels-check` fails until the declarations are regenerated.
+Both halves run in the project's gates. See `docs/bridge.md` for the declaration rules.
+
 ## Styling
 
 `page/styles/mixer.css` puts every rule in the `overrides` layer the shipped stylesheet

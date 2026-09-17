@@ -134,6 +134,145 @@ Encoding happens whether or not anyone is there. That costs a `json.dumps` on a 
 buys the thing worth having: a value the codec cannot render fails in every runtime rather
 than only in a browser, where the exception lands in a console nobody has open.
 
+## Typing the channel, on both sides
+
+Everything above types the *payload* in Python and nothing at all on the page:
+`bridge.send("gian", value)` is valid JavaScript, valid Python, and a message nobody
+receives. Declaring the channels closes that, and generates the page's types from the
+declaration rather than asking anyone to keep two files in step.
+
+```python
+# myapp/channels.py
+from typing import Literal, TypedDict
+
+from textual_wasm.channels import Channel
+
+type LevelName = Literal["gain", "bass", "treble"]
+
+
+class Clipping(TypedDict):
+    threshold: int
+    hot: list[LevelName]
+
+
+GAIN: Channel[int] = Channel("gain")
+CLIPPING: Channel[Clipping] = Channel("clipping")
+```
+
+```console
+$ textual-wasm channels myapp.channels -o page/channels.d.ts
+```
+
+```ts
+export type LevelName = "gain" | "bass" | "treble";
+
+export interface Clipping {
+  threshold: number;
+  hot: LevelName[];
+}
+
+export interface Channels {
+  gain: number;
+  clipping: Clipping;
+}
+
+export interface Bridge {
+  send<K extends ChannelName>(channel: K, value: Channels[K]): void;
+  on<K extends ChannelName>(channel: K, callback: (value: Channels[K]) => void): () => void;
+  sendText(channel: string, text: string): void;
+  onText(channel: string, callback: (text: string) => void): () => void;
+  codec: Codec;
+}
+```
+
+The mapped type is the part worth generating. A channel name that does not exist and a
+payload of the wrong shape are both type errors at the call site:
+
+```text
+error TS2345: Argument of type '"clippping"' is not assignable to parameter of
+type 'keyof Channels'.
+```
+
+The generated file also types the rest of `globalThis.textualWasm`, so there is one file to
+reference rather than two.
+
+### Using it from a plain page
+
+A `.d.ts` has nothing to load at runtime, so a page imports it as types only:
+
+```js
+/**
+ * @typedef {import("./channels.js").TextualWasm} TextualWasm
+ * @typedef {import("./channels.js").ChannelName} ChannelName
+ */
+```
+
+and is checked with `tsc --noEmit` over a `tsconfig.json` with `allowJs` and `checkJs`. The
+[`page-bridge`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/examples/page-bridge)
+example ships one; a bundled TypeScript project imports the same names normally instead.
+
+### The declaration carries only a name
+
+```python
+GAIN: Channel[int] = Channel("gain")   # the payload type is in the annotation
+```
+
+Not `Channel("gain", int)`, and that is worth being explicit about because the more obvious
+form quietly stops working. A `payload: type[T]` field means `type[SomeTypedDict]`, which is
+not a valid type — pyright stops solving `T` and **every** `send` passes, including the wrong
+ones. The annotation is where the type goes.
+
+A `Channel` assigned without one is an error rather than a channel silently missing from the
+generated file.
+
+### What a payload may contain
+
+Whatever survives `json.dumps` and `json.loads` unchanged: `str`, `int`, `float`, `bool`,
+`None`, `Literal`, `list`, `tuple`, `dict[str, …]`, unions, `TypedDict`, a `type X = …` alias,
+and an `Enum` whose members are strings or numbers. Anything else is refused by name, with a
+suggestion:
+
+```text
+bytes cannot cross a JSON channel; base64 it into a str, or use the raw pipe and skip
+the codec
+```
+
+`TypedDict` rather than a dataclass on purpose: a TypedDict **is** the decoded object, so
+nothing has to be structured back into a class on arrival and no serialisation library has to
+be chosen for you. A payload that needs real validation swaps the codec instead.
+
+:::{note}
+`int` and `float` both become `number`. JSON has one numeric type and TypeScript has no
+integer type, so a generated `integer` would be a claim neither runtime can enforce.
+:::
+
+### Keeping it honest
+
+`--check` exits non-zero when the committed file no longer matches the declarations, which is
+the only thing that makes a generated file worth trusting:
+
+```console
+$ textual-wasm channels myapp.channels --check -o page/channels.d.ts
+page/channels.d.ts is out of date; run `textual-wasm channels myapp.channels -o page/channels.d.ts`
+```
+
+Run it in CI beside your other checks. Without it, a page goes on type-checking green against
+channels the application stopped sending — which is worse than having no generated file,
+because it reads as proof.
+
+### JSON Schema, for everything else
+
+`--schema` emits the same model as JSON Schema 2020-12:
+
+```console
+$ textual-wasm channels myapp.channels --schema -o page/channels.schema.json
+```
+
+Both outputs come off one walk of the Python types, so they cannot describe two different
+things. Use it for runtime validation at the page's edge, or to feed a generator for a
+language this does not emit — `datamodel-codegen` and `json-schema-to-typescript` both read
+it directly.
+
 ## Main thread and worker
 
 The channel behaves identically in both, and that is asserted rather than asserted-about:

@@ -93,6 +93,12 @@ This demo is built with `--worker`, so the interpreter is in a Web Worker and ev
 above crosses a `postMessage` boundary. Nothing in the app or the page is written differently
 because of it.
 
+**The page is type-checked against the app.** `mixer_app/channels.py` declares what each
+channel carries; `page/channels.d.ts` is generated from it and committed, and `tsc` checks
+`page/controls.mjs` against that. A channel name the application does not declare is a type
+error on the page, and a payload that gained a field fails the drift gate until the
+declarations are regenerated.
+
 ```console
 $ textual-wasm build mixer_app.app:Mixer mixer_app -o dist/ --template page --worker
 ```
