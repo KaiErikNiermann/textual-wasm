@@ -61,6 +61,13 @@ What to change, in the order you will actually hit it.
 Custom pages, and Textual inside Svelte, Vue or plain HTML.
 :::
 
+:::{grid-item-card} {octicon}`arrow-both` The data channel
+:link: bridge
+:link-type: doc
+
+Live values between the app and the page, in both directions.
+:::
+
 :::{grid-item-card} {octicon}`alert` Limitations
 :link: limitations
 :link-type: doc
@@ -105,6 +112,7 @@ usage
 
 porting
 embedding
+bridge
 workers
 storage
 examples

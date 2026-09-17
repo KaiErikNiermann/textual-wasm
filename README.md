@@ -129,6 +129,7 @@ static files by GitHub Pages.
 |---|---|
 | [`simple-app`](./examples/simple-app) | A task list. The smallest complete thing. |
 | [`embedded-page`](./examples/embedded-page) | The terminal as one component of an article, driven by HTML buttons. |
+| [`page-bridge`](./examples/page-bridge) | HTML sliders and Textual meters over the same live values, each moving the other. |
 | [`svelte-app`](./examples/svelte-app) | Mounted in a Svelte 5 component, with Svelte state around it. |
 | [`persistent-notes`](./examples/persistent-notes) | A SQLite database that survives a page reload. One code path, one extra `flush()`. |
 | [`addon-gallery`](./examples/addon-gallery) | Four third-party Textual libraries, none of which knows it is in a browser. |
@@ -143,6 +144,7 @@ bootstrap.py   TEXTUAL_* env, applied before the first `import textual` (it cach
 polyfills.py   runtime bugs, quarantined and reported
 driver.py      WasmDriverBase  ->  CaptureDriver (sink: a list)
 browser.py     WasmDriverBase  ->  BrowserDriver (sink: xterm.js)
+bridge.py      a two-way data channel: text on named channels, JSON on top, bind on top of that
 target.py      which app, and how a harness knows it drew
 probe.py       the experiment, over any app
 check.py       every runtime this machine has, and the comparisons

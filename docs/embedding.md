@@ -93,9 +93,11 @@ globalThis.textualWasm.input("2");
 ```
 
 That is xterm's own *user input* entry point. The application receives a keystroke and cannot
-tell a button from a keyboard, which means **the keyboard is the integration surface**: your
-app needs no JavaScript API, no message protocol, and no awareness that a page is involved.
-Anything a user could do to a terminal app, a page can do to it.
+tell a button from a keyboard, so a page can do anything a user could do — with no JavaScript
+API on the app's side, no protocol, and no awareness that a page is involved.
+
+That covers control and stops at data. A slider has no keyboard spelling and an application
+has no keystroke to send back, which is what {doc}`bridge` is for.
 
 `globalThis.textualWasm` appears once the app is driving the terminal and carries:
 
@@ -105,6 +107,7 @@ Anything a user could do to a terminal app, a page can do to it.
 | `screen()` | The visible grid: `{ columns, rows, lines }`. |
 | `columns`, `rows` | The grid size chosen at boot. |
 | `finished` | A promise that resolves when the app exits. |
+| `bridge` | The two-way data channel. See {doc}`bridge`. |
 
 It appears *seconds* after your page does — Pyodide has to boot a CPython interpreter — so
 poll for it rather than assuming it:
@@ -147,6 +150,26 @@ know about each other:
 $ textual-wasm build palette_app.app:Palette palette_app -o public/terminal
 $ vite build
 ```
+
+## Level 4 — values, not keystrokes
+
+A button is a keystroke. A slider is not, and neither is the app telling the page that
+something changed. Both are one channel:
+
+```python
+self.bridge = Bridge.connect(self)
+self.bridge.bind("gain", self, "gain")
+```
+
+```js
+const { bridge } = globalThis.textualWasm;
+bridge.on("gain", (value) => { slider.value = value; });
+slider.addEventListener("input", () => bridge.send("gain", Number(slider.value)));
+```
+
+The channel carries text on named channels and puts a JSON codec on top of that, so anything
+with its own framing can use the layer underneath. It works the same on the main thread and
+in a worker. {doc}`bridge` is the chapter; `examples/page-bridge` is the working page.
 
 ### Two things a host page should define
 

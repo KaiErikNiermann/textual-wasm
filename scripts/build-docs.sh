@@ -33,6 +33,13 @@ poetry run textual-wasm build dashboard_app.app:Dashboard examples/embedded-page
   -o "${OUT}/demos/embedded" --title "A terminal in a page" \
   --template examples/embedded-page/page
 
+step "demo: bridge"
+# --worker on purpose: the channel this demo is about crosses a postMessage boundary here,
+# and a demo built the easy way would not be demonstrating the claim.
+poetry run textual-wasm build mixer_app.app:Mixer examples/page-bridge/mixer_app \
+  -o "${OUT}/demos/bridge" --title "Mixer" \
+  --template examples/page-bridge/page --worker
+
 step "demo: svelte"
 # Two builds that do not know about each other: the app becomes static files under `public/`,
 # and Vite copies that directory through untouched.

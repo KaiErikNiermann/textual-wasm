@@ -1,6 +1,6 @@
 # Examples
 
-Five complete projects, each self-contained enough to copy out of the repository and use.
+Six complete projects, each self-contained enough to copy out of the repository and use.
 The demos below are **live**: every one is a real build of the app beside it, running in your
 browser on this static site.
 
@@ -59,6 +59,43 @@ button from a keyboard. It exposes no JavaScript API and knows nothing about the
 
 Its stylesheet lands in the `overrides` cascade layer the shipped CSS declares and leaves
 empty, so it restyles the page without out-specifying anything.
+
+---
+
+## Live state, both directions
+
+[`examples/page-bridge`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/examples/page-bridge)
+— a mixing desk. Three HTML sliders and three Textual meters over the same three values.
+
+```{raw} html
+<iframe class="demo-frame" src="demos/bridge/" title="HTML sliders and a Textual mixer sharing live state" loading="lazy"></iframe>
+```
+
+**What it shows.** Drag a slider and the meter follows. Click the terminal and press the
+arrow keys, and the slider follows. Neither side owns the levels, and the binding is one line
+on each:
+
+```python
+self.bridge.bind("gain", self, "gain")
+```
+
+```js
+bridge.on("gain", (value) => { slider.value = value; });
+slider.addEventListener("input", () => bridge.send("gain", Number(slider.value)));
+```
+
+The orange line under the sliders has no control behind it — the application sends it when a
+level goes over 85, which is the direction that did not exist when the keyboard was the only
+seam. The text field uses the raw pipe rather than the JSON codec, because a line of prose is
+already a string. See {doc}`bridge`.
+
+This demo is built with `--worker`, so the interpreter is in a Web Worker and every value
+above crosses a `postMessage` boundary. Nothing in the app or the page is written differently
+because of it.
+
+```console
+$ textual-wasm build mixer_app.app:Mixer mixer_app -o dist/ --template page --worker
+```
 
 ---
 
