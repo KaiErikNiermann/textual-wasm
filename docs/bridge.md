@@ -134,6 +134,7 @@ Encoding happens whether or not anyone is there. That costs a `json.dumps` on a 
 buys the thing worth having: a value the codec cannot render fails in every runtime rather
 than only in a browser, where the exception lands in a console nobody has open.
 
+(typing-the-channel)=
 ## Typing the channel, on both sides
 
 Everything above types the *payload* in Python and nothing at all on the page:
@@ -273,6 +274,171 @@ things. Use it for runtime validation at the page's edge, or to feed a generator
 language this does not emit — `datamodel-codegen` and `json-schema-to-typescript` both read
 it directly.
 
+## When something goes wrong
+
+The design rule is one sentence: **a bad value fails where it was written, not on the far
+side.** A failure that crosses the boundary before anyone notices lands in a browser console
+nobody has open, and says nothing about what sent it.
+
+Every case below is asserted end to end, in Chromium and Firefox, by
+`tests/test_bridge_errors.py`.
+
+### The application never dies
+
+Nothing a page can send stops the app. A malformed payload on a bound channel is dropped and
+logged with the channel name; the attribute keeps its old value and the next good message
+applies normally. The `BridgeMessage` is posted either way, so a handler that wants the raw
+text still gets it.
+
+### Errors name their channel
+
+```text
+BridgePayloadError: could not decode the payload on channel 'levels':
+Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+```
+
+`BridgePayloadError` is raised in both directions — by `message.data` for text the codec
+cannot read, and by `send` for a value it cannot render. It subclasses `ValueError` and keeps
+the original as `__cause__`.
+
+### What cannot be sent
+
+| From | Refused | Because |
+|---|---|---|
+| Python | `float("nan")`, `float("inf")` | `json.dumps` writes the bare token `NaN`, and `JSON.parse("NaN")` throws. The codec passes `allow_nan=False`, which is the one place it is stricter than the standard library. |
+| Python | anything `json` cannot render | `BridgePayloadError`, naming the channel |
+| Page | `send(channel, undefined)` | `JSON.stringify(undefined)` is `undefined`, not a string |
+| Page | `sendText(channel, <not a string>)` | coercing would make `String(undefined)` into data that looks real |
+
+The page-side refusals throw a `TypeError` at the call site, so the stack still points at the
+caller.
+
+### A page can change what type a reactive holds
+
+This is the one that bites, and it is not obvious:
+
+```python
+gain: reactive[int] = reactive(0)
+self.bridge.bind("gain", self, "gain")     # no validator
+```
+
+```js
+bridge.send("gain", "loud");               // gain is now the string "loud"
+```
+
+Textual's reactives are not checked at runtime, so the annotation is documentation and the
+page decides the type. The failure surfaces wherever the application next does arithmetic on
+it, a long way from the channel that caused it.
+
+Without a validator, `bind` warns once per binding when the type changes, which turns a
+silent corruption into a loud one. The fix is one argument:
+
+```python
+self.bridge.bind("gain", self, "gain", validate=int)
+```
+
+Anything callable works, so a converter, a range clamp or a model validator all fit:
+
+```python
+self.bridge.bind("gain", self, "gain", validate=lambda v: max(0, min(100, int(v))))
+self.bridge.bind("levels", self, "levels", validate=TypeAdapter(Levels).validate_python)
+```
+
+A value the validator rejects is logged and the attribute is left alone. **Pass one for any
+channel a page can reach.** Declaring channels with {ref}`Channel <typing-the-channel>`
+types the page, which stops honest mistakes; it does not stop a page that lies.
+
+### What is not checked
+
+The raw pipe carries what it is given: an escape sequence, a null byte, a right-to-left
+override and an astral-plane emoji all survive a round trip unchanged, which is asserted.
+Channel names are not validated either — any string is a channel, including the empty one.
+That is the pipe doing its job, and the reason a page handling untrusted input should put a
+validating codec in front of it rather than expecting this layer to.
+
+## What it costs, and where it stops
+
+Measured on a desktop machine through Playwright's Chromium 153 and Firefox 155, against
+a build with the interpreter in a Web Worker. Your numbers will differ; the shape of them
+will not.
+
+| | Chromium | Firefox |
+|---|---|---|
+| Round trip, page → app → page | 0.1 ms median, 0.2 ms p95 | under 1 ms |
+| 10,000 small messages, app drains | 148 ms | 193 ms |
+| 1 MB payload, round trip | 4 ms | similar |
+| 8 MB payload, round trip | 32 ms | similar |
+| 200,000 messages, all received | yes | yes |
+
+A single value crossing costs about a tenth of a millisecond. A slider dragged at 60 Hz uses
+roughly a thousandth of what the channel can carry. **For anything a human is doing to a
+control, the channel is free and you can stop reading here.**
+
+### There is no backpressure
+
+`send` returns as soon as the value is queued. The queue lives in the receiving runtime, and
+nothing anywhere tells a fast sender to slow down.
+
+That gap is large. Measured: a page pushes **200,000 messages in 162 ms**, and the
+application takes **2.7 seconds** to consume them. The send is seventeen times faster than
+the receive, so a burst does not cost you the time it took to send — it costs you a backlog
+afterwards, during which the application is busy draining and its own work waits.
+
+```text
+page:  |==| 162ms of sending
+app:   |==============================| 2.7s of draining
+```
+
+The ceiling is about **75,000 messages a second** into the application, and it is Python's,
+not the channel's: the same burst on a terminal takes the same time. Nothing here is fixed by
+`--worker`, which moves where the work happens rather than how much there is.
+
+So:
+
+- **A control a person operates** — a slider, a colour picker, a text field. No concern.
+- **An animation loop or a sensor at 60 Hz** — about 0.1% of capacity. No concern.
+- **A stream of ticks, samples or events at kHz rates** — you will build a backlog. Batch
+  them into one message per frame, or use `sendLatest`.
+
+### `sendLatest`, for state that arrives faster than it is used
+
+```js
+bridge.sendLatest("gain", Number(slider.value));
+```
+
+At most one value per channel per frame, keeping the newest and dropping the rest. Measured:
+20,000 calls in a synchronous loop become **one** message.
+
+That is a lie for an event stream and exactly right for a value that is only ever rendered —
+the application was going to draw the last one and throw the rest away. Hence the separate
+name: `send` never drops anything.
+
+There is no Python-side equivalent, and that asymmetry is deliberate. An application sending
+faster than a page can paint is not a problem anyone has: the page's listener is a function
+call, not a queue.
+
+### Large payloads are fine, and are copied
+
+About 3.5 ms per megabyte, round trip, in both engines. But every payload is copied at each
+boundary — `JSON.stringify`, the structured clone into the worker, `json.loads` — so an 8 MB
+message is several 8 MB allocations before it is a Python object. Sending one every frame
+will not end well; sending one when a file is dropped is unremarkable.
+
+### Nothing accumulates
+
+Checked with forced collection between rounds, in both modes: the page's heap after 25,000
+messages is where it started (27,000 KB → 27,004 KB on the main thread, 3,045 KB → 3,047 KB
+in a worker). There is no per-message retention on either side. The relay described above
+holds at most 128 messages and only before anything has subscribed.
+
+### The main thread still stalls
+
+A burst of 5,000 messages blocks the main thread for **33 ms in Chromium and 66 ms in
+Firefox** — two to four dropped frames — when the interpreter runs there. In a worker the
+longest gap is one frame, on both engines. This is the same trade {doc}`workers` describes
+for slow Python generally; the channel does not change it, and heavy channel traffic is one
+more reason to reach for `--worker`.
+
 ## Main thread and worker
 
 The channel behaves identically in both, and that is asserted rather than asserted-about:
@@ -300,7 +466,8 @@ A page using the shipped `main.mjs` gets the other side for free on
 
 | Member | |
 |---|---|
-| `send(channel, value)` | Encode with the codec and send. |
+| `send(channel, value)` | Encode with the codec and send. Never drops. |
+| `sendLatest(channel, value)` | At most one per channel per frame, keeping the newest. |
 | `sendText(channel, text)` | Send as-is. |
 | `on(channel, callback)` | Receive decoded. Returns an unsubscribe function. |
 | `onText(channel, callback)` | Receive raw. Returns an unsubscribe function. |

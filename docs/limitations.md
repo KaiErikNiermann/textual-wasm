@@ -130,6 +130,20 @@ is a property of the font file rather than of the emulator, so the render equiva
 which covers box drawing, CJK, combining marks, astral characters, variation selectors and ZWJ
 emoji — does not extend to them.
 
+**The data channel has no backpressure, and Python sets the ceiling.** `send` returns as soon
+as the value is queued; nothing tells a fast sender to slow down. Measured in Chromium, a page
+pushes 200,000 messages in 162 ms and the application takes 2.7 seconds to consume them, so a
+burst costs a backlog rather than the time it took to send. The receiving ceiling is about
+75,000 messages a second and it is the interpreter's — the same burst takes the same time on
+a terminal, and `--worker` moves the work rather than reducing it. Anything a person operates
+is three orders of magnitude below that; a kHz sample stream is not. See {doc}`bridge`.
+
+**A bound reactive is not type-checked at runtime.** Textual's reactives do not validate, so
+a page sending a string to a `reactive[int]` leaves a string there and the failure surfaces
+somewhere else entirely. `bind` warns once when the type changes and takes a `validate=`
+argument; neither is a substitute for treating a page as untrusted input. This is Textual's
+behaviour rather than this project's, and the bridge can only make it visible.
+
 ---
 
 ## Textual upstream
