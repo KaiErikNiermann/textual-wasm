@@ -129,14 +129,18 @@ def run_harness(
     *,
     node: str,
     timeout: float = DEFAULT_TIMEOUT,
+    directory: Path = HARNESS_DIR,
 ) -> HarnessResult:
-    """Run one packaged harness and parse the JSON it writes to stdout.
+    """Run one harness and parse the JSON it writes to stdout.
 
     Args:
-        script: File name inside the harness directory.
+        script: File name inside `directory`.
         config: Everything the run needs, written to a temporary file the harness reads.
         node: The Node binary, from :func:`availability`.
         timeout: Seconds before the harness is abandoned.
+        directory: Where to find `script`. The packaged harnesses by default; the test
+            suite points this at its own, because a harness that exists only to assert
+            something is not part of what ships.
 
     Returns:
         The parsed payload, the exit status, and whatever the harness said on stderr - which
@@ -147,9 +151,9 @@ def run_harness(
             it failed in a way it did not report; its stderr is attached, because on its own
             "expecting value: line 1 column 1" names nothing anyone can act on.
     """
-    harness = HARNESS_DIR / script
-    with tempfile.TemporaryDirectory(prefix="textual-wasm-") as directory:
-        config_path = Path(directory) / "config.json"
+    harness = directory / script
+    with tempfile.TemporaryDirectory(prefix="textual-wasm-") as scratch:
+        config_path = Path(scratch) / "config.json"
         config_path.write_text(json.dumps(config), encoding="utf-8")
         _log.debug("running %s with %s", harness, dict(config))
         completed = subprocess.run(  # noqa: S603 - argv is ours, no shell
