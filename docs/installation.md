@@ -1,7 +1,7 @@
 # Installation
 
 ```console
-$ pip install textual-wasm
+pip install textual-wasm
 ```
 
 That is enough for `doctor`, `build` and `dev` — the three commands most people need. It
@@ -12,7 +12,7 @@ compiled.
 To track unreleased work, install from the repository instead:
 
 ```console
-$ pip install git+https://github.com/KaiErikNiermann/textual-wasm
+pip install git+https://github.com/KaiErikNiermann/textual-wasm
 ```
 :::
 
@@ -60,12 +60,12 @@ implementation turned out to be the wrong one. See {doc}`study` §12.3.
 ## For working on textual-wasm itself
 
 ```console
-$ git clone https://github.com/KaiErikNiermann/textual-wasm
-$ cd textual-wasm
-$ poetry install
-$ pnpm install                       # only for the wasm and browser legs
-$ git config core.hooksPath .githooks
-$ poetry run pytest
+git clone https://github.com/KaiErikNiermann/textual-wasm
+cd textual-wasm
+poetry install
+pnpm install                       # only for the wasm and browser legs
+git config core.hooksPath .githooks
+poetry run pytest
 ```
 
 The pre-push hook runs ruff, pyright in strict mode, radon, semgrep and the test suite. CI

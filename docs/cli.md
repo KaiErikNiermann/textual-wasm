@@ -5,7 +5,7 @@ Every command takes `--help`. This page is the map.
 ## `textual-wasm doctor`
 
 ```console
-$ textual-wasm doctor <module:App | path> [-r DISTRIBUTION]...
+textual-wasm doctor <module:App | path> [-r DISTRIBUTION]...
 ```
 
 Reports what will behave differently under Pyodide, before you run it there: imports, **call
@@ -26,8 +26,8 @@ time.sleep(0.5)  # textual-wasm: allow time.sleep - CLI-only path, never reached
 ## `textual-wasm build`
 
 ```console
-$ textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR]
-                     [--worker] [--storage] [--no-check-dependencies] [-r DIST]...
+textual-wasm build <module:App> <package> [-o dist/] [--title T] [--template DIR]
+                   [--worker] [--storage] [--no-check-dependencies] [-r DIST]...
 ```
 
 Writes a self-contained static site. See {doc}`usage` and {doc}`embedding`.
@@ -54,7 +54,7 @@ from, the build says it did not check rather than reporting a clean result.
 ## `textual-wasm dev`
 
 ```console
-$ textual-wasm dev [dist/] [-p PORT]
+textual-wasm dev [dist/] [-p PORT]
 ```
 
 Serves a build on loopback with caching off. The standard library's own server — a development
@@ -63,9 +63,9 @@ server is not a deployment target.
 ## `textual-wasm check`
 
 ```console
-$ textual-wasm check [--app module:App] [--ready-marker T] [--keys K] [--settled-marker T]
-                     [--width N] [--height N] [--browser ENGINE] [--worker]
-                     [-r DISTRIBUTION]... [--strict]
+textual-wasm check [--app module:App] [--ready-marker T] [--keys K] [--settled-marker T]
+                   [--width N] [--height N] [--browser ENGINE] [--worker]
+                   [-r DISTRIBUTION]... [--strict]
 ```
 
 Runs the app on every runtime available and compares them. See {doc}`usage`.
@@ -80,7 +80,7 @@ identical, so this is the same comparison rather than a weaker one — see {doc}
 ## `textual-wasm pins`
 
 ```console
-$ textual-wasm pins [--output wasm-requirements.txt]
+textual-wasm pins [--output wasm-requirements.txt]
 ```
 
 Regenerates the WASM dependency closure from the installed native environment, walking
@@ -90,7 +90,7 @@ load the same code.
 ## `textual-wasm matrix`
 
 ```console
-$ textual-wasm matrix [-o docs/porting-matrix.md] [--check]
+textual-wasm matrix [-o docs/porting-matrix.md] [--check]
 ```
 
 Renders the {doc}`matrix` from the substitution registry. `--check` exits non-zero when the
@@ -99,7 +99,7 @@ file on disk is out of date, which is the CI form.
 ## `textual-wasm libraries`
 
 ```console
-$ textual-wasm libraries [-o docs/library-table.md] [--check]
+textual-wasm libraries [-o docs/library-table.md] [--check]
 ```
 
 Renders {doc}`library-support` from the ecosystem registry — which third-party Textual
@@ -109,7 +109,7 @@ widgets. `--check` is the CI form, same as `matrix`.
 ## `textual-wasm channels`
 
 ```console
-$ textual-wasm channels MODULE [-o page/channels.d.ts] [--path DIR] [--schema] [--check]
+textual-wasm channels MODULE [-o page/channels.d.ts] [--path DIR] [--schema] [--check]
 ```
 
 Renders TypeScript declarations for every channel an application declares, so the page can

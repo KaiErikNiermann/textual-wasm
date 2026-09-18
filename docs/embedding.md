@@ -6,7 +6,7 @@ replacing it, and putting the terminal inside an application you already have.
 ## Level 1 — a title
 
 ```console
-$ textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
+textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
 ```
 
 Defaults to your application class name. The page has no heading of its own, so this is the
@@ -15,7 +15,7 @@ browser tab and nothing else.
 ## Level 2 — your own page
 
 ```console
-$ textual-wasm build myapp.main:App myapp -o dist/ --template page/
+textual-wasm build myapp.main:App myapp -o dist/ --template page/
 ```
 
 `--template` is a **directory copied over the built page**. Anything in it wins over the
@@ -147,8 +147,8 @@ The complete project is in {doc}`examples`, including the two build steps that n
 know about each other:
 
 ```console
-$ textual-wasm build palette_app.app:Palette palette_app -o public/terminal
-$ vite build
+textual-wasm build palette_app.app:Palette palette_app -o public/terminal
+vite build
 ```
 
 ## Level 4 — sending values

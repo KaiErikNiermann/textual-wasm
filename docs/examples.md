@@ -30,8 +30,8 @@ behind by the build fails at *mount time* in the browser and nowhere earlier, so
 what proves it ships.
 
 ```console
-$ poetry run simple-app                                             # a terminal
-$ textual-wasm build simple_app.app:TaskList simple_app -o dist/    # a web page
+poetry run simple-app                                             # a terminal
+textual-wasm build simple_app.app:TaskList simple_app -o dist/    # a web page
 ```
 
 ---
@@ -99,7 +99,7 @@ channel carries. `page/channels.d.ts` is generated from it and committed, and `t
 payload that gains a field fails the drift gate until the declarations are regenerated.
 
 ```console
-$ textual-wasm build mixer_app.app:Mixer mixer_app -o dist/ --template page --worker
+textual-wasm build mixer_app.app:Mixer mixer_app -o dist/ --template page --worker
 ```
 
 ---
@@ -116,8 +116,8 @@ $ textual-wasm build mixer_app.app:Mixer mixer_app -o dist/ --template page --wo
 **What it shows.** Two toolchains that never have to know about each other:
 
 ```console
-$ textual-wasm build palette_app.app:Palette palette_app -o public/terminal
-$ vite build
+textual-wasm build palette_app.app:Palette palette_app -o public/terminal
+vite build
 ```
 
 Vite copies `public/` through untouched — it never sees the Python — and the build's entry
@@ -158,7 +158,7 @@ await store.flush()                                     # no-op natively
 ```
 
 ```console
-$ textual-wasm build notes_app.app:Notes notes_app -o dist/ --storage --worker
+textual-wasm build notes_app.app:Notes notes_app -o dist/ --storage --worker
 ```
 
 Build it *without* `--storage` and the app says so in its own banner rather than silently
@@ -182,7 +182,7 @@ PyPI, installed by `micropip` at boot.
 The part that makes it work is not in the application at all:
 
 ```console
-$ textual-wasm build gallery_app.app:Gallery gallery_app -o dist/ --worker \
+textual-wasm build gallery_app.app:Gallery gallery_app -o dist/ --worker \
     -r textual-autocomplete -r textual-plotext -r textual-plot -r textual-slider
 ```
 
@@ -202,7 +202,7 @@ Not shipped as an example, but worth knowing: `python -m textual` — lazily-loa
 Markdown widget, a command palette, network calls — runs unmodified.
 
 ```console
-$ textual-wasm check --app textual.demo.demo_app:DemoApp \
+textual-wasm check --app textual.demo.demo_app:DemoApp \
     --ready-marker "What is Textual?" --width 100 --height 30
 ```
 

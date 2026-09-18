@@ -36,6 +36,13 @@ myst_enable_extensions = [
 ]
 myst_heading_anchors = 3
 
+# Blocks that interleave a command with its output keep the `$` - there it is what separates
+# the two - so the copy button drops the prompt and the output lines rather than handing over
+# text that has to be edited before it runs. A block without a prompt copies whole.
+copybutton_prompt_text = r"\$ "
+copybutton_prompt_is_regexp = True
+copybutton_line_continuation_character = "\\"
+
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "textual": ("https://textual.textualize.io", None),

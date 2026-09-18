@@ -5,7 +5,7 @@ Everything the build does, and the choices it makes for you.
 ## What `build` produces
 
 ```console
-$ textual-wasm build myapp.main:App myapp -o dist/
+textual-wasm build myapp.main:App myapp -o dist/
 ```
 
 | Argument | |
@@ -32,7 +32,7 @@ def make_app() -> Viewer:
 ```
 
 ```console
-$ textual-wasm build myapp.web:make_app myapp -o dist/
+textual-wasm build myapp.web:make_app myapp -o dist/
 ```
 
 This is common: of ten Textual applications surveyed on GitHub, two took required
@@ -69,7 +69,7 @@ The build installs a dependency closure with `micropip` at page load, pinned to 
 in **your** environment:
 
 ```console
-$ textual-wasm pins            # writes wasm-requirements.txt
+textual-wasm pins            # writes wasm-requirements.txt
 ```
 
 The closure is walked from installed metadata with **extras followed** — which matters more
@@ -81,13 +81,13 @@ from the list that was wrong.
 Extra distributions your app needs:
 
 ```console
-$ textual-wasm build myapp.main:App myapp -o dist/ -r httpx -r "pydantic>=2"
+textual-wasm build myapp.main:App myapp -o dist/ -r httpx -r "pydantic>=2"
 ```
 
 Whether a given package works at all is a question `doctor` answers:
 
 ```console
-$ textual-wasm doctor myapp.main:App -r httpx -r cryptography
+textual-wasm doctor myapp.main:App -r httpx -r cryptography
 ```
 
 | State | Means |
@@ -104,7 +104,7 @@ around it. A Textual app already renders its own header, footer and title, so pa
 would be a second frame competing with the one the app draws.
 
 ```console
-$ textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
+textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
 ```
 
 `--title` names the document, defaulting to your application class. For anything more,
@@ -113,7 +113,7 @@ $ textual-wasm build myapp.main:App myapp -o dist/ --title "My App"
 ## Checking it behaves the same
 
 ```console
-$ textual-wasm check --app myapp.main:App \
+textual-wasm check --app myapp.main:App \
     --ready-marker "My App" --keys q --settled-marker "goodbye"
 ```
 

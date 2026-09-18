@@ -14,7 +14,7 @@ the same material organised by *whose* constraint each one is.
 ## 1. Ask before you run
 
 ```console
-$ textual-wasm doctor myapp.main:App -r httpx -r pydantic
+textual-wasm doctor myapp.main:App -r httpx -r pydantic
 ```
 
 The doctor reads your source and reports three classes of problem with a `file:line` for
@@ -113,7 +113,7 @@ terminal, so a hosted app gets it without asking.
 ## 7. Pin the dependency closure, not just your dependencies
 
 ```console
-$ textual-wasm pins        # writes wasm-requirements.txt from the native environment
+textual-wasm pins        # writes wasm-requirements.txt from the native environment
 ```
 
 micropip resolves against Pyodide's own bundled package set *before* PyPI. Asking for bare
@@ -127,7 +127,7 @@ native environment is what makes that true.
 ## 8. Check it rather than believing it
 
 ```console
-$ textual-wasm check --app myapp.main:App \
+textual-wasm check --app myapp.main:App \
     --ready-marker "My App" --keys q --settled-marker bye
 ```
 

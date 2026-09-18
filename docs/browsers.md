@@ -82,8 +82,8 @@ That leg is new and has not yet reported. This page will carry its result rather
 assumption — if you are relying on Safari today, run it yourself:
 
 ```console
-$ sudo safaridriver --enable
-$ textual-wasm check --browser safari --app myapp.main:App
+sudo safaridriver --enable
+textual-wasm check --browser safari --app myapp.main:App
 ```
 
 ## Mobile

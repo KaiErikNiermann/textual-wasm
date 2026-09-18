@@ -161,7 +161,7 @@ CLIPPING: Channel[Clipping] = Channel("clipping")
 ```
 
 ```console
-$ textual-wasm channels myapp.channels -o page/channels.d.ts
+textual-wasm channels myapp.channels -o page/channels.d.ts
 ```
 
 ```ts
@@ -266,7 +266,7 @@ because it looks like proof.
 `--schema` emits the same model as JSON Schema 2020-12:
 
 ```console
-$ textual-wasm channels myapp.channels --schema -o page/channels.schema.json
+textual-wasm channels myapp.channels --schema -o page/channels.schema.json
 ```
 
 Both outputs come from one walk of the Python types, so they cannot describe two different

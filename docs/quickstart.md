@@ -9,9 +9,9 @@ read {doc}`porting` instead — this page assumes you are starting fresh.
 not enough to reconstruct the import path.
 
 ```console
-$ mkdir -p hello/hello_app && cd hello
-$ python -m venv .venv && source .venv/bin/activate
-$ pip install textual textual-wasm
+mkdir -p hello/hello_app && cd hello
+python -m venv .venv && source .venv/bin/activate
+pip install textual textual-wasm
 ```
 
 ```python
@@ -44,7 +44,7 @@ __all__ = ["Hello"]
 Run it the ordinary way first, so you know the app itself works:
 
 ```console
-$ python -c "from hello_app.app import Hello; Hello().run()"
+python -c "from hello_app.app import Hello; Hello().run()"
 ```
 
 ## 2. Ask what will break
@@ -99,7 +99,7 @@ Copy it to GitHub Pages, S3, Netlify, or a directory on any web server. Two thin
 ## 5. Check that it really behaves the same
 
 ```console
-$ textual-wasm check --app hello_app.app:Hello \
+textual-wasm check --app hello_app.app:Hello \
     --ready-marker "Press space." --keys space --settled-marker "Hello from WebAssembly."
 ```
 
