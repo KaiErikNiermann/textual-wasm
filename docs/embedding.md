@@ -21,7 +21,7 @@ textual-wasm build myapp.main:App myapp -o dist/ --template page/
 `--template` is a **directory copied over the built page**. Anything in it wins over the
 shipped asset of the same name, so replacing `index.html` alone is a one-file directory.
 
-A directory rather than a set of options on purpose: what people want to change is a
+A directory, and not a set of options, on purpose: what people want to change is a
 *document*, and every option that tries to parameterise a document ends up reinventing a worse
 templating language.
 
@@ -110,7 +110,7 @@ has no keystroke to send back. {doc}`bridge` covers those.
 | `bridge` | The two-way data channel. See {doc}`bridge`. |
 
 It appears *seconds* after your page does — Pyodide has to boot a CPython interpreter — so
-poll for it rather than assuming it:
+poll for it:
 
 ```js
 while (globalThis.textualWasm === undefined) {
@@ -182,8 +182,8 @@ working page.
 ```
 
 Both have fallbacks, so omitting them is not an error. But the font is what decides how wide a
-character cell is, so it is worth being deliberate about — and it is the one setting that can
-make a render subtly wrong rather than obviously broken.
+character cell is, so choose it deliberately: a wrong font makes a render subtly wrong
+instead of obviously broken.
 
 ### Sizing
 

@@ -51,10 +51,9 @@ dist/
   styles/         the page's stylesheet
 ```
 
-**Python is shipped as source, not as wheels.** It costs a little size and buys two things
-worth more: a dev server can serve straight from the working tree, and the browser
-demonstrably runs the same files the other runtimes do — which is what the cross-runtime
-comparison depends on.
+**Python is shipped as source, not as wheels.** It costs a little size and gives two things
+in return: a dev server can serve straight from the working tree, and the browser runs the
+same files the other runtimes do, which is what the cross-runtime comparison depends on.
 
 ### Size
 
@@ -72,11 +71,10 @@ in **your** environment:
 textual-wasm pins            # writes wasm-requirements.txt
 ```
 
-The closure is walked from installed metadata with **extras followed** — which matters more
-than it sounds. `textual` depends on `markdown-it-py[linkify]`, and a list of distribution
-names cannot express that extra. Its absence does not fail the install; it surfaces later as
-Textual's own `Markdown` widget dying with `Linkify enabled but not installed`, three layers
-from the list that was wrong.
+The closure is walked from installed metadata with **extras followed**. `textual` depends on
+`markdown-it-py[linkify]`, and a list of distribution names cannot express that extra. Its
+absence does not fail the install; it surfaces later as Textual's own `Markdown` widget dying
+with `Linkify enabled but not installed`, three layers from the list that was wrong.
 
 Extra distributions your app needs:
 
@@ -95,7 +93,7 @@ textual-wasm doctor myapp.main:App -r httpx -r cryptography
 | pure | Pure Python. Any version, straight from PyPI. |
 | wasm wheel | Publishes a `pyemscripten` wasm wheel to PyPI. Any version. |
 | bundled native | Pyodide ships a build. Works, but **pins you to Pyodide's version** — `cryptography` is three majors behind PyPI. |
-| unavailable | No wasm build exists. `micropip.add_mock_package()` is sometimes the honest answer. |
+| unavailable | No wasm build exists. `micropip.add_mock_package()` is sometimes the way through. |
 
 ## The page
 
@@ -133,7 +131,7 @@ identical: terminal and browser render the same
 equivalent across 4 runtime(s)
 ```
 
-### The eight checks
+### What is checked
 
 Nothing is asked of your app: the probe schedules its own timer, reads the resize off the
 `Screen` your app laid out, and judges input by what appears on the grid.
@@ -141,7 +139,7 @@ Nothing is asked of your app: the probe schedules its own timer, reads the resiz
 | Check | Settles |
 |---|---|
 | `import_purity` | No POSIX terminal module and no Textual platform driver was imported. |
-| `driver_hook` | `TEXTUAL_DRIVER` selected the out-of-tree driver — the mechanism the whole project rests on. |
+| `driver_hook` | `TEXTUAL_DRIVER` selected the out-of-tree driver, which is what puts Textual in a browser at all. |
 | `run_async` | `App.run_async()` completed on the host's event loop. |
 | `resize_delivered` | The synthesised resize reached the widget tree. |
 | `ansi_output` | The compositor emitted truecolor SGR, i.e. real terminal output. |
@@ -170,9 +168,9 @@ variable parts have settled.
 :class: tip
 
 By default a runtime that cannot be checked here is reported as skipped and the rest still
-produce a verdict — a check that fails for a missing tool teaches people to ignore its result.
-`--strict` makes a skip a failure, which is what CI wants: a silently narrower check is the
-thing you are trying to prevent.
+produce a verdict; a check that fails for a missing tool teaches people to ignore its result.
+`--strict` makes a skip a failure, which is what CI wants, because a silently narrower check
+reports success for work it did not do.
 :::
 
 ## Diagnostics at runtime
@@ -187,8 +185,8 @@ time.sleep(2)                        # freezes the page for two seconds
 ```
 
 Each becomes a loud, specific error or warning naming the substitute. And because Textual
-prints tracebacks through a `Console(stderr=True)` — which under Pyodide is a browser console
-nobody is watching — crash output is routed into the terminal the user is already looking at.
+prints tracebacks through a `Console(stderr=True)`, which under Pyodide is the browser
+console, crash output is routed into the terminal the user is already looking at.
 
 To do this yourself when hosting Pyodide some other way:
 

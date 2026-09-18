@@ -25,9 +25,8 @@ nothing else.
 it. The app imports nothing from `textual_wasm` and does not branch on the platform — shipping
 it to a browser is a build step, not a port.
 
-Its stylesheet is a real `.tcss` file rather than a `CSS` string on purpose: a stylesheet left
-behind by the build fails at *mount time* in the browser and nowhere earlier, so the example is
-what proves it ships.
+Its stylesheet is a real `.tcss` file on purpose: a stylesheet left behind by the build fails
+at *mount time* in the browser and nowhere earlier, so the example is what proves it ships.
 
 ```console
 poetry run simple-app                                             # a terminal
@@ -148,7 +147,7 @@ persisting across page reloads.
 *as a filesystem*, so `sqlite3.connect(...)` works in a page and persists — and a `Store`
 protocol with two backends would be a worse reimplementation of that, without SQL.
 
-What genuinely differs is *when* a write becomes durable, so the app calls one extra method:
+What differs is *when* a write becomes durable, so the app calls one extra method:
 
 ```python
 store = Store.open("persistent-notes")
@@ -161,15 +160,14 @@ await store.flush()                                     # no-op natively
 textual-wasm build notes_app.app:Notes notes_app -o dist/ --storage --worker
 ```
 
-Build it *without* `--storage` and the app says so in its own banner rather than silently
-forgetting. Measured across Chromium and Firefox, main thread and Web Worker: a note written,
-the page reloaded, the note still there — in all four combinations. {doc}`storage` is the
-full account, including why `localStorage` is the wrong answer (a Web Worker does not have
-it).
+Build it *without* `--storage` and the app says so in its own banner. Measured across Chromium
+and Firefox, main thread and Web Worker: a note written, the page reloaded, the note still there
+— in all four combinations. {doc}`storage` is the full account, including why `localStorage` is
+the wrong answer (a Web Worker does not have it).
 
 ---
 
-## Four third-party libraries in one page
+## Third-party libraries in one page
 
 [`examples/addon-gallery`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/examples/addon-gallery)
 — a signal explorer built from `textual-autocomplete`, `textual-plotext`, `textual-plot` and

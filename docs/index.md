@@ -16,21 +16,21 @@ no build toolchain at the far end, and nothing for the person deploying it to in
 and xterm.js are fetched from a pinned CDN; your application is written into the page as
 source.
 
-:::{admonition} This documentation site is the proof
+:::{admonition} This site is built with textual-wasm
 :class: tip
 
 Every demo in the [examples gallery](examples.md) is a real build of a real Textual app,
 running in your browser on this GitHub Pages site. GitHub Pages serves static files and
-nothing else — which is exactly the claim.
+nothing else.
 :::
 
-## Why this is possible at all
+## Why this works
 
 Textual's driver is an abstraction with an environment-variable hook —
-`TEXTUAL_DRIVER=module:Symbol` — that was clearly built for out-of-tree drivers. Every
+`TEXTUAL_DRIVER=module:Symbol` — that exists for out-of-tree drivers. Every
 syscall lives in `textual/drivers/`, the entry point is fully awaitable, and the input parser
 is pure synchronous Python. So a driver whose sink is an `xterm.js` terminal instead of a file
-descriptor is the whole of it.
+descriptor is all it takes.
 
 **Nothing here patches Textual.** The [feasibility study](study.md) is the audit that
 established that, and §11–§14 are what the implementation measured against it.
@@ -51,7 +51,7 @@ A working web build of a new app in about five minutes.
 :link: porting
 :link-type: doc
 
-What to change, in the order you will actually hit it.
+What to change, in the order you will hit it.
 :::
 
 :::{grid-item-card} {octicon}`browser` Embedding
@@ -83,7 +83,7 @@ Measured across Chromium, Firefox and WebKit — and what that measurement does 
 :::
 ::::
 
-## What the tool actually does
+## Commands
 
 | Command | |
 |---|---|

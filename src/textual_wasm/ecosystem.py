@@ -157,7 +157,7 @@ LIBRARIES: Final[tuple[Library, ...]] = (
         widgets=("Image",),
         guidance=(
             "Only the auto-selecting widget was verified. A probe that imported every "
-            "submodule of the package **hung** rather than failing, so one of the backend "
+            "submodule of the package **hung** instead of failing, so one of the backend "
             "modules blocks on import under this driver - unsurprising for a library whose job "
             "is to ask the terminal what protocols it supports. Import "
             "`textual_image.widget.Image` and let it choose; do not import a specific backend."
@@ -382,9 +382,7 @@ LIBRARIES: Final[tuple[Library, ...]] = (
         version="0.1.0",
         downloads=8,
         summary="Tailwind-like utility classes for Textual CSS",
-        observed=(
-            "Installs and imports. Ships stylesheets rather than widgets, so nothing to mount."
-        ),
+        observed=("Installs and imports. Ships stylesheets, not widgets, so nothing to mount."),
     ),
     # --- TEXTUAL_CAP: installs by downgrading Textual underneath you ---------------------
     Library(
@@ -495,7 +493,7 @@ LIBRARIES: Final[tuple[Library, ...]] = (
             "current Textual itself installs."
         ),
         guidance=(
-            "A stale transitive pin rather than a browser constraint. Drag-and-drop into a page "
+            "A stale transitive pin, not a browser constraint. Drag-and-drop into a page "
             "is a browser API anyway, so a terminal FileDrop is not the right mechanism here."
         ),
     ),
@@ -557,7 +555,7 @@ LIBRARIES: Final[tuple[Library, ...]] = (
             "It is the *other* architecture: a server runs Python and streams the terminal to a "
             "browser. This project runs Python in the browser and needs no server. Pick one - "
             "there is nothing to compose. It is also the most-downloaded package in this survey, "
-            "so the comparison is the one most people actually want."
+            "so the comparison is the one most people want."
         ),
     ),
     Library(

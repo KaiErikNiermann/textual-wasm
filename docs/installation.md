@@ -20,8 +20,7 @@ pip install git+https://github.com/KaiErikNiermann/textual-wasm
 
 **3.12 or newer** on your development machine. Note this is separate from the interpreter your
 app runs on in a browser, which is whatever CPython the pinned Pyodide ships — 3.14 at
-present. `textual-wasm check` reports both, and a difference between them is expected rather
-than a problem:
+present. `textual-wasm check` reports both, and a difference between them is expected:
 
 ```
 platform          linux        emscripten
@@ -29,9 +28,9 @@ python_version    3.14.7       3.14.2
 event_loop        _UnixSelector…  WebLoop
 ```
 
-## Optional tools, and what each one buys
+## Optional tools
 
-Nothing below is needed to build or serve a site. Each unlocks one leg of
+Nothing below is needed to build or serve a site. Each enables one leg of
 `textual-wasm check`, and a leg that cannot run is reported as skipped with the command that
 would enable it — never as a failure.
 
@@ -81,13 +80,13 @@ Playwright's engines are downloaded separately from the package, which is why th
 commands. `--browser chrome` and `--browser msedge` drive the browsers already installed on
 your machine instead, and need no download at all — see {doc}`browsers`.
 
-:::{admonition} Why tmux, specifically
+:::{admonition} Why tmux
 :class: dropdown
 
 It is the only terminal emulator that will hand its screen back as text. `capture-pane` is
-what makes "does the browser render this the same way a terminal does" a mechanical question
-rather than an opinion — and the answer has already been surprising once, when the *reference*
-implementation turned out to be the wrong one. See {doc}`study` §12.3.
+what makes "does the browser render this the same way a terminal does" a mechanical
+question, and the answer has already been surprising once: the *reference* implementation
+turned out to be the wrong one. See {doc}`study` §12.3.
 :::
 
 ## For working on textual-wasm itself

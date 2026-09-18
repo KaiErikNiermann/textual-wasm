@@ -28,7 +28,7 @@ slider.addEventListener("input", () => bridge.send("gain", Number(slider.value))
 That is a complete two-way binding. The slider moves the reactive, the reactive moves the
 slider, and neither side owns the value.
 
-## Three layers
+## Layers
 
 Each layer works without the one above it. Use the lowest that answers the question.
 
@@ -64,7 +64,7 @@ survives either way for a handler that wants to recover.
 Binding a channel does not consume it. A bound value is applied *and* posted, so an
 application can bind a level and still react to its arrival.
 
-## Structure, without inventing a format
+## Structure
 
 `Codec` is two methods:
 
@@ -103,7 +103,7 @@ The page's codec is a property, so a project speaking something else replaces it
 globalThis.textualWasm.bridge.codec = { encode: pack, decode: unpack };
 ```
 
-## Timing, and why the first message is not lost
+## Timing at startup
 
 `globalThis.textualWasm` appears only once the app is driving the terminal, so a page always
 subscribes *after* the application has started. But `bind(initial=True)` sends during
@@ -111,8 +111,8 @@ subscribes *after* the application has started. But `bind(initial=True)` sends d
 on a fast machine and catch it on a slow one.
 
 Both ends therefore hold messages for a receiver that has not arrived yet: 128 of them, oldest
-dropped, with one warning if nothing ever subscribes. That is what makes a slider snap into
-step on load instead of sitting at whatever its markup declared.
+dropped, with one warning if nothing ever subscribes. That is what makes a slider snap into step
+on load instead of sitting at whatever its markup declared.
 
 The queue covers the gap at startup and nothing more. A page that fills it is talking to
 something that will never answer.
@@ -247,10 +247,9 @@ library on your behalf. A payload that needs real validation replaces the codec 
 integer type, so a generated `integer` would be a claim neither runtime can enforce.
 :::
 
-### Keeping it honest
+### Checking for drift
 
-`--check` exits non-zero when the committed file no longer matches the declarations. That
-check is what makes a generated file worth trusting:
+`--check` exits non-zero when the committed file no longer matches the declarations:
 
 ```console
 $ textual-wasm channels myapp.channels --check -o page/channels.d.ts
@@ -258,8 +257,7 @@ page/channels.d.ts is out of date; run `textual-wasm channels myapp.channels -o 
 ```
 
 Run it in CI beside the other checks. Without it, a page keeps type-checking green against
-channels the application no longer sends. That is worse than having no generated file at all,
-because it looks like proof.
+channels the application no longer sends, and the green is meaningless.
 
 ### JSON Schema, for everything else
 
@@ -274,16 +272,16 @@ things. Use the schema for runtime validation at the page's edge, or to feed a g
 language this tool does not emit; `datamodel-codegen` and `json-schema-to-typescript` both
 read it directly.
 
-## When something goes wrong
+## Error handling
 
-The design rule is one sentence: **a bad value fails where it was written, not on the far
-side.** A failure that crosses the boundary unnoticed lands in an unwatched browser console
-and says nothing about what sent it.
+The design rule: **a bad value fails where it was written, not on the far side.** A failure that
+crosses the boundary unnoticed lands in an unwatched browser console and says nothing about what
+sent it.
 
 Every case below is asserted end to end, in Chromium and Firefox, by
 `tests/test_bridge_errors.py`.
 
-### The application never dies
+### The application keeps running
 
 Nothing a page can send stops the app. A malformed payload on a bound channel is dropped and
 logged with the channel name; the attribute keeps its old value and the next good message
@@ -346,7 +344,8 @@ self.bridge.bind("levels", self, "levels", validate=TypeAdapter(Levels).validate
 
 A rejected value is logged and the attribute is left alone. **Pass a validator for any
 channel a page can reach.** Declaring channels with {ref}`Channel <typing-the-channel>` types
-the page and stops honest mistakes. It does not stop a page that lies.
+the page and catches mistakes. It does not stop a page that sends the wrong thing on
+purpose.
 
 ### What is not checked
 
@@ -355,10 +354,10 @@ override and an astral-plane emoji all survive a round trip unchanged, and the t
 asserts it. Channel names are not validated either: any string is a channel, including the
 empty one.
 
-That is the pipe doing its job. A page handling untrusted input should put a validating codec
-in front of the channel; this layer will not do it for them.
+The pipe is deliberately permissive. A page handling untrusted input should put a validating
+codec in front of the channel; this layer will not do it for them.
 
-## What it costs, and where it stops
+## Cost and limits
 
 Measured on a desktop machine through Playwright's Chromium 153 and Firefox 155, against a
 build with the interpreter in a Web Worker. Absolute numbers vary by machine. The ratios

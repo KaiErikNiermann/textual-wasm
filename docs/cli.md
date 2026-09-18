@@ -14,8 +14,8 @@ requirements can coexist *with each other*. That last one catches the quietest f
 add-on ecosystem: a library that caps Textual below your version installs perfectly well,
 because micropip resolves Textual *down* to suit it. Exits non-zero on
 anything blocking — a silent failure, a fatal call, an absent module, or a dependency with no
-wasm build. Things that raise honestly are reported but do not fail the run; the app will tell
-you about those itself.
+wasm build. Things that raise a clear error are reported but do not fail the run; the
+app will report those itself.
 
 A finding you have considered can be marked in place, and the reason is required:
 
@@ -39,8 +39,8 @@ needs no special headers and deploys to the same static hosts. See {doc}`workers
 what `textual_wasm.storage` writes into. Off by default: it adds a round trip to boot, and an
 app that writes nothing should not ask a user's browser for storage. See {doc}`storage`.
 
-The build **checks its resolved closure and refuses** rather than writing a site that will
-die during `micropip.install` in someone else's browser. Two different failures:
+The build **checks its resolved closure and refuses** to write a site that would die during
+`micropip.install` in someone else's browser. Two different failures:
 
 - a native dependency pinned to a version Pyodide does not have — `pandas<=2.2.3` against its
   bundled 3.0.2. This half reads Pyodide's package set, so it needs the vendored runtime.
@@ -49,7 +49,7 @@ die during `micropip.install` in someone else's browser. Two different failures:
   important of the two, because micropip would otherwise *succeed* by downgrading Textual.
 
 `--no-check-dependencies` skips the first. Where no local Pyodide exists to read a package set
-from, the build says it did not check rather than reporting a clean result.
+from, the build reports that it did not check.
 
 ## `textual-wasm dev`
 
@@ -75,7 +75,7 @@ install anything. Without it an app that depends on more than Textual fails to i
 Pyodide, which is most applications.
 
 `--worker` builds the browser leg to run Python in a Web Worker. The render must come out
-identical, so this is the same comparison rather than a weaker one — see {doc}`workers`.
+identical, so this is the same comparison, not a weaker one — see {doc}`workers`.
 
 ## `textual-wasm pins`
 
@@ -84,8 +84,8 @@ textual-wasm pins [--output wasm-requirements.txt]
 ```
 
 Regenerates the WASM dependency closure from the installed native environment, walking
-extras. Generated rather than hand-written because two runtimes are only comparable when they
-load the same code.
+extras. It is generated because two runtimes are only comparable when they load the same
+code.
 
 ## `textual-wasm matrix`
 
@@ -127,7 +127,7 @@ CI form, same as `matrix`.
 
 | | |
 |---|---|
-| `probe` | Run the eight checks natively and print a report (`--json` for the machine-readable form). |
+| `probe` | Run the checks natively and print a report (`--json` for the machine-readable form). |
 | `compare` | Diff two probe reports. |
 | `capture-terminal` | Render the app in a real terminal via tmux and emit the grid as JSON. |
 | `compare-screens` | Diff two grids, reporting the row and the column at which they stop matching. |

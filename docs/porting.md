@@ -1,13 +1,13 @@
 # Porting an existing app
 
-In the order you will actually hit the problems, with the reason each one is a problem.
+In the order you will hit the problems, with the reason each one is a problem.
 
 The short version: **a Textual app that avoids threads, subprocesses and raw sockets usually
 runs unchanged.** What follows is how to find out whether yours is one, and what to do when it
 is not.
 
 :::{seealso}
-{doc}`quickstart` if you are starting a new app rather than moving one. {doc}`limitations` for
+{doc}`quickstart` if you are starting a new app. {doc}`limitations` for
 the same material organised by *whose* constraint each one is.
 :::
 
@@ -37,10 +37,10 @@ time.sleep(0.5)  # textual-wasm: allow time.sleep - CLI-only path, never reached
 The reason is required. A pragma without one is how a suppression outlives the thing it was
 suppressing.
 
-## 2. The five that fail silently
+## 2. Code that fails silently
 
-These are the ones worth reading even if the doctor is clean, because they are the ones
-whose absence you cannot feel in testing:
+Worth reading even if the doctor is clean. None of these raise anything, so a terminal test
+surfaces none of them:
 
 | What you wrote | What happens |
 |---|---|
@@ -54,14 +54,15 @@ whose absence you cannot feel in testing:
 warning that names the substitute. The build output calls it for you; call it yourself if
 you are hosting Pyodide some other way.
 
-The full list, with what was measured for each, is the {doc}`matrix`.
+The complete list, with what was measured for each, is the {doc}`matrix`.
 
 ## 3. Threads are not available, in any configuration
 
 `@work(thread=True)` cannot work. Pyodide is not built with `-pthread`, and its ABI forbids
 `-pthread` in any library linked against it, so this is not a flag anyone can turn on:
-`sys._emscripten_info.pthreads` is `False` and `SharedArrayBuffer` does not change it. SAB
-buys the interrupt buffer and urllib3's streaming worker, not `threading`.
+`sys._emscripten_info.pthreads` is `False` and `SharedArrayBuffer` does not change it.
+`SharedArrayBuffer` enables the interrupt buffer and urllib3's streaming worker. It does not
+enable `threading`.
 
 Use `@work` without `thread=True`. If the work is genuinely CPU-bound, it has to be broken
 into chunks that `await asyncio.sleep(0)` between them, because there is one thread and the
@@ -69,7 +70,7 @@ UI is on it.
 
 ## 4. Blocking HTTP is mostly fine
 
-Contrary to the usual advice, `requests` and `httpx` work in a browser. Bundled `urllib3`
+`requests` and `httpx` work in a browser. Bundled `urllib3`
 ships an Emscripten backend that routes through JSPI, a worker, or XHR, and Pyodide patches
 httpx to use a fetch-backed transport when `sys.platform == "emscripten"`.
 
@@ -100,7 +101,7 @@ constants at import time, so a value set afterwards is ignored, silently.
 The default page is bare, and `--title` and `--template` are how you change it. That is a
 subject of its own: see {doc}`embedding`.
 
-## 6. Crashes go where nobody is looking
+## 6. Crashes are printed to the browser console
 
 Textual prints tracebacks through a `Console(stderr=True)`. Under Pyodide stderr is the
 browser console - so an app that crashes in the browser reports it somewhere the user cannot
@@ -110,7 +111,7 @@ see and the developer is not watching.
 terminal the user is already looking at. The browser driver does it when it takes the
 terminal, so a hosted app gets it without asking.
 
-## 7. Pin the dependency closure, not just your dependencies
+## 7. Pin the whole dependency closure
 
 ```console
 textual-wasm pins        # writes wasm-requirements.txt from the native environment
@@ -124,7 +125,7 @@ purity check about terminal modules, which had nothing to do with the actual cau
 Two runtimes cannot be compared unless they load the same code. Generating the pins from the
 native environment is what makes that true.
 
-## 8. Check it rather than believing it
+## 8. Check it
 
 ```console
 textual-wasm check --app myapp.main:App \
@@ -133,7 +134,7 @@ textual-wasm check --app myapp.main:App \
 
 The markers are what let a machine tell "the app has drawn" from "the runtime has not
 started yet". Without a ready marker every leg waits for any non-blank screen, which is
-weaker but still honest; without a settled marker the keystroke cannot be checked at all,
+weaker but still valid; without a settled marker the keystroke cannot be checked at all,
 because a screen captured right after typing may not have handled it.
 
 What the check compares:
@@ -141,9 +142,9 @@ What the check compares:
 - **native against Pyodide** - eight checks, the runtime facts, and the replayed grid. Any
   disagreement is a real portability difference.
 - **a real terminal against the browser** - cell by cell. This is the render claim, and it
-  is made against a real pty rather than a replay: three character-width tables are involved
-  (rich's `cell_len` laid it out, `pyte` replays it, `xterm.js` draws it) and they do not
-  share code.
+  is measured against a real pty. Three character-width tables are involved (rich's
+  `cell_len` laid it out, `pyte` replays it, `xterm.js` draws it) and they do not share
+  code.
 
 `--strict` makes a runtime that could not be checked a failure, which is what CI wants.
 {doc}`usage` has more on reading the output.

@@ -1,7 +1,7 @@
 # Quickstart
 
 A Textual app in a browser, from nothing, in about five minutes. If you already have an app,
-read {doc}`porting` instead — this page assumes you are starting fresh.
+read {doc}`porting` instead.
 
 ## 1. A project
 
@@ -47,7 +47,7 @@ Run it the ordinary way first, so you know the app itself works:
 python -c "from hello_app.app import Hello; Hello().run()"
 ```
 
-## 2. Ask what will break
+## 2. Scan for what will break
 
 ```console
 $ textual-wasm doctor hello_app.app:Hello
@@ -55,9 +55,9 @@ no source findings
 no blocking issues
 ```
 
-Worth doing before the build rather than after, because the failures this catches are the ones
-that do **not** raise — `os.system()` returning 0 and doing nothing, `run_in_executor` quietly
-running inline on the only thread. See {doc}`limitations`.
+Worth doing before the build, because the failures it catches do **not** raise: `os.system()`
+returns 0 and does nothing, `run_in_executor` runs inline on the only thread. See
+{doc}`limitations`.
 
 ## 3. Build and serve
 
@@ -92,19 +92,19 @@ app.json  entry.py  index.html  main.mjs  sources.json  styles/
 Copy it to GitHub Pages, S3, Netlify, or a directory on any web server. Two things to know:
 
 - **Serve `.wasm` as `application/wasm`.** Most hosts do; a few old configurations do not, and
-  the failure is a message about the MIME type rather than a 404.
-- **No COOP/COEP headers are needed.** The default build is main-thread only precisely so the
-  simplest deployment works. See {doc}`limitations` for what that costs.
+  the failure is a MIME type message, not a 404.
+- **No COOP/COEP headers are needed.** The default build is main-thread only so the simplest
+  deployment works. See {doc}`limitations` for what that costs.
 
-## 5. Check that it really behaves the same
+## 5. Check that it behaves the same
 
 ```console
 textual-wasm check --app hello_app.app:Hello \
     --ready-marker "Press space." --keys space --settled-marker "Hello from WebAssembly."
 ```
 
-The three markers are how a machine knows what it is looking at: text that means the app has
-drawn, keystrokes to send, and text that means those keystrokes were handled. Without the last
+The markers are how a machine knows what it is looking at: text that means the app has drawn,
+keystrokes to send, and text that means those keystrokes were handled. Without the last
 one a capture races the app and sometimes reads the screen from before the keypress.
 
 What comes back is a runtime-by-runtime table and two comparisons — the Python runtimes check

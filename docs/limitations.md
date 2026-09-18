@@ -3,8 +3,8 @@
 Organised by **whose constraint each one is**, because that is what decides whether it can
 ever change. A browser sandbox rule is permanent; a choice this project made for v1 is not.
 
-The [porting matrix](matrix.md) is the same material as a per-capability table, generated from
-the registry the tools themselves read.
+The [porting matrix](matrix.md) is the same material as a per-capability table, generated
+from the registry the tools themselves read.
 
 ---
 
@@ -41,15 +41,15 @@ project can fix.
 
 `@work(thread=True)` cannot work. Pyodide is **not built with `-pthread`**, and its ABI
 documentation forbids `-pthread` in any library linked against it — so this is not a flag
-anyone can turn on. Measured rather than inferred: `sys._emscripten_info.pthreads` is `False`
-and `grep -c SharedArrayBuffer pyodide.asm.mjs` is `0`.
+anyone can turn on. `sys._emscripten_info.pthreads` is `False` and
+`grep -c SharedArrayBuffer pyodide.asm.mjs` is `0`.
 
-`SharedArrayBuffer` does **not** change this. It buys the interrupt buffer and `urllib3`'s
-streaming worker. Contingent on: a forked Pyodide build. Nothing less.
+`SharedArrayBuffer` does **not** change this. It enables the interrupt buffer and `urllib3`'s
+streaming worker. Changing it needs a forked Pyodide build.
 :::
 
 **`loop.run_in_executor()` ignores the executor** and runs the callable inline on the only
-thread. It returns the right answer, so nothing fails — the page just freezes for the duration.
+thread. It returns the right answer, so nothing fails; the page freezes for the duration.
 This project turns it into a warning naming the substitute.
 
 **`textual[syntax]` does not install, so `TextArea` syntax highlighting is unavailable.**
@@ -57,9 +57,9 @@ Textual's syntax extra requires `tree-sitter>=0.25.0`; Pyodide bundles 0.23.2 as
 wheel, which cannot be fetched from PyPI at another version. Measured directly:
 `micropip.install("textual[syntax]")` fails and `micropip.install("textual")` succeeds. A
 plain `TextArea` works; `TextArea.code_editor` and any `language=` argument do not. This is
-the same trap as the next entry, reached through an extra rather than a direct dependency —
-and micropip's message for it ("can't find a pure Python wheel for tree-sitter") is
-misleading, since it exists, one minor version too old.
+the same trap as the next entry, reached through an extra instead of a direct dependency, and
+micropip's message for it ("can't find a pure Python wheel for tree-sitter") is misleading:
+the wheel exists, one minor version too old.
 
 **A package bundled as a native wheel pins you to Pyodide's version of it.** `cryptography` is
 three majors behind PyPI; `polars`, eleven minors. Since Pyodide 314 a package can also publish
@@ -82,8 +82,7 @@ neither is wired up here yet.
 
 ## This project
 
-Deliberate v1 choices. These are the ones that could move, and the list is honest about what
-that would take.
+Deliberate v1 choices. Each of these could move, and each entry says what that would take.
 
 **Main thread by default; a Web Worker is one flag away.** By default the interpreter shares a
 thread with the page, so a slow `on_mount` freezes the tab — measured at a **1333 ms** gap
@@ -117,8 +116,7 @@ bytes, tmux 3.4 places `⚠️` (U+26A0 U+FE0F) one column further along than Ch
 emulators only honour it consistently once their Unicode width data is recent enough — so an
 app that draws such emoji will occupy different columns in different terminals, and nothing on
 the WebAssembly side changes that. `check` refuses to use a tmux older than 3.5 as its
-reference rather than reporting a disagreement about tmux as though it were one about the
-browser.
+reference, so a disagreement about tmux is never reported as one about the browser.
 
 **The cross-browser check reads xterm.js's buffer, not pixels.** Chromium, Firefox and WebKit
 render the demo identically cell for cell — but xterm.js's width logic is the same JavaScript
@@ -126,8 +124,8 @@ in all three, so cell assignment is engine-independent by construction. Glyph-le
 is not covered. See {doc}`browsers`.
 
 **Nerd Font and Powerline glyphs are unmeasured.** They are private-use codepoints whose width
-is a property of the font file rather than of the emulator, so the render equivalence result —
-which covers box drawing, CJK, combining marks, astral characters, variation selectors and ZWJ
+is a property of the font file, not of the emulator, so the render equivalence result — which
+covers box drawing, CJK, combining marks, astral characters, variation selectors and ZWJ
 emoji — does not extend to them.
 
 **The data channel has no backpressure, and Python sets the ceiling.** `send` returns as soon
@@ -155,13 +153,12 @@ and each would be a small upstream change.
 looking at works by replacing it. A supported hook for "where do tracebacks go" would be
 better than an attribute assignment.
 
-**Driver construction is by class name from an environment variable.** That is the mechanism
-this whole project rests on, and it is genuinely public — but `App._driver` is the only handle
-on the constructed instance, and it is private. This project keeps that risk in one function
-and a lint rule stops it spreading.
+**Driver construction is by class name from an environment variable.** That hook is public,
+but `App._driver` is the only handle on the constructed instance, and it is private. This
+project keeps that risk in one function and a lint rule stops it spreading.
 
 **`@work(thread=True)` fails at `loop.run_in_executor`**, deep inside the worker machinery,
-rather than at decoration time where the mistake is. A capability check at decoration would
+instead of at decoration time where the mistake is. A capability check at decoration would
 turn a confusing runtime symptom into a clear error.
 
 **Textual's version is pinned into the comparison.** Two runtimes are only comparable if they
@@ -172,7 +169,7 @@ upstream releases is the mitigation, and the study recommends building it early.
 
 ## What is *not* a limitation
 
-Worth stating, because these are commonly assumed:
+These are commonly assumed to be problems and are not:
 
 - **`requests` and `httpx` work in a browser.** Bundled `urllib3` ships an Emscripten backend
   routing through JSPI, a worker, or XHR, and Pyodide patches httpx to use a fetch transport.

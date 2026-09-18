@@ -77,7 +77,7 @@ class Substitution:
     detect: tuple[DetectionRule, ...]
 
     observed: str
-    """What actually happens, measured. Present tense, specific."""
+    """What happens, measured. Present tense, specific."""
 
     guidance: str
     """What to do instead. The text a developer sees, so it names the replacement API."""
@@ -254,7 +254,7 @@ SUBSTITUTIONS: Final[tuple[Substitution, ...]] = (
         detect=(DetectionRule(DetectionKind.CALL, "os.get_terminal_size"),),
         observed=(
             "Raises, because stdin is not a tty. Note the errno: Emscripten uses its own "
-            "table, so this is 59 rather than the familiar 25."
+            "table, so this is 59, not the familiar 25."
         ),
         guidance=(
             "Use `shutil.get_terminal_size()`, which falls back to COLUMNS/LINES and then to "
@@ -299,8 +299,8 @@ SUBSTITUTIONS: Final[tuple[Substitution, ...]] = (
         ),
         guidance=(
             "There is no terminal to interrogate. Take the size from the driver, which already "
-            "has it, and choose rendering modes from a configuration value rather than by "
-            "asking. `textual_wasm.capabilities` reports what this runtime can do without "
+            "has it, and choose rendering modes from a configuration value; there is nothing to "
+            "ask. `textual_wasm.capabilities` reports what this runtime can do without "
             "probing for it."
         ),
         env_divergent=True,
@@ -312,8 +312,8 @@ SUBSTITUTIONS: Final[tuple[Substitution, ...]] = (
         detect=(DetectionRule(DetectionKind.CALL, "fcntl.ioctl"),),
         observed=(
             "Raises `OSError: [Errno 59] Not a tty`, identically under Node and in a browser. "
-            "Errno 59 is not ENOTTY, which is 25, so code matching on the number rather than "
-            "on the exception sees an unrelated error."
+            "Errno 59 is not ENOTTY, which is 25, so code matching on the number sees an "
+            "unrelated error. Match on the exception."
         ),
         guidance=(
             "`TIOCGWINSZ` is the usual reason to reach for this, and the size is already "
@@ -366,7 +366,7 @@ SUBSTITUTIONS: Final[tuple[Substitution, ...]] = (
         guidance=(
             "A page cannot listen for connections; nothing in the sandbox can. An application "
             "that wants to be reached from outside needs a server, which is the architecture "
-            "this project is an alternative to rather than a component of."
+            "this project replaces."
         ),
         # The browser's text, not Node's - Node raises nothing at all here. Errno 138 is
         # Emscripten's ENOTSUP; the number is included because "Not supported" on its own is

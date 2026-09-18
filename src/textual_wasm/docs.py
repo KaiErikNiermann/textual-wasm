@@ -67,7 +67,7 @@ SEVERITY_HEADINGS: Final[dict[Severity, tuple[str, str]]] = {
         "Loud but misleading",
         (
             "Raises, and the message sends you somewhere else - a symptom, a private module, or "
-            "a generic errno rather than the actual constraint. `textual_wasm.diagnostics` "
+            "a generic errno instead of the actual constraint. `textual_wasm.diagnostics` "
             "rewrites exactly these."
         ),
     ),
@@ -89,8 +89,8 @@ SEVERITY_HEADINGS: Final[dict[Severity, tuple[str, str]]] = {
 }
 """Section title and preamble per severity, in the order the document presents them.
 
-Ordered by how hard the failure is to diagnose rather than by how bad it sounds - a wrong
-answer with no error costs more of an afternoon than a crash does.
+Ordered by how hard the failure is to diagnose, not by how bad it sounds - a wrong answer
+with no error costs more of an afternoon than a crash does.
 """
 
 
@@ -127,7 +127,7 @@ def _section(severity: Severity) -> list[str]:
         "",
         preamble,
         "",
-        "| Capability | Detected as | What actually happens | What to do instead |",
+        "| Capability | Detected as | What happens | What to do instead |",
         "|---|---|---|---|",
         *_rows(entries),
         "",
@@ -146,8 +146,8 @@ def render_matrix() -> str:
         "# Porting matrix",
         "",
         (
-            f"What behaves differently under Pyodide {PYODIDE_VERSION}, measured rather than "
-            "transcribed. Pyodide's own documentation lists `termios`, `fcntl`, `pty` and `tty` "
+            f"What behaves differently under Pyodide {PYODIDE_VERSION}. Pyodide's own "
+            "documentation lists `termios`, `fcntl`, `pty` and `tty` "
             "as removed; in this version all four import successfully. Every row below carries "
             "the snippet used to observe it, and a characterisation test re-runs those snippets "
             "inside a real Pyodide, so a runtime change fails the suite instead of quietly "
@@ -165,7 +165,7 @@ def render_matrix() -> str:
     lines += [
         "## What is *not* here",
         "",
-        "Things that work, and are worth naming because they are commonly assumed not to:",
+        "Things that work, and are commonly assumed not to:",
         "",
         (
             "- `requests` and `httpx` work in a browser. Pyodide patches httpx, and bundled "
@@ -179,7 +179,7 @@ def render_matrix() -> str:
             "native wheel pins you to Pyodide's version of it."
         ),
         (
-            "- `SharedArrayBuffer` does **not** unlock Python threads. It buys the interrupt "
+            "- `SharedArrayBuffer` does **not** enable Python threads. It enables the interrupt "
             "buffer and urllib3's streaming worker. `@work(thread=True)` is unavailable in any "
             "configuration of this build."
         ),
@@ -204,7 +204,7 @@ SUPPORT_HEADINGS: Final[dict[Support, tuple[str, str]]] = {
             "Installs and imports cleanly, but nothing could be mounted automatically: either "
             "it defines no Textual widget at all (a Rich renderable, a stylesheet) or every "
             "widget it defines needs constructor arguments a generic probe cannot invent. "
-            "Absence of evidence, listed as such rather than rounded up to working."
+            "Absence of evidence, listed as such and not rounded up to working."
         ),
     ),
     Support.TEXTUAL_CAP: (
@@ -222,7 +222,7 @@ SUPPORT_HEADINGS: Final[dict[Support, tuple[str, str]]] = {
         (
             "The install fails under Pyodide. Read the middle column before assuming the "
             "reason is WebAssembly - three of these are ordinary dependency pins that would "
-            "fail anywhere, and only the first is genuinely about a missing native build."
+            "fail anywhere, and only the first is about a missing native build."
         ),
     ),
     Support.NOT_ON_PYPI: (
@@ -301,13 +301,13 @@ def render_libraries() -> str:
         "",
         (
             "Measured in four tiers, because no single one of them is a verdict: `micropip` "
-            "install, import, this project's own static scan, and then the tier that actually "
-            "decides a port - constructing every `Widget` subclass the library defines and "
+            "install, import, this project's own static scan, and then the tier that decides a "
+            "port - constructing every `Widget` subclass the library defines and "
             "mounting it in a running Textual app under the capture driver."
         ),
         "",
         (
-            "Two results are worth reading before the table. On the first run of this survey "
+            "Two results before the table. On the first run of this survey "
             "the static scan produced **no findings at all**, across every library - which was "
             "a gap in the rules, not a clean bill of health. The two failures the runtime tier "
             "had already found showed where, and both now have registry entries that fire on "

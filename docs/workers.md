@@ -28,25 +28,25 @@ main thread throughout:
 | default (main thread) | **1333 ms** |
 | `--worker` | **16.8 ms** |
 
-16.8 ms is one frame at 60 Hz — the page never stopped painting. The measurement is the
-longest gap rather than a frame count on purpose: over a window longer than the blocking call,
-a frame count dilutes a real stall into a healthy-looking average. The first version of this
+16.8 ms is one frame at 60 Hz — the page never stopped painting. The measurement is the longest
+gap between frames, not a frame count: over a window longer than the blocking call, a frame
+count dilutes a real stall into an average that looks healthy. The first version of this
 measurement reported "340 frames rendered" for a build that had frozen for a third of a second.
 
 `textual-wasm check --worker` runs the full four-runtime comparison against a worker build, so
-"renders identically" is checked rather than assumed, on all three engines, on every commit.
+"renders identically" is checked on all three engines, on every commit.
 
 ## What it does not fix
 
-**It does not make Python faster.** The work takes just as long. The freeze moves off the
-thread the user can see, which is the entire benefit and the whole of it.
+**It does not make Python faster.** The work takes just as long. The freeze moves off the thread
+the user can see, which is the entire benefit.
 
 **It does not give you threads.** `sys._emscripten_info.pthreads` is `False` inside a worker
 exactly as it is on the main thread — Pyodide is not built with `-pthread`, and its ABI
 forbids it in linked libraries. `@work(thread=True)` is unavailable in either mode. Use
 `@work` without `thread=True`, which is cooperative and works normally.
 
-**It does not need — or benefit from — cross-origin isolation.** No COOP/COEP headers, so a
+**It does not need cross-origin isolation.** No COOP/COEP headers, so a
 worker build deploys to GitHub Pages and every other header-less static host, exactly like the
 default. `SharedArrayBuffer` would only be needed to *block* the worker waiting on main-thread
 input, and Textual never does: its input path is a queue an async loop drains, so a message
@@ -80,7 +80,7 @@ nor `document`:
 - `App.open_url()` — becomes `window.open` on the page's thread.
 - Textual's file delivery — becomes a download-triggering anchor on the page's thread.
 
-If you register your **own** host object rather than using the shipped page, those two are
+If you register your **own** host object instead of using the shipped page, those two are
 optional members of the contract:
 
 ```js
@@ -94,11 +94,11 @@ Omitting them is fine on the main thread, where the driver falls back to the pag
 globals. In a worker there is nothing to fall back to, so a host that omits them will raise
 when the application tries to open a link.
 
-## The data channel crosses either way
+## The data channel works in both modes
 
 {doc}`bridge` behaves identically in both modes. On the main thread Python calls the page
 directly; here the same two-member contract is satisfied by a `postMessage`. Adding `--worker`
-changes nothing in an application or a page, and `tests/test_bridge_browser.py` proves it by
+changes nothing in an application or a page, and `tests/test_bridge_browser.py` checks it by
 running one harness against both builds and comparing the two sets of results.
 
 The channel carries text, and not arbitrary values, for exactly this reason. On the main

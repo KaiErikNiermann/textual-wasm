@@ -4,8 +4,7 @@ A TUI that remembers something — a theme, a cursor position, a list of notes �
 to put it. On a terminal that place is a file. In a browser the instinct is to reach for
 `localStorage` and write a storage abstraction with two backends.
 
-**Both halves of that instinct are wrong here**, and this page is the measurement that says
-so.
+**Both halves of that instinct are wrong here**, for the reasons below.
 
 ---
 
@@ -36,7 +35,7 @@ and a 16.8 ms worst-case main-thread stall, see [workers](workers.md) — a stor
 works on the main thread is not a store. It is also 5 MB, string-only, and synchronous on
 the thread that paints.
 
-## Why not a storage abstraction either
+## Why not a storage abstraction
 
 Pyodide can mount IndexedDB **as a filesystem**. So this works, in a page, in a worker:
 
@@ -59,9 +58,9 @@ get there.
 call `shelve.open`, which is the worst available ordering.
 :::
 
-## What actually differs: when a write becomes durable
+## When a write becomes durable
 
-Not the API. The durability model.
+The API is the same on both runtimes. Durability is where they differ.
 
 | | terminal | browser |
 |---|---|---|
@@ -72,9 +71,9 @@ Under IDBFS, writes live in an in-memory filesystem until something calls Emscri
 `syncfs`, which is asynchronous, whole-file, and nobody's default. A closed tab between the
 commit and the sync loses the data.
 
-So `textual_wasm.storage` is deliberately thin. It supplies the two things that genuinely
-differ — where the files go, and the one call a browser needs — and leaves the rest to
-`pathlib` and the standard library.
+So `textual_wasm.storage` is deliberately thin. It supplies the two things that differ — where
+the files go, and the one call a browser needs — and leaves the rest to `pathlib` and the
+standard library.
 
 ## Using it
 
@@ -99,8 +98,8 @@ textual_wasm.storage.Store.flush() to make writes durable
 
 ### Where the files go
 
-`Store.open` reports which of three situations you are in, so an app can tell the user rather
-than silently losing their work:
+`Store.open` reports which situation you are in, so an app can warn the user before work is
+lost:
 
 | `location().kind` | when | durable |
 |---|---|---|
@@ -108,11 +107,13 @@ than silently losing their work:
 | `persistent` | a browser build with `--storage` | after `flush()` |
 | `ephemeral` | a browser build **without** `--storage`; MEMFS | no |
 
-`ephemeral` is a state rather than an exception on purpose. An app that writes a config
-should still run in a build that did not ask for persistence — and it finds out by asking
-`store.durable`, not by catching something from `open()`.
+`ephemeral` is reported as a state, deliberately: an app that writes a config should still
+run in a build that did not ask for persistence, and it finds out by reading
+`store.durable`.
 
-### Three flush points, none of them sufficient alone
+### Flush points
+
+All three are needed.
 
 1. **After a change**, debounced. A flush rewrites the whole file, so a burst of edits should
    produce one write. `@work(exclusive=True)` gets you that for free — Textual cancels the
@@ -126,27 +127,27 @@ page can hear it and only the worker owns the mount. `main.mjs` and `worker.mjs`
 between them — it is the same shape as `PageCapabilities` in `browser.py:67`, the operations
 a worker cannot perform for itself.
 
-`pagehide` rather than `beforeunload`: a backgrounded tab may be discarded without ever
-firing `beforeunload`.
+`pagehide`, not `beforeunload`: a backgrounded tab may be discarded without ever firing
+`beforeunload`.
 
-## Constraints worth knowing before you design around them
+## Important constraints
 
 **WAL is not available.** `journal_mode=WAL` wants shared memory and file locking Emscripten
 does not provide. Use `journal_mode=DELETE` (or `MEMORY`) and `synchronous=OFF`: durability
 comes from `flush()`, and `fsync` has nothing to sync to under a memory-backed filesystem.
 
 :::{note}
-`PRAGMA journal_mode=wal` *returns* `"wal"` under Pyodide rather than refusing, so it looks
-like it worked. Whether a WAL database survives a `syncfs` round trip was **not measured**
-here; treat the setting as unsupported rather than as broken.
+`PRAGMA journal_mode=wal` *returns* `"wal"` under Pyodide, so it looks like it worked.
+Whether a WAL database survives a `syncfs` round trip was **not measured** here; treat the
+setting as unsupported.
 :::
 
 **A flush is whole-file.** IDBFS stores each file as one blob, so syncing a 50 MB database
 rewrites 50 MB. On a small database the cost is invisible — 1–2 ms in both engines. Plan
 differently for bulk data.
 
-**`ENOENT` is 44, not 2.** Code that matches on errno numbers rather than exception types
-gets this wrong. Already in [limitations](limitations.md), and storage code is where it bites.
+**`ENOENT` is 44, not 2.** Code that matches on errno numbers gets this wrong; match on
+exception types. Already in [limitations](limitations.md), and storage code is where it bites.
 
 ## The other option: OPFS
 
@@ -154,12 +155,11 @@ gets this wrong. Already in [limitations](limitations.md), and storage code is w
 `FileSystemDirectoryHandle`, and `pyodide.mountNativeFS` accepts one — which would give
 byte-range writes instead of whole-file blobs, with no picker and no user gesture.
 
-That is the better long-term floor. It is **not measured here**, so it is a direction rather
-than a result, and `--storage` uses IDBFS today.
+That is the better long-term floor. It is **not measured here**, and `--storage` uses IDBFS
+today.
 
 ## A worked example
 
 [`examples/persistent-notes`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/examples/persistent-notes)
 is a notebook backed by a real SQLite database with a real schema. Add a note, reload the
-page, it is still there. Build it without `--storage` and the banner turns into a warning
-instead of quietly forgetting.
+page, it is still there. Build it without `--storage` and the banner turns into a warning.
