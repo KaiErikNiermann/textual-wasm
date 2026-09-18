@@ -35,11 +35,44 @@ Nothing below is needed to build or serve a site. Each unlocks one leg of
 `textual-wasm check`, and a leg that cannot run is reported as skipped with the command that
 would enable it — never as a failure.
 
-| Tool | Unlocks | Install |
-|---|---|---|
-| `tmux` | The **real-terminal reference**: your app on a real pty through Textual's own driver, which is what the browser render is judged against. | `apt install tmux` / `pacman -S tmux` / `brew install tmux` |
-| Node + `pyodide` | The **WASM leg**: the same probe under Pyodide, headless and CI-able. | `pnpm add -D pyodide` |
-| Node + `playwright` | The **browser leg**: a real build, served by a real dev server, rendered by a real browser engine. | `pnpm add -D playwright` then `pnpm exec playwright install chromium firefox webkit` |
+| Tool | Unlocks |
+|---|---|
+| `tmux` | The **real-terminal reference**: your app on a real pty through Textual's own driver, which is what the browser render is judged against. |
+| Node + `pyodide` | The **WASM leg**: the same probe under Pyodide, headless and CI-able. |
+| Node + `playwright` | The **browser leg**: a real build, served by a real dev server, rendered by a real browser engine. |
+
+Pick your platform and take the whole block, or the lines for the legs you want:
+
+::::{tab-set}
+
+:::{tab-item} Debian/Ubuntu
+```console
+apt install tmux                                      # real-terminal reference
+pnpm add -D pyodide                                   # WASM leg
+pnpm add -D playwright                                # browser leg
+pnpm exec playwright install chromium firefox webkit  # browser leg: the engines
+```
+:::
+
+:::{tab-item} Arch
+```console
+pacman -S tmux                                        # real-terminal reference
+pnpm add -D pyodide                                   # WASM leg
+pnpm add -D playwright                                # browser leg
+pnpm exec playwright install chromium firefox webkit  # browser leg: the engines
+```
+:::
+
+:::{tab-item} macOS
+```console
+brew install tmux                                     # real-terminal reference
+pnpm add -D pyodide                                   # WASM leg
+pnpm add -D playwright                                # browser leg
+pnpm exec playwright install chromium firefox webkit  # browser leg: the engines
+```
+:::
+
+::::
 
 The npm packages are resolved by walking up from your working directory the way Node itself
 would, so a single `node_modules` at the root of a monorepo serves every project in it.
