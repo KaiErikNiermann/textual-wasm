@@ -53,21 +53,29 @@ exclude_patterns = [
     "library-table.md",
 ]
 
+# Project links for the sidebar brand row (see _templates/sidebar/brand.html). The brand
+# name is the display spelling; `project` stays the distribution name the package is
+# installed under.
+brand_name = "Textual WASM"
+repo_url = "https://github.com/KaiErikNiermann/textual-wasm"
+pypi_url = "https://pypi.org/project/textual-wasm/"
+release_url = f"{repo_url}/releases/tag/v{release}"
+
 html_theme = "furo"
-html_title = f"textual-wasm {release}"
+html_title = brand_name
 html_static_path = ["_static"]
 # Named explicitly, because a browser requests /favicon.ico by default and that 404 shows up
 # in every page-error check run against this site.
 html_favicon = "_static/favicon.svg"
 html_css_files = ["custom.css"]
 html_theme_options = {
-    "source_repository": "https://github.com/KaiErikNiermann/textual-wasm/",
+    "source_repository": f"{repo_url}/",
     "source_branch": "main",
     "source_directory": "docs/",
     "footer_icons": [
         {
             "name": "GitHub",
-            "url": "https://github.com/KaiErikNiermann/textual-wasm",
+            "url": repo_url,
             "html": (
                 '<svg stroke="currentColor" fill="currentColor" stroke-width="0" '
                 'viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 '
@@ -83,4 +91,12 @@ html_theme_options = {
             "class": "",
         },
     ],
+}
+
+# Consumed by _templates/sidebar/brand.html.
+html_context = {
+    "brand_name": brand_name,
+    "repo_url": repo_url,
+    "pypi_url": pypi_url,
+    "release_url": release_url,
 }

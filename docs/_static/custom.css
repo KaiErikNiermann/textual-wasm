@@ -1,3 +1,104 @@
+/* ── Sidebar brand (name + release/source row) ────────────────── */
+
+body {
+  --tw-brand-gap:          0.4rem;
+  --tw-brand-pad-block:    0.75rem;
+  --tw-meta-gap:           0.5rem;
+  --tw-meta-icon-size:     1rem;
+  --tw-dot-size:           3px;
+  --tw-dot-opacity:        0.4;
+  --tw-version-font-size:  0.7rem;
+  --tw-version-pad-inline: 0.38rem;
+  --tw-version-pad-block:  0.05rem;
+  --tw-version-radius:     4px;
+  --tw-version-text:       var(--color-brand-primary);
+  --tw-version-background: color-mix(in srgb, var(--color-brand-primary) 12%, transparent);
+  --tw-version-border:     color-mix(in srgb, var(--color-brand-primary) 32%, transparent);
+  --tw-version-background--hover: color-mix(in srgb, var(--color-brand-primary) 22%, transparent);
+  --tw-version-border--hover:     color-mix(in srgb, var(--color-brand-primary) 55%, transparent);
+  --tw-link-idle:          var(--color-foreground-secondary);
+  --tw-link-hover:         var(--color-brand-primary);
+}
+
+/* Furo stacks the brand in a column, so the anchor owns the separation between its
+   parts and the name gives up its own margin. The meta row lives outside that anchor -
+   it holds links of its own, and anchors cannot nest. */
+.sidebar-brand {
+  align-items: flex-start;
+  gap: var(--tw-brand-gap);
+  padding-block: var(--tw-brand-pad-block) 0;
+}
+
+.sidebar-brand-text {
+  margin-block: 0;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-brand-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tw-meta-gap);
+  padding-inline: var(--sidebar-item-spacing-horizontal);
+  padding-block: var(--tw-brand-gap) var(--tw-brand-pad-block);
+}
+
+.sidebar-brand-version {
+  display: inline-block;
+  padding-inline: var(--tw-version-pad-inline);
+  padding-block: var(--tw-version-pad-block);
+  border: 1px solid var(--tw-version-border);
+  border-radius: var(--tw-version-radius);
+  background: var(--tw-version-background);
+  color: var(--tw-version-text);
+  font-family: var(--font-stack--monospace);
+  font-size: var(--tw-version-font-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  text-decoration: none;
+  transition: background 120ms ease-in-out, border-color 120ms ease-in-out;
+}
+
+.sidebar-brand-version:hover,
+.sidebar-brand-version:focus-visible {
+  background: var(--tw-version-background--hover);
+  border-color: var(--tw-version-border--hover);
+}
+
+.sidebar-brand-dot {
+  inline-size: var(--tw-dot-size);
+  block-size: var(--tw-dot-size);
+  border-radius: 50%;
+  background: var(--color-foreground-secondary);
+  opacity: var(--tw-dot-opacity);
+}
+
+.sidebar-brand-link {
+  display: inline-flex;
+  color: var(--tw-link-idle);
+  text-decoration: none;
+  transition: color 120ms ease-in-out;
+}
+
+.sidebar-brand-link:hover,
+.sidebar-brand-link:focus-visible {
+  color: var(--tw-link-hover);
+}
+
+.sidebar-brand-icon {
+  inline-size: var(--tw-meta-icon-size);
+  block-size: var(--tw-meta-icon-size);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-brand-link,
+  .sidebar-brand-version {
+    transition: none;
+  }
+}
+
 /* Two small adjustments to Furo, and deliberately nothing else: a theme that is being
    overridden heavily is the wrong theme. */
 
