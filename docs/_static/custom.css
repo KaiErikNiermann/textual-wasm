@@ -1,3 +1,151 @@
+/* ── Font: IBM Plex Sans via Google Fonts ─────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+body {
+  --font-stack: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Helvetica, Arial, sans-serif;
+  --font-stack--headings: var(--font-stack);
+}
+
+/* ── Typography & spacing ─────────────────────────────────────── */
+
+.content p {
+  line-height: 1.7;
+}
+
+.content h2 {
+  margin-block-start: 2em;
+  padding-block-end: 0.3em;
+  border-block-end: 1px solid var(--color-background-border);
+}
+
+.content h3 {
+  margin-block-start: 1.6em;
+}
+
+/* ── Code blocks ──────────────────────────────────────────────── */
+
+.highlight pre {
+  border-radius: 6px;
+  padding: 1em;
+}
+
+.content code.literal {
+  padding-inline: 0.3em;
+  padding-block: 0.1em;
+  border-radius: 4px;
+}
+
+/* ── Tables ───────────────────────────────────────────────────── */
+
+.content table {
+  border-collapse: collapse;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.content table td,
+.content table th {
+  padding: 0.6em 0.9em;
+  border-block-end: 1px solid var(--color-background-border);
+}
+
+.content table th {
+  font-weight: 600;
+  text-align: start;
+}
+
+.content table tr:last-child td {
+  border-block-end: none;
+}
+
+/* ── Admonitions (GitHub markdown-alert style) ────────────────── */
+
+/* Furo paints a filled bar behind each title. GitHub does not: it keeps the
+   coloured rule on the inline edge and colours the title text to match. */
+body {
+  --color-admonition-title-background:                  transparent;
+  --color-admonition-title-background--note:            transparent;
+  --color-admonition-title-background--tip:             transparent;
+  --color-admonition-title-background--hint:            transparent;
+  --color-admonition-title-background--important:       transparent;
+  --color-admonition-title-background--warning:         transparent;
+  --color-admonition-title-background--attention:       transparent;
+  --color-admonition-title-background--caution:         transparent;
+  --color-admonition-title-background--danger:          transparent;
+  --color-admonition-title-background--error:           transparent;
+  --color-admonition-title-background--seealso:         transparent;
+  --color-admonition-title-background--admonition-todo: transparent;
+
+  /* GitHub accent colours for border + icon + title text */
+  --color-admonition-title--note:      #4493f8;
+  --color-admonition-title--tip:       #3fb950;
+  --color-admonition-title--hint:      #3fb950;
+  --color-admonition-title--important: #ab7df8;
+  --color-admonition-title--warning:   #d29922;
+  --color-admonition-title--attention: #d29922;
+  --color-admonition-title--caution:   #f85149;
+  --color-admonition-title--danger:    #f85149;
+  --color-admonition-title--error:     #f85149;
+  --color-admonition-title--seealso:   #4493f8;
+  --color-admonition-title:            #ab7df8;
+
+  /* Match surrounding body text size (Furo defaults to 0.8125rem) */
+  --admonition-font-size:       1rem;
+  --admonition-title-font-size: 1rem;
+}
+
+.admonition {
+  margin-block: 1em;
+  padding: 0.5em 1em;
+  border-radius: 0;
+  border-inline-start-width: 0.25em;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font-size: var(--admonition-font-size);
+}
+
+.admonition > .admonition-title {
+  margin: 0 0 0.3em 0;
+  padding: 0.4rem 0.5rem 0.4rem 2rem;
+  background-color: transparent;
+  font-size: var(--admonition-title-font-size);
+  font-weight: 600;
+}
+
+.admonition.note > .admonition-title      { color: var(--color-admonition-title--note); }
+.admonition.tip > .admonition-title       { color: var(--color-admonition-title--tip); }
+.admonition.hint > .admonition-title      { color: var(--color-admonition-title--hint); }
+.admonition.important > .admonition-title { color: var(--color-admonition-title--important); }
+.admonition.warning > .admonition-title   { color: var(--color-admonition-title--warning); }
+.admonition.attention > .admonition-title { color: var(--color-admonition-title--attention); }
+.admonition.caution > .admonition-title   { color: var(--color-admonition-title--caution); }
+.admonition.danger > .admonition-title    { color: var(--color-admonition-title--danger); }
+.admonition.error > .admonition-title     { color: var(--color-admonition-title--error); }
+.admonition.seealso > .admonition-title   { color: var(--color-admonition-title--seealso); }
+
+/* ── Definition lists ─────────────────────────────────────────── */
+
+dl dt {
+  margin-block-start: 1.2em;
+  font-weight: 600;
+}
+
+dl dd {
+  margin-inline-start: 1.2em;
+}
+
+/* ── Sidebar navigation ───────────────────────────────────────── */
+
+.sidebar-tree .caption {
+  margin-block-start: 1.5em;
+  opacity: 0.7;
+  font-size: 0.8em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 /* ── Sidebar brand (name + release/source row) ────────────────── */
 
 body {
@@ -99,11 +247,10 @@ body {
   }
 }
 
-/* Two small adjustments to Furo, and deliberately nothing else: a theme that is being
-   overridden heavily is the wrong theme. */
+/* ── Page-specific ────────────────────────────────────────────── */
 
-/* Live demos are embedded as iframes and need a real block size - a character grid measured
-   against `height: auto` collapses to nothing. */
+/* Live demos are embedded as iframes and need a real block size - a character grid
+   measured against `height: auto` collapses to nothing. */
 .demo-frame {
   inline-size: 100%;
   block-size: 34rem;
@@ -111,8 +258,8 @@ body {
   border-radius: 0.5rem;
 }
 
-/* The porting matrix is wide and its cells are prose. Without this the table is squeezed into
-   a column and every row wraps to five lines. */
+/* The porting matrix is wide and its cells are prose. Without this the table is squeezed
+   into a column and every row wraps to five lines. */
 .wide-table table {
   display: table;
   inline-size: 100%;
