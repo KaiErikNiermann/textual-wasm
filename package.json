@@ -33,6 +33,6 @@
     "stylelint-declaration-strict-value": "^1.12.1",
     "stylelint-order": "^8.1.1",
     "tailwind-csstree": "^0.4.0",
-    "typescript": "^5.9.0"
+    "typescript": "^7.0.2"
   }
 }
