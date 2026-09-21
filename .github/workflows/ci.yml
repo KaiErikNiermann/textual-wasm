@@ -177,7 +177,7 @@ jobs:
         # Pyodide is the same build in every leg of this matrix, so this is measured once.
         if: matrix.browser == 'chromium'
         run: node scripts/run-substitution-check.mjs > substitutions.json
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: always() && matrix.browser == 'chromium'
         with:
           name: substitution-measurements

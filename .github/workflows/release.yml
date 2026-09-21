@@ -57,7 +57,7 @@ jobs:
         # The same script the `build-verify` recipe runs, so the list of required paths is
         # not maintained in two places that can disagree.
         run: python scripts/verify-wheel.py
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: distributions
           path: dist/
