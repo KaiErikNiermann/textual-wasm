@@ -51,5 +51,15 @@ rm -rf "${OUT}/demos/svelte"
 mkdir -p "${OUT}/demos"
 cp -r examples/svelte-app/dist "${OUT}/demos/svelte"
 
+step "playground"
+# The same two-build shape as the Svelte demo: the runner is an ordinary textual-wasm build
+# under `public/`, and Vite bundles the editor page around it without ever seeing the Python.
+poetry run textual-wasm build playground_runner.app:create playground/runner/playground_runner \
+  -o playground/public/runner --title "Playground"
+pnpm --dir playground install --frozen-lockfile
+pnpm --dir playground exec vite build
+rm -rf "${OUT}/playground"
+cp -r playground/dist "${OUT}/playground"
+
 step "size"
-du -sh "${OUT}" "${OUT}/demos"/*
+du -sh "${OUT}" "${OUT}/demos"/* "${OUT}/playground"
