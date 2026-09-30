@@ -6,9 +6,10 @@
   "description": "JavaScript runtime dependencies for the textual-wasm cross-runtime check.",
   "scripts": {
     "check": "poetry run textual-wasm check",
-    "lint:all": "pnpm lint:css && pnpm lint:style && pnpm lint:ts",
-    "lint:css": "eslint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" && stylelint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\"",
-    "lint:style": "EIO_BACKEND=posix poetry run semgrep --config .semgrep/vendor/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets examples",
+    "lint:all": "pnpm lint:css && pnpm lint:js && pnpm lint:style && pnpm lint:ts",
+    "lint:css": "eslint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" \"playground/src/**/*.css\" && stylelint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" \"playground/src/**/*.css\"",
+    "lint:js": "eslint \"playground/src/**/*.mjs\" playground/vite.config.js",
+    "lint:style": "EIO_BACKEND=posix poetry run semgrep --config .semgrep/vendor/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets examples playground/src playground/index.html",
     "lint:ts": "tsc --noEmit -p examples/page-bridge"
   },
   "dependencies": {

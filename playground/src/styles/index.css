@@ -1,0 +1,11 @@
+/* The only stylesheet the page links: layer order and imports, nothing else (PC-5). Plain
+   CSS in the same shape as the shipped page's, so one set of lint rules reads both. */
+
+@layer reset, tokens, base, layout, overrides;
+
+@import url("./tokens.css") layer(tokens);
+@import url("./base.css") layer(base);
+@import url("./layout.css") layer(layout);
+
+/* @layer overrides is declared above and left empty. Anything landing there is
+   acknowledged debt, visible in review. */

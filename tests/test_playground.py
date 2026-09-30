@@ -16,6 +16,8 @@ from playground_runner.app import (
     program_frames,
 )
 
+STARTERS = Path(__file__).resolve().parent.parent / "playground" / "starters"
+
 HELLO = """\
 from textual.app import App
 from textual.widgets import Static
@@ -101,3 +103,10 @@ def test_the_shown_traceback_starts_in_the_program(tmp_path: Path) -> None:
     trace = program_frames(caught.value.__traceback__, tmp_path / "app.py")
     assert trace is not None
     assert trace.tb_frame.f_code.co_filename == str(tmp_path / "app.py")
+
+
+@pytest.mark.parametrize("starter", sorted(STARTERS.glob("*.py")), ids=lambda path: path.stem)
+def test_every_starter_builds_an_app(starter: Path, tmp_path: Path) -> None:
+    """The picker's programs are the first thing anyone runs; a broken one is the first
+    impression."""
+    assert isinstance(load(starter.read_text(encoding="utf-8"), tmp_path), App)

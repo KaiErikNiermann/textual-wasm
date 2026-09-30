@@ -1,0 +1,46 @@
+/* The entire arbitrariness budget of the playground (PC-1). The palette is the shipped
+   page's, so the terminal inside the frame and the page around it agree. */
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    --font-display: inter, system-ui, -apple-system, sans-serif;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "IBM Plex Mono", "DejaVu Sans Mono", ui-monospace, monospace;
+
+    /* One brand anchor; everything else derived, so a hue change is one edit (PC-10). */
+    --color-brand: oklch(62% 0.15 250deg);
+    --color-warn: oklch(62% 0.18 30deg);
+    --color-ink: oklch(24% 0.02 260deg);
+    --color-surface: oklch(98% 0.004 260deg);
+    --color-terminal-bg: oklch(17% 0.012 260deg);
+    --color-on-brand: oklch(99% 0 0deg);
+    --color-ink-dim: color-mix(in oklch, var(--color-ink) 62%, var(--color-surface));
+    --color-edge: color-mix(in oklch, var(--color-ink) 16%, transparent);
+    --color-raised: color-mix(in oklch, var(--color-ink) 5%, var(--color-surface));
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 1rem;
+    --radius-1: 0.375rem;
+    --text-1: 0.875rem;
+    --text-2: 1rem;
+    --line-tight: 1.25;
+    --line-body: 1.5;
+
+    /* The narrowest a pane gets before the two stack; a statement about the content, not
+       about any particular screen (PC-7). */
+    --pane-min: 26rem;
+    --pane-min-block: 14rem;
+    --status-min: 16rem;
+    --duration-0: 1ms;
+    --duration-1: 160ms;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-ink: oklch(93% 0.01 260deg);
+      --color-surface: oklch(19% 0.012 260deg);
+    }
+  }
+}

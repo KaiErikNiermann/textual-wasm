@@ -1,0 +1,43 @@
+/* Element defaults. Margins are zeroed so containers own separation with gap (PC-2). */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body,
+  h1,
+  p {
+    margin: 0;
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-2);
+    line-height: var(--line-body);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-2);
+    line-height: var(--line-tight);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: var(--duration-0);
+      transition-duration: var(--duration-0);
+    }
+  }
+}

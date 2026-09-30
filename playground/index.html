@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Textual playground</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='14' font-family='monospace'%3E%26gt;_%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./src/styles/index.css" />
+  </head>
+  <body class="page">
+    <header class="toolbar">
+      <h1 class="toolbar-title">Textual playground</h1>
+      <label class="field">
+        <span class="field-label">Start from</span>
+        <select id="starter" class="control"></select>
+      </label>
+      <div class="toolbar-actions">
+        <button id="run" class="control" data-variant="primary" type="button" title="Ctrl+Enter">
+          Run
+        </button>
+        <button id="share" class="control" type="button">Copy link</button>
+        <a id="detach" class="control detach" href="./" target="_blank" rel="noopener">Open full window</a>
+      </div>
+      <p id="status" class="toolbar-status" role="status" aria-live="polite"></p>
+    </header>
+    <main class="workspace">
+      <section class="pane" aria-label="Editor">
+        <div class="pane-tab">app.py</div>
+        <div id="editor" class="editor"></div>
+      </section>
+      <section class="pane" aria-label="Running app">
+        <div class="pane-tab">terminal</div>
+        <!-- Replaced on every run: a new frame is a new interpreter. -->
+        <iframe id="runner" class="runner" title="The running Textual app"></iframe>
+      </section>
+    </main>
+    <script type="module" src="./src/main.mjs"></script>
+  </body>
+</html>

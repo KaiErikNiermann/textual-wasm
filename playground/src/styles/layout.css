@@ -1,0 +1,131 @@
+/* The page: a toolbar over two panes, the editor and the running app. */
+
+@layer layout {
+  .page {
+    display: grid;
+    block-size: 100dvb;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    border-block-end: 1px solid var(--color-edge);
+    padding-block: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+
+  .toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  /* Takes the rest of the row, and wraps below the controls when there is none left. */
+  .toolbar-status {
+    --_tone: var(--color-ink-dim);
+
+    color: var(--_tone);
+    flex: 1 1 var(--status-min);
+    font-size: var(--text-1);
+  }
+
+  .toolbar-status[data-tone="error"] {
+    --_tone: var(--color-warn);
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-1);
+  }
+
+  .field-label {
+    color: var(--color-ink-dim);
+  }
+
+  /* Closed variance (PC-3): a variant rebinds the private properties, nothing else. */
+  .control {
+    --_bg: var(--color-raised);
+    --_fg: var(--color-ink);
+    --_edge: var(--color-edge);
+
+    background: var(--_bg);
+    border: 1px solid var(--_edge);
+    border-radius: var(--radius-1);
+    color: var(--_fg);
+    cursor: pointer;
+    font: inherit;
+    font-size: var(--text-1);
+    padding-block: var(--space-1);
+    padding-inline: var(--space-3);
+    text-decoration: none;
+    transition: border-color var(--duration-1) ease;
+  }
+
+  .control:hover {
+    --_edge: var(--color-brand);
+  }
+
+  .control[data-variant="primary"] {
+    --_bg: var(--color-brand);
+    --_fg: var(--color-on-brand);
+    --_edge: var(--color-brand);
+  }
+
+  /* Only offered inside the documentation, where the page is squeezed into a column. */
+  [data-embedded="false"] .detach {
+    display: none;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pane-min)), 1fr));
+    grid-auto-rows: minmax(var(--pane-min-block), 1fr);
+    min-block-size: 0;
+    overflow: auto;
+  }
+
+  .pane {
+    display: grid;
+    border-inline-end: 1px solid var(--color-edge);
+    grid-template-rows: auto minmax(0, 1fr);
+    min-block-size: 0;
+    min-inline-size: 0;
+  }
+
+  .pane-tab {
+    background: var(--color-raised);
+    border-block-end: 1px solid var(--color-edge);
+    color: var(--color-ink-dim);
+    font-family: var(--font-mono);
+    font-size: var(--text-1);
+    padding-block: var(--space-1);
+    padding-inline: var(--space-3);
+  }
+
+  .editor {
+    min-block-size: 0;
+    overflow: hidden;
+  }
+
+  /* CodeMirror's own root: it sizes to its content unless told to fill the pane. */
+  .editor .cm-editor {
+    block-size: 100%;
+    font-size: var(--text-1);
+  }
+
+  .editor .cm-scroller {
+    font-family: var(--font-mono);
+  }
+
+  .runner {
+    background: var(--color-terminal-bg);
+    block-size: 100%;
+    border: 0;
+    inline-size: 100%;
+  }
+}
