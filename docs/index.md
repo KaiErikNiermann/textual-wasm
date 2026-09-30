@@ -116,6 +116,7 @@ bridge
 workers
 storage
 examples
+playground
 ```
 
 ```{toctree}

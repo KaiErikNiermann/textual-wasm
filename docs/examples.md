@@ -2,7 +2,8 @@
 
 Six complete projects, each self-contained enough to copy out of the repository and use.
 The demos below are **live**: every one is a real build of the app beside it, running in your
-browser on this static site.
+browser on this static site. To write one of your own without installing anything, use the
+{doc}`playground`.
 
 :::{note}
 The first load of each demo fetches a CPython interpreter (~10 MB, then cached by your

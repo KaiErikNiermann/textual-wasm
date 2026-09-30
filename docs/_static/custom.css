@@ -266,6 +266,11 @@ body {
   border-radius: 0.5rem;
 }
 
+/* The playground holds an editor and a terminal, so it gets more room than a demo. */
+.demo-frame[data-size="tall"] {
+  block-size: min(48rem, 85dvb);
+}
+
 /* The porting matrix is wide and its cells are prose. Without this the table is squeezed
    into a column and every row wraps to five lines. */
 .wide-table table {
