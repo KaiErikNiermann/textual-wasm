@@ -75,7 +75,7 @@ build-backend = "poetry.core.masonry.api"
 
 # --- Ruff -------------------------------------------------------------------
 [tool.ruff]
-src = ["src", "tests"]
+src = ["src", "tests", "playground/runner"]
 # Deliberately non-compliant code that exists to prove the semgrep rules still fire.
 extend-exclude = ["tests/semgrep/positive", "tests/doctor"]
 line-length = 100
@@ -124,7 +124,10 @@ ban-relative-imports = "all"
 
 # --- Pyright ----------------------------------------------------------------
 [tool.pyright]
-include = ["src", "tests", "scripts"]
+include = ["src", "tests", "scripts", "playground/runner"]
+# The playground's runner is a package of its own rather than part of the distribution, so
+# the tests that import it need it on the path.
+extraPaths = ["playground/runner"]
 exclude = ["tests/semgrep/positive", "tests/doctor"]
 # Hand-written stubs for the Pyodide `js` module, which exists only inside the runtime.
 stubPath = "typings"
@@ -140,6 +143,7 @@ venv = ".venv"
 # --- Pytest -----------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["playground/runner"]
 asyncio_mode = "auto"
 addopts = "-q --strict-markers"
 markers = [

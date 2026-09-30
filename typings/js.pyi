@@ -15,11 +15,15 @@ class HTMLAnchorElement(Protocol):
 class Document(Protocol):
     def createElement(self, tag: Literal["a"]) -> HTMLAnchorElement: ...
 
+class Location(Protocol):
+    hash: str
+
 class Window(Protocol):
     def open(self, url: str, target: str) -> None: ...
 
 document: Document
 window: Window
+location: Location
 
 crossOriginIsolated: bool
 """True when the page is cross-origin isolated (COOP + COEP).
