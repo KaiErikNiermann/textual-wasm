@@ -136,9 +136,14 @@ build-verify: build
 docs out="":
   ./scripts/build-docs.sh {{out}}
 
+# The build's dev server, called directly: `textual-wasm dev` refuses a directory that is not
+# a build, and the plain http.server sends no CORS header, which the playground's sandboxed
+# runner frame needs.
+
 # Serve the built documentation site
 docs-serve port="8000":
-  poetry run python -m http.server {{port}} --directory docs/_build/html
+  poetry run python -c "from pathlib import Path; from textual_wasm.bundler import serve; \
+    serve(Path('docs/_build/html'), port={{port}})"
 
 # Regenerate the WASM requirements file from the installed native environment
 pins:

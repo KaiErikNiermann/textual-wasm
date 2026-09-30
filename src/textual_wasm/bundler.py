@@ -497,6 +497,10 @@ def _handler_for(directory: Path, *, quiet: bool) -> type[http.server.SimpleHTTP
             # A development server that caches is a development server people restart for no
             # reason. The Pyodide runtime is fetched from a CDN and cached there instead.
             self.send_header("Cache-Control", "no-store")
+            # What GitHub Pages sends, and what a sandboxed frame needs: without
+            # `allow-same-origin` its origin is opaque, so a build loaded into one - the docs
+            # playground's runner - fetches its own manifest and modules cross-origin.
+            self.send_header("Access-Control-Allow-Origin", "*")
             super().end_headers()
 
     return Handler

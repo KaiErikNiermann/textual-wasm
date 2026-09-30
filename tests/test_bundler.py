@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import dataclasses
 import json
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -330,3 +331,14 @@ def test_an_unchecked_build_says_so_rather_than_reporting_a_clean_one(tmp_path: 
     """`dependencies_checked` is the difference between "nothing wrong" and "nothing looked"."""
     result = bundler.build(dataclasses.replace(_spec(tmp_path), check_dependencies=False))
     assert not result.dependencies_checked
+
+
+def test_the_dev_server_lets_a_sandboxed_frame_read_the_build(tmp_path: Path) -> None:
+    """A frame sandboxed without `allow-same-origin` has an opaque origin, so every file a
+    build loads into it is a cross-origin fetch - which GitHub Pages allows, and so must this."""
+    (tmp_path / "app.json").write_text("{}", encoding="utf-8")
+    with (
+        bundler.background_server(tmp_path) as url,
+        urllib.request.urlopen(f"{url}app.json") as response,  # noqa: S310 - loopback URL
+    ):
+        assert response.headers["Access-Control-Allow-Origin"] == "*"
