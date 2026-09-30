@@ -21,19 +21,19 @@ install-browsers *engines="chromium firefox webkit":
 gates: lint fmt-check types complexity policy lint-web test matrix-check libraries-check channels-check
 
 # Ruff
-lint *paths="src tests":
+lint *paths="src tests playground/runner":
   poetry run ruff check {{paths}}
 
 # Ruff, fixing what it can
-lint-fix *paths="src tests":
+lint-fix *paths="src tests playground/runner":
   poetry run ruff check --fix {{paths}}
 
 # Format
-fmt *paths="src tests":
+fmt *paths="src tests playground/runner":
   poetry run ruff format {{paths}}
 
 # Formatting is already applied
-fmt-check *paths="src tests":
+fmt-check *paths="src tests playground/runner":
   poetry run ruff format --check {{paths}}
 
 # Pyright, strict

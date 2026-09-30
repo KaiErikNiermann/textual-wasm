@@ -43,9 +43,9 @@ jobs:
         # the registry could drift with CI green.
         run: pnpm install --frozen-lockfile
       - name: ruff (lint)
-        run: poetry run ruff check src tests
+        run: poetry run ruff check src tests playground/runner
       - name: ruff (format)
-        run: poetry run ruff format --check src tests
+        run: poetry run ruff format --check src tests playground/runner
       - name: pyright (strict)
         run: poetry run pyright
       - name: radon (nothing above grade B)

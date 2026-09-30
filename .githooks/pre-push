@@ -51,10 +51,10 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
 done
 
 step "ruff (lint)"
-poetry run ruff check src tests
+poetry run ruff check src tests playground/runner
 
 step "ruff (format)"
-poetry run ruff format --check src tests
+poetry run ruff format --check src tests playground/runner
 
 step "pyright (strict)"
 poetry run pyright
