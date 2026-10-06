@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import re
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Final
 
@@ -65,6 +66,28 @@ def test_a_write_leaves_no_partial_file_behind(store: Store) -> None:
     store.write_text("settings.json", "value")
     names = {path.name for path in store.location.root.iterdir()}
     assert names == {"settings.json"}, f"partial file left behind: {names}"
+
+
+def test_concurrent_writes_to_one_name_never_publish_a_mixture(store: Store) -> None:
+    """Each write stages in its own sibling, so a reader sees one writer's bytes or another's.
+
+    With one shared staging name, eight threads publishing here produced hundreds of reads
+    matching no writer and `FileNotFoundError`s from renames whose file another had taken.
+    """
+    payloads = [bytes([n]) * 100_000 for n in range(8)]
+
+    def hammer(payload: bytes) -> list[bytes | None]:
+        reads: list[bytes | None] = []
+        for _ in range(50):
+            store.write_bytes("shared.bin", payload)
+            reads.append(store.read_bytes("shared.bin"))
+        return reads
+
+    with ThreadPoolExecutor(len(payloads)) as pool:
+        reads = [read for batch in pool.map(hammer, payloads) for read in batch]
+
+    assert all(read in payloads for read in reads)
+    assert {path.name for path in store.location.root.iterdir()} == {"shared.bin"}
 
 
 def test_nested_names_create_their_directories(store: Store) -> None:

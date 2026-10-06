@@ -240,11 +240,24 @@ class Store:
         Worth the extra call even under MEMFS: the failure it prevents is a half-written
         config that the next load cannot parse, and on this runtime "the next load" can be
         a page refresh in the middle of a write.
+
+        The sibling is unique per write. A fixed `<name>.partial` was shared by every writer
+        to `name`, so two threads writing at once truncated each other's staging file and the
+        rename published whatever mixture was in it - measured: 8 threads, 1600 writes, 332
+        reads of bytes no writer wrote.
         """
         target = self.path(name)
-        scratch = target.with_name(f"{target.name}.partial")
-        scratch.write_bytes(payload)
-        scratch.replace(target)
+        with tempfile.NamedTemporaryFile(
+            dir=target.parent, prefix=f".{target.name}.", suffix=".partial", delete=False
+        ) as scratch:
+            staged = Path(scratch.name)
+            try:
+                scratch.write(payload)
+                scratch.close()
+                staged.replace(target)
+            except BaseException:
+                staged.unlink(missing_ok=True)
+                raise
 
     async def flush(self) -> None:
         """Make everything written so far durable.
