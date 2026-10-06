@@ -444,9 +444,17 @@ async function bootInWorker(manifest, host, bridge) {
         break;
       }
       case "crashed": {
-        isDrawn = true;
-        settleIfReady();
-        onCrashed(new Error(data.error));
+        // A crash before "running" is a failure to boot: the page is still awaiting
+        // `running`, and nothing is awaiting `finished` yet, so it is `running` that has to
+        // reject or the page sits on its boot status forever.
+        const error = new Error(data.error);
+        if (isStarted) {
+          isDrawn = true;
+          settleIfReady();
+          onCrashed(error);
+        } else {
+          onFailed(error);
+        }
         break;
       }
       // The two capabilities a worker cannot perform itself, forwarded back to this thread
