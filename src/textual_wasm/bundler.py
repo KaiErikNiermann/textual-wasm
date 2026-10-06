@@ -211,12 +211,30 @@ class BuildResult:
         )
 
 
+class EscapingSymlinkError(ValueError):
+    """Raised when a file in the package is a symlink to something outside it."""
+
+
 def _shippable(path: Path, package: Path) -> bool:
-    """Whether one file belongs in the browser's copy of `package`."""
+    """Whether one file belongs in the browser's copy of `package`.
+
+    Raises:
+        EscapingSymlinkError: If `path` resolves outside `package`. Everything collected
+            here is published with the site, so following such a link would ship whatever
+            it points at - a `.env` in the home directory as readily as a shared asset - and
+            skipping it quietly would ship an app missing a file it reads.
+    """
     if not path.is_file() or path.suffix in EXCLUDED_SUFFIXES:
         return False
     relative = path.relative_to(package)
-    return not any(part in EXCLUDED_DIRECTORIES for part in relative.parts)
+    if any(part in EXCLUDED_DIRECTORIES for part in relative.parts):
+        return False
+    if not path.resolve().is_relative_to(package.resolve()):
+        raise EscapingSymlinkError(
+            f"{path} points outside {package} (to {path.resolve()}); copy the file into the "
+            "package instead of linking it"
+        )
+    return True
 
 
 def _encode(path: Path) -> dict[str, str]:

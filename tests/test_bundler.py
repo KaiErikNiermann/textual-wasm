@@ -143,6 +143,31 @@ def test_caches_and_environments_are_not_shipped(tmp_path: Path) -> None:
     assert set(bundler._collect_sources(package)) == {"__init__.py"}  # pyright: ignore[reportPrivateUsage]
 
 
+def test_a_symlink_out_of_the_package_is_refused(tmp_path: Path) -> None:
+    """Whatever is collected is published, so a link out would publish its target."""
+    secret = tmp_path / "secret.env"
+    secret.write_text("TOKEN=hunter2", encoding="utf-8")
+    package = tmp_path / "leaky"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "config.env").symlink_to(secret)
+
+    with pytest.raises(bundler.EscapingSymlinkError, match="points outside"):
+        bundler._collect_sources(package)  # pyright: ignore[reportPrivateUsage]
+
+
+def test_a_symlink_within_the_package_still_ships(tmp_path: Path) -> None:
+    package = tmp_path / "linked"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "real.json").write_text("{}", encoding="utf-8")
+    (package / "alias.json").symlink_to(package / "real.json")
+
+    shipped = bundler._collect_sources(package)  # pyright: ignore[reportPrivateUsage]
+
+    assert shipped["alias.json"] == shipped["real.json"]
+
+
 def test_requirements_come_from_the_projects_own_pins(built: bundler.BuildResult) -> None:
     """One generated list, so a build and a probe install the same closure."""
     assert set(bundler.default_requirements()) <= set(built.requirements)
