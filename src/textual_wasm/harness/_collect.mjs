@@ -42,8 +42,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * @param {string} description what is being waited for, for the failure message
  */
 async function waitFor(evaluate, source, description) {
-  const deadline = Date.now() + READY_TIMEOUT_MS;
-  while (Date.now() < deadline) {
+  const deadline = performance.now() + READY_TIMEOUT_MS;
+  while (performance.now() < deadline) {
     if (await evaluate(source)) {
       return;
     }
@@ -87,8 +87,8 @@ export async function waitForMarker(evaluate, marker) {
  */
 export async function waitForStableGrid(evaluate) {
   let previous = null;
-  const deadline = Date.now() + SETTLE_TIMEOUT_MS;
-  while (Date.now() < deadline) {
+  const deadline = performance.now() + SETTLE_TIMEOUT_MS;
+  while (performance.now() < deadline) {
     const current = await evaluate(String.raw`globalThis.textualWasm.screen().lines.join("\n")`);
     if (current === previous) {
       return;
