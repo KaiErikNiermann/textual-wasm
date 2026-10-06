@@ -76,6 +76,20 @@ def test_a_channel_name_that_is_not_an_identifier_is_quoted() -> None:
     assert '  "echo-back": string;' in _ts(str, channel="echo-back")
 
 
+def test_strings_that_need_escaping_are_escaped() -> None:
+    """A quote or a backslash in a literal, or in a channel name, is still one string."""
+    rendered = _ts(Literal['a"b', "c\\d"], channel='q"x')
+    assert '  "q\\"x": "a\\"b" | "c\\\\d";' in rendered
+
+
+Wire = TypedDict("Wire", {"wire-key": int})
+
+
+def test_a_typed_dict_key_that_is_not_an_identifier_is_quoted() -> None:
+    """The functional `TypedDict` syntax exists for exactly these keys."""
+    assert '  "wire-key": number;' in _ts(Wire)
+
+
 def test_declaring_no_channels_still_produces_a_usable_interface() -> None:
     """An empty interface makes `keyof Channels` be `never`, which reads at every call site
     as a baffling error rather than as "you have not declared anything yet"."""

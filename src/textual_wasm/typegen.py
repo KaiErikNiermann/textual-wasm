@@ -30,6 +30,7 @@ from __future__ import annotations
 import dataclasses
 import datetime
 import enum
+import json
 import types
 import typing
 from typing import TYPE_CHECKING, Final, Literal
@@ -482,7 +483,7 @@ def _ts_named(named: Named) -> str:
         members = " | ".join(_ts_literal(value) for value in named.values)
         return f"export type {named.name} = {members};\n"
     fields = "\n".join(
-        f"  {field.name}{'' if field.required else '?'}: {_ts(field.type)};"
+        f"  {_ts_key(field.name)}{'' if field.required else '?'}: {_ts(field.type)};"
         for field in named.fields
     )
     return f"export interface {named.name} {{\n{fields}\n}}\n"
@@ -504,12 +505,21 @@ def _ts_channels(channels: Sequence[ChannelType]) -> str:
 
 
 def _ts_key(name: str) -> str:
-    """Quote a channel name unless it is a plain identifier.
+    """Quote a property name unless it is a plain identifier.
 
-    Channel names are strings, and `echo-back` is a perfectly good one that is not a valid
-    TypeScript property name.
+    Channel names and `TypedDict` keys are strings, and `echo-back` is a perfectly good one
+    that is not a valid TypeScript property name.
     """
-    return name if name.isidentifier() else f'"{name}"'
+    return name if name.isidentifier() else _ts_string(name)
+
+
+def _ts_string(value: str) -> str:
+    """A TypeScript string literal for `value`.
+
+    A JSON string is one, escapes included, so `json.dumps` is the whole job - and wrapping
+    the raw text in quotes is what it replaces, which broke on the first `"` or `\\`.
+    """
+    return json.dumps(value)
 
 
 def _ts(node: TypeNode) -> str:  # noqa: PLR0911 - one return per variant, exhaustively
@@ -553,7 +563,7 @@ def _ts_array(item: TypeNode) -> str:
 def _ts_literal(value: str | int | float | bool) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
-    return f'"{value}"' if isinstance(value, str) else str(value)
+    return _ts_string(value) if isinstance(value, str) else str(value)
 
 
 _TS_SURFACE: Final[str] = """\
