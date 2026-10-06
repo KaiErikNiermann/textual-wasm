@@ -108,10 +108,24 @@ function showInAddressBar(fragment) {
 }
 
 /**
+Counts calls to `run`, so one whose compression finished late can tell it has been overtaken.
+*/
+const runs = { latest: 0 };
+
+/**
 Run `source` in a fresh frame.
+
+Compression is asynchronous and need not finish in call order - Firefox finishes a short
+program started second before a long one started first - so a run checks that it is still
+the latest before replacing the frame, or the older program would replace the newer one.
 */
 async function run(source) {
+  runs.latest += 1;
+  const ticket = runs.latest;
   const fragment = await encode(source);
+  if (ticket !== runs.latest) {
+    return;
+  }
   showInAddressBar(fragment);
   const current = document.querySelector("#runner");
   const fresh = document.createElement("iframe");
