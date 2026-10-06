@@ -47,6 +47,13 @@ const FALLBACK_TERMINAL_FONT = '"IBM Plex Mono", "DejaVu Sans Mono", ui-monospac
  */
 
 /**
+ * The largest side a forced grid may have. The query string is anyone's to write, and xterm
+ * allocates a buffer for every cell it is told to have, so `?cols=9007199254740991` would
+ * otherwise exhaust the tab. A thousand either way is far past any real comparison.
+ */
+const MAX_FORCED_SIDE = 1000;
+
+/**
  * A forced grid, from `?cols=&rows=`. Comparing this render against the native one requires
  * both to be the same size, and a browser window's size is not a number anyone chose.
  *
@@ -54,11 +61,19 @@ const FALLBACK_TERMINAL_FONT = '"IBM Plex Mono", "DejaVu Sans Mono", ui-monospac
  */
 function forcedGrid() {
   const parameters = new URLSearchParams(location.search);
+  if (!parameters.has("cols") && !parameters.has("rows")) {
+    return null;
+  }
   const cols = Number(parameters.get("cols"));
   const rows = Number(parameters.get("rows"));
-  return Number.isSafeInteger(cols) && cols > 0 && Number.isSafeInteger(rows) && rows > 0
-    ? { cols, rows }
-    : null;
+  const isSide = (side) => Number.isSafeInteger(side) && side > 0 && side <= MAX_FORCED_SIDE;
+  if (isSide(cols) && isSide(rows)) {
+    return { cols, rows };
+  }
+  console.warn(
+    `[textual-wasm] ignoring ?cols=&rows=: each must be a whole number from 1 to ${MAX_FORCED_SIDE}`,
+  );
+  return null;
 }
 
 /**
