@@ -61,6 +61,11 @@ SETTLE_TIMEOUT: Final[float] = 15.0
 DEFAULT_TIMEOUT: Final[float] = 30.0
 """Generous: a cold Textual start on a loaded machine is seconds."""
 
+TMUX_COMMAND_TIMEOUT: Final[float] = 10.0
+"""Seconds one tmux command may take. Each returns in milliseconds; the bound exists because
+the capture's own deadline is only checked between commands, so one that never returned
+would hang the whole check instead of failing it."""
+
 
 class TmuxUnavailableError(RuntimeError):
     """Raised when a capture is attempted without tmux installed."""
@@ -74,13 +79,19 @@ def _tmux(*args: str) -> str:
     """Run a tmux command with the user's configuration deliberately excluded."""
     if TMUX is None:
         raise TmuxUnavailableError("tmux is not installed; cannot capture a real terminal")
-    completed = subprocess.run(  # noqa: S603 - fixed binary, no shell, arguments are ours
-        [TMUX, "-f", "/dev/null", "-u", *args],
-        capture_output=True,
-        text=True,
-        check=True,
-        encoding="utf-8",
-    )
+    try:
+        completed = subprocess.run(  # noqa: S603 - fixed binary, no shell, arguments are ours
+            [TMUX, "-f", "/dev/null", "-u", *args],
+            capture_output=True,
+            text=True,
+            check=True,
+            encoding="utf-8",
+            timeout=TMUX_COMMAND_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise CaptureTimeoutError(
+            f"tmux {args[0]} did not return within {TMUX_COMMAND_TIMEOUT}s"
+        ) from error
     return completed.stdout
 
 

@@ -7,6 +7,8 @@ suite that fails for a missing tool teaches people to ignore it.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from textual_wasm import terminal
@@ -81,3 +83,17 @@ def test_a_patch_suffix_does_not_confuse_the_version_check(
     monkeypatch.setattr(terminal, "version", lambda: "tmux 3.5a")
     usable, _reason = terminal.usable()
     assert usable
+
+
+def test_a_tmux_command_that_never_returns_fails_the_capture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The capture deadline is checked between commands, so each command needs its own."""
+    stuck = tmp_path / "tmux"
+    stuck.write_text("#!/bin/sh\nexec sleep 30\n", encoding="utf-8")
+    stuck.chmod(0o755)
+    monkeypatch.setattr(terminal, "TMUX", str(stuck))
+    monkeypatch.setattr(terminal, "TMUX_COMMAND_TIMEOUT", 0.2)
+
+    with pytest.raises(terminal.CaptureTimeoutError, match="did not return"):
+        terminal._tmux("capture-pane", "-p")  # pyright: ignore[reportPrivateUsage]
