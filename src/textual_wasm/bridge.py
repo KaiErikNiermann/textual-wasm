@@ -415,8 +415,11 @@ class Bridge:
         binding = _Binding(channel, node, attribute, validate)
         self._bindings[channel] = binding
 
+        # Textual has no public way to remove a watcher, so this one retires itself: once
+        # `close` has cleared the bindings or a later `bind` has replaced this one, it is no
+        # longer the channel's binding and sends nothing.
         def on_change(value: object) -> None:
-            if not binding.suppressed:
+            if self._bindings.get(channel) is binding and not binding.suppressed:
                 self.send(channel, value)
 
         self._app.watch(node, attribute, on_change, init=initial)

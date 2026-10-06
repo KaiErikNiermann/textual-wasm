@@ -277,6 +277,33 @@ async def test_an_applied_value_is_not_echoed_back(page: FakePage) -> None:
     assert page.sent == [], f"the applied value was echoed: {page.sent}"
 
 
+async def test_a_closed_bridge_stops_sending_bound_values(page: FakePage) -> None:
+    """`close` forgets the bindings, and the watchers it registered have to forget too:
+    Textual has no public way to remove one, so an app outliving its bridge kept sending."""
+    app = Mixer()
+    async with app.run_test() as pilot:
+        channel = Bridge(app, host=page)
+        channel.bind("gain", app, "gain", initial=False)
+        channel.close()
+        app.gain = 9
+        await pilot.pause()
+
+    assert page.sent == []
+
+
+async def test_rebinding_a_channel_replaces_the_old_binding(page: FakePage) -> None:
+    """One channel holds one binding, so a second `bind` must not leave the first sending."""
+    app = Mixer()
+    async with app.run_test() as pilot:
+        channel = Bridge(app, host=page)
+        channel.bind("gain", app, "gain", initial=False)
+        channel.bind("gain", app, "gain", initial=False)
+        app.gain = 9
+        await pilot.pause()
+
+    assert page.sent == [("gain", "9")]
+
+
 async def test_a_binding_survives_a_payload_it_cannot_apply(page: FakePage) -> None:
     """Called from JavaScript, so an exception here lands in a console nobody reads. The
     binding is skipped, the message is still posted, and the next good value still applies."""
