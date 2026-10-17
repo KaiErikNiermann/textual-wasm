@@ -36,7 +36,16 @@ export default defineConfig([
       // `main()` plus module-scope constants is the clearest shape for them.
       "unicorn/prefer-top-level-await": "off",
       "unicorn/no-null": "off",
+      // The ` * ` gutter is the JSDoc convention every doc comment here follows, and the
+      // one TypeScript and editors format; the fix leaves bare prose inside `/** */`.
+      "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
     },
+  },
+  {
+    // A tool config's whole job is `export default defineConfig(...)`, which the rule
+    // reads as a module-scope call with side effects.
+    files: ["**/*.config.js"],
+    rules: { "unicorn/no-top-level-side-effects": "off" },
   },
   {
     // The page assets live inside the Python package so they ship with it, and a Python
