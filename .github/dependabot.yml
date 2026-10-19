@@ -9,6 +9,11 @@
 # Python closure on purpose, because two runtimes are only comparable when they load the same
 # code. A flood of version bumps is not maintenance here - each one changes what the
 # cross-runtime check is checking, and has to be read rather than merged.
+#
+# The limits are per entry, so the queue is bounded by their sum: five open PRs at most. Every
+# entry folds its minor and patch bumps into one grouped PR, which counts once against the
+# limit; majors still arrive one per PR, because they are the ones that need reading on their
+# own. Dependabot's own security updates are counted separately and are not capped by this.
 version: 2
 updates:
   - package-ecosystem: pip
@@ -18,11 +23,17 @@ updates:
       day: monday
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 4
+    # Two rather than one: 0.x tooling (ruff, pyright) reports breaking bumps as majors, and one
+    # of those sitting red must not hold back the week's runtime pins.
+    open-pull-requests-limit: 2
     groups:
       # One PR for the linters, which move together and are never load-bearing.
       dev-tooling:
         patterns: ["ruff", "pyright", "radon", "semgrep", "pytest*", "types-*"]
+        update-types: [minor, patch]
+      # Everything else in the closure. Groups match in order, so the linters never land here.
+      runtime:
+        patterns: ["*"]
         update-types: [minor, patch]
     ignore:
       # Textual's version is pinned into the comparison itself: a release changes what the
@@ -38,7 +49,11 @@ updates:
       day: monday
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
+    groups:
+      npm-root:
+        patterns: ["*"]
+        update-types: [minor, patch]
     ignore:
       # The runtime versions live in `bundler.py` and are pinned there; these entries exist so
       # the harnesses can run, and bumping them without bumping the pins would make the
@@ -46,23 +61,20 @@ updates:
       - dependency-name: pyodide
       - dependency-name: "@xterm/*"
 
+  # The example and the playground share Vite, so one entry spanning both turns a Vite release
+  # into one PR instead of two.
   - package-ecosystem: npm
-    directory: /examples/svelte-app
+    directories: [/examples/svelte-app, /playground]
     schedule:
       interval: weekly
       day: monday
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 2
-
-  - package-ecosystem: npm
-    directory: /playground
-    schedule:
-      interval: weekly
-      day: monday
-    cooldown:
-      default-days: 7
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 1
+    groups:
+      frontends:
+        patterns: ["*"]
+        update-types: [minor, patch]
 
   - package-ecosystem: github-actions
     directory: /
@@ -71,4 +83,8 @@ updates:
       day: monday
     cooldown:
       default-days: 7
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
+        update-types: [minor, patch]
