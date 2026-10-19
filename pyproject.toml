@@ -54,10 +54,10 @@ include = [
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.1"
 pytest-asyncio = "^1.4"
-ruff = "^0.16"
+ruff = "^0.17"
 pyright = "^1.1"
 radon = "^6.0"
-semgrep = "^1.179"
+semgrep = "^1.180"
 pyyaml = "^6.0.3"
 types-pyyaml = "^6.0.12.20260906"
 
