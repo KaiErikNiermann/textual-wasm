@@ -49,8 +49,8 @@ importers:
         specifier: ^0.8.1
         version: 0.8.1(prettier@3.9.9)
       selenium-webdriver:
-        specifier: ^4.49.0
-        version: 4.49.0
+        specifier: ^4.51.0
+        version: 4.51.0
       stylelint:
         specifier: ^17.15.0
         version: 17.15.0(supports-color@10.2.2)(typescript@7.0.2)
@@ -1753,8 +1753,8 @@ packages:
     resolution: {integrity: sha512-3A6sD0WYP7+QrjbfNA2FN3FsOaGGFoekCVgTyypy53gPxhbkCIjtO6YWgdrfM+n/8sI8JeXZOIxsHjMTNxQ4nQ==}
     engines: {node: ^14.0.0 || >=16.0.0}
 
-  selenium-webdriver@4.49.0:
-    resolution: {integrity: sha512-16XqeOEMj+4+p+pzLLyvNWmF5jCY05EKIl3e1anZBgv4+zq7PUTtiNjKtQhMpwosZ0wIMKDFAQ2xdyogOHD4DA==}
+  selenium-webdriver@4.51.0:
+    resolution: {integrity: sha512-2FY/x+THHk9uWj+WLBib0r+53D1G0pidox796H5AfbRHhJdPc7CVQPNJi31ip1Tb9duBYRw0zX0wJovnbwSDHg==}
     engines: {node: '>= 22.0.0'}
 
   semver@7.8.5:
@@ -2083,6 +2083,18 @@ packages:
 
   ws@8.21.3:
     resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.22.0:
+    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -3664,12 +3676,12 @@ snapshots:
       refa: 0.12.1
       regexp-ast-analysis: 0.7.1
 
-  selenium-webdriver@4.49.0:
+  selenium-webdriver@4.51.0:
     dependencies:
       '@bazel/runfiles': 6.5.0
       jszip: 3.10.2
       tmp: 0.2.7
-      ws: 8.21.3
+      ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4083,6 +4095,8 @@ snapshots:
       signal-exit: 4.1.0
 
   ws@8.21.3: {}
+
+  ws@8.22.0: {}
 
   yaml@2.9.0: {}
 
