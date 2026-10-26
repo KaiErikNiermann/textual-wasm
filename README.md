@@ -7,8 +7,7 @@
 [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 Ship one [Textual](https://github.com/Textualize/textual) application as **both** a terminal
-TUI and a fully client-side web page — same source, no server-side Python process, no fork of
-Textual.
+TUI and a fully client-side web page.
 
 **[Documentation](https://kaierikniermann.github.io/textual-wasm/)** ·
 **[Live demos](https://kaierikniermann.github.io/textual-wasm/examples.html)** ·
