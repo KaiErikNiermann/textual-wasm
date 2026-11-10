@@ -52,12 +52,12 @@ include = [
 ]
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^9.1"
+pytest = "^9.2"
 pytest-asyncio = "^1.4"
 ruff = "^0.17"
 pyright = "^1.1"
 radon = "^6.0"
-semgrep = "^1.182"
+semgrep = "^1.183"
 pyyaml = "^6.0.3"
 types-pyyaml = "^6.0.12.20260906"
 
@@ -145,6 +145,7 @@ venv = ".venv"
 testpaths = ["tests"]
 pythonpath = ["playground/runner"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 addopts = "-q --strict-markers"
 markers = [
     # Boots a real Pyodide runtime. Measured at ~4s for the whole set, so these run by
