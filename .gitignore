@@ -11,3 +11,6 @@ artifacts/
 
 # Sphinx build output. The site is built in CI and published to Pages.
 docs/_build/
+
+# Local working log, never committed.
+LOG.md
