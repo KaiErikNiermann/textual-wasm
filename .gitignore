@@ -14,3 +14,6 @@ docs/_build/
 
 # Local working log, never committed.
 LOG.md
+
+# Benchmark builds, partial runs and other local scratch output
+.scratch/
