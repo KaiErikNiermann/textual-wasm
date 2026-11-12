@@ -17,3 +17,4 @@ LOG.md
 
 # Benchmark builds, partial runs and other local scratch output
 .scratch/
+.upstream-issues/
