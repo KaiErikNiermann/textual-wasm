@@ -202,6 +202,36 @@ export function installPackages(pyodide, packages) {
 }
 
 /**
+ * The install failures that are decided by the requirements rather than by luck, each with
+ * the message that names its cause. One table, read both by `explainInstallFailure` and by
+ * the retry decision, so the two cannot disagree about what counts as permanent.
+ */
+const PERMANENT_INSTALL_FAILURES = [
+  {
+    pattern: /Can't find a pure Python 3 wheel for '([^']+)'/,
+    explain: ([, requirement]) =>
+      `cannot install ${requirement}: either nothing has built it for WebAssembly, or ` +
+      "Pyodide bundles it as a native wheel at a version your requirement excludes - a " +
+      "native wheel cannot be fetched from PyPI at any other version. Run " +
+      `\`textual-wasm doctor -r "${requirement}"\` to find out which, before the next build.`,
+  },
+  {
+    pattern: /Can't fetch metadata for '([^']+)'/,
+    explain: ([, name]) =>
+      `cannot install ${name}: PyPI has no distribution under that name. micropip ` +
+      "installs from PyPI or a URL and has no path to a git repository, so a library that " +
+      "only exists as a repository has to be vendored into your own package instead.",
+  },
+  {
+    pattern: /Requested '([^']+)', but ([^ ]+) is already installed/,
+    explain: ([, requested, installed]) =>
+      `cannot install ${requested}: it contradicts ${installed}, which is already in this ` +
+      "build's closure. One of the two has to move; `textual-wasm doctor` reports which " +
+      "requirement declared the conflicting constraint.",
+  },
+];
+
+/**
  * Rewrite micropip's install failures into something that names the actual cause.
  *
  * Three shapes come out of a failed `micropip.install`, and the first is actively
@@ -219,36 +249,60 @@ export function installPackages(pyodide, packages) {
  */
 export function explainInstallFailure(error) {
   const text = String(error?.message ?? error);
-
-  const missing = /Can't find a pure Python 3 wheel for '([^']+)'/.exec(text);
-  if (missing !== null) {
-    return (
-      `cannot install ${missing[1]}: either nothing has built it for WebAssembly, or ` +
-      "Pyodide bundles it as a native wheel at a version your requirement excludes - a " +
-      "native wheel cannot be fetched from PyPI at any other version. Run " +
-      `\`textual-wasm doctor -r "${missing[1]}"\` to find out which, before the next build.`
-    );
+  for (const { pattern, explain } of PERMANENT_INSTALL_FAILURES) {
+    const match = pattern.exec(text);
+    if (match !== null) {
+      return explain(match);
+    }
   }
-
-  const unknown = /Can't fetch metadata for '([^']+)'/.exec(text);
-  if (unknown !== null) {
-    return (
-      `cannot install ${unknown[1]}: PyPI has no distribution under that name. micropip ` +
-      "installs from PyPI or a URL and has no path to a git repository, so a library that " +
-      "only exists as a repository has to be vendored into your own package instead."
-    );
-  }
-
-  const clash = /Requested '([^']+)', but ([^ ]+) is already installed/.exec(text);
-  if (clash !== null) {
-    return (
-      `cannot install ${clash[1]}: it contradicts ${clash[2]}, which is already in this ` +
-      "build's closure. One of the two has to move; `textual-wasm doctor` reports which " +
-      "requirement declared the conflicting constraint."
-    );
-  }
-
   return `cannot install this build's packages: ${text}`;
+}
+
+/**
+ * Whether a failed install will fail the same way again.
+ *
+ * The three shapes `explainInstallFailure` names are decided by the requirements, so
+ * repeating them changes nothing. Anything else is treated as possibly transient - above all
+ * a wheel fetch that failed on the network, which Firefox reports as "CORS request did not
+ * succeed" with no status, and which once in nineteen benchmark boots took a page down for
+ * good.
+ *
+ * @param {unknown} error the failure from `micropip.install`
+ * @returns {boolean}
+ */
+export function isPermanentInstallFailure(error) {
+  const text = String(error?.message ?? error);
+  return PERMANENT_INSTALL_FAILURES.some(({ pattern }) => pattern.test(text));
+}
+
+/**
+ * How many times to try `micropip.install` before giving up. Two: one retry covers a dropped
+ * connection or a CDN hiccup, and a failure that survives it is not one more retry from
+ * succeeding, so further attempts would only delay the message that says what went wrong.
+ */
+const INSTALL_ATTEMPTS = 2;
+
+/**
+ * Install `requirements`, retrying once when the failure might be transient.
+ *
+ * A retry is cheap and safe: micropip skips what the first attempt already installed.
+ *
+ * @param {object} pyodide
+ * @param {string[]} requirements
+ */
+async function installRequirements(pyodide, requirements) {
+  const micropip = pyodide.pyimport("micropip");
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      await micropip.install(requirements);
+      return;
+    } catch (error) {
+      if (attempt >= INSTALL_ATTEMPTS || isPermanentInstallFailure(error)) {
+        throw error;
+      }
+      console.warn(`[textual-wasm] installing packages failed, retrying once: ${error}`);
+    }
+  }
 }
 
 /**
@@ -329,7 +383,7 @@ export async function boot({ manifest, host, bridge, loadPyodide, onStatus }) {
   onStatus("booting", `installing ${manifest.requirements.length} package(s)…`, "packages");
   await pyodide.loadPackage("micropip");
   try {
-    await pyodide.pyimport("micropip").install(manifest.requirements);
+    await installRequirements(pyodide, manifest.requirements);
   } catch (error) {
     // Rethrown rather than reported and swallowed: the application cannot run without its
     // packages, and a boot that continues from here fails later with something unrelated.

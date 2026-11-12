@@ -10,7 +10,7 @@
  * requirement that contradicts one already in the closure.
  */
 
-import { explainInstallFailure } from "../assets/boot.mjs";
+import { explainInstallFailure, isPermanentInstallFailure } from "../assets/boot.mjs";
 
 const CASES = [
   {
@@ -58,7 +58,27 @@ if (rewritten.includes("pure Python 3 wheel")) {
   failures.push("the misleading phrase was passed through unchanged");
 }
 
-console.log(JSON.stringify({ checked: CASES.length, failures }));
+// Which failures are retried. The three shapes above are decided by the requirements, so a
+// retry would fail identically; a network failure (Firefox's wording for a wheel fetch that
+// never got a response, captured from a real boot) or anything unrecognised gets one more try.
+const RETRY_CASES = [
+  ...CASES.slice(0, 3).map((testCase) => ({ name: testCase.name, input: testCase.input, permanent: true })),
+  {
+    name: "a wheel fetch that failed on the network",
+    input:
+      "OSError: Request for https://files.pythonhosted.org/packages/b3/81/" +
+      "markdown_it_py-4.2.0-py3-none-any.whl failed: NetworkError when attempting to fetch resource.",
+    permanent: false,
+  },
+  { name: "something unrecognised", input: CASES[3].input, permanent: false },
+];
+for (const testCase of RETRY_CASES) {
+  if (isPermanentInstallFailure(new Error(testCase.input)) !== testCase.permanent) {
+    failures.push(`${testCase.name}: expected permanent=${testCase.permanent}`);
+  }
+}
+
+console.log(JSON.stringify({ checked: CASES.length + RETRY_CASES.length, failures }));
 if (failures.length > 0) {
   // Thrown rather than `process.exit`: a non-zero status is what the caller checks, and an
   // uncaught throw supplies one without pretending this is a CLI.
