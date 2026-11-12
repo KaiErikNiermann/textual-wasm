@@ -290,7 +290,7 @@ const INSTALL_ATTEMPTS = 2;
  * @param {object} pyodide
  * @param {string[]} requirements
  */
-async function installRequirements(pyodide, requirements) {
+export async function installRequirements(pyodide, requirements) {
   const micropip = pyodide.pyimport("micropip");
   for (let attempt = 1; ; attempt += 1) {
     try {

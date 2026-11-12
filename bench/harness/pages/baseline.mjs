@@ -15,7 +15,7 @@
  * The application itself is the next level up, and is the real page rather than a copy.
  */
 
-import { importPyodide, installPackages, readManifest } from "./boot.mjs";
+import { importPyodide, installPackages, installRequirements, readManifest } from "./boot.mjs";
 
 /**
  * The driver's parser tick, isolated: the same interval, doing the same nothing.
@@ -54,7 +54,8 @@ export async function bringUp(level, manifestUrl) {
     return;
   }
   await pyodide.loadPackage("micropip");
-  await pyodide.pyimport("micropip").install(manifest.requirements);
+  // The page's own install, retry included, so a baseline fails no more often than the app.
+  await installRequirements(pyodide, manifest.requirements);
   const sources = await fetch(manifest.sourcesUrl);
   installPackages(pyodide, await sources.json());
   await pyodide.runPythonAsync("import textual.app\nimport rich.console\n");
