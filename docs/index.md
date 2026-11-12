@@ -125,6 +125,7 @@ playground
 
 limitations
 browsers
+benchmarks
 matrix
 library-support
 cli

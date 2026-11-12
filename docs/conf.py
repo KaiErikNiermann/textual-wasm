@@ -58,6 +58,8 @@ exclude_patterns = [
     "porting-matrix.md",
     # Same arrangement: included into library-support.md rather than built on its own.
     "library-table.md",
+    # Generated from bench/results/latest.json and included into benchmarks.md.
+    "benchmark-results.md",
 ]
 
 # Project links for the sidebar brand row (see _templates/sidebar/brand.html). The brand

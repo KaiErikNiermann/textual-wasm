@@ -1,0 +1,6369 @@
+{
+ "schema": 1,
+ "profile": "full",
+ "environment": {
+  "date": "2026-11-12T11:31:26+00:00",
+  "commit": "e5c0c19",
+  "dirty": true,
+  "os": "Linux-7.2.11-arch1-1-x86_64-with-glibc2.44",
+  "cpu": "AMD Ryzen 9 9900X3D 12-Core Processor",
+  "cores": 24,
+  "memory_bytes": 32697417728,
+  "python": "3.14.8",
+  "node": "v26.12.1",
+  "pyodide": "314.0.6",
+  "textual": "8.2.8"
+ },
+ "records": {
+  "chromium/-/idle/blank": {
+   "engine": "chromium",
+   "mode": "-",
+   "case": "idle/blank",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10020.333286,
+     "cpuMs": 10,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.237,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10024.235348,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.192,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10023.387459,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.233,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:32:05+00:00"
+  },
+  "chromium/main/idle/pyodide": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "idle/pyodide",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10030.340356,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.274,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10030.953944,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.261,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10030.110250000002,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.26499999999999996,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:32:49+00:00"
+  },
+  "chromium/worker/idle/pyodide": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "idle/pyodide",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10028.458662000001,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.221,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10031.371955,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.183,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10030.883837000001,
+     "cpuMs": 10,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.168,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:33:33+00:00"
+  },
+  "chromium/main/idle/textual": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "idle/textual",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10021.397819,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.204,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10026.035745999998,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.19899999999999998,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10026.031003,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.243,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:34:21+00:00"
+  },
+  "chromium/worker/idle/textual": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "idle/textual",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10025.642125,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.101,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10026.471799,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.136,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10025.462542,
+     "cpuMs": 0,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.16500000000000004,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:35:14+00:00"
+  },
+  "chromium/main/idle/tick": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "idle/tick",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10026.414107,
+     "cpuMs": 70,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 57.006,
+      "scriptMs": 7.263000000000001,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10020.805794,
+     "cpuMs": 60,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 52.188,
+      "scriptMs": 6.3260000000000005,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10025.517399,
+     "cpuMs": 50,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 46.503,
+      "scriptMs": 5.485,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:36:01+00:00"
+  },
+  "chromium/worker/idle/tick": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "idle/tick",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10026.349919,
+     "cpuMs": 50,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.12100000000000001,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10024.277137000001,
+     "cpuMs": 60,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.134,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10026.540069,
+     "cpuMs": 50,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.133,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:36:49+00:00"
+  },
+  "chromium/main/idle/app": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "idle/app",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10027.776954,
+     "cpuMs": 50,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 48.643,
+      "scriptMs": 5.615,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10026.983149,
+     "cpuMs": 50,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 47.808,
+      "scriptMs": 5.0280000000000005,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10027.293317,
+     "cpuMs": 50,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 47.205000000000005,
+      "scriptMs": 5.15,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": 0,
+     "characters": 0
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:37:38+00:00"
+  },
+  "chromium/worker/idle/app": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "idle/app",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10026.567658,
+     "cpuMs": 60,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.748,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10028.425759999998,
+     "cpuMs": 60,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.637,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10022.179215,
+     "cpuMs": 60,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 0.614,
+      "scriptMs": 0,
+      "layoutMs": 0,
+      "styleMs": 0
+     },
+     "writes": 0,
+     "characters": 0
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:38:26+00:00"
+  },
+  "chromium/main/idle/input": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "idle/input",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10022.980533,
+     "cpuMs": 100,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 76.74600000000001,
+      "scriptMs": 7.909,
+      "layoutMs": 3.463,
+      "styleMs": 1.052
+     },
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10022.787973999999,
+     "cpuMs": 170,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 111.035,
+      "scriptMs": 11.994,
+      "layoutMs": 4.069,
+      "styleMs": 1.256
+     },
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10027.419583,
+     "cpuMs": 140,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 95.791,
+      "scriptMs": 9.584,
+      "layoutMs": 3.7889999999999997,
+      "styleMs": 1.229
+     },
+     "writes": 20,
+     "characters": 13690
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:39:15+00:00"
+  },
+  "chromium/worker/idle/input": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "idle/input",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10026.807356,
+     "cpuMs": 120,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 22.263,
+      "scriptMs": 5.132000000000001,
+      "layoutMs": 4.314,
+      "styleMs": 1.343
+     },
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10027.306894000001,
+     "cpuMs": 140,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 21.955000000000002,
+      "scriptMs": 5.207,
+      "layoutMs": 4.159000000000001,
+      "styleMs": 1.2750000000000001
+     },
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10026.683352,
+     "cpuMs": 130,
+     "processes": 6,
+     "mainThread": {
+      "taskMs": 18.743,
+      "scriptMs": 4.337,
+      "layoutMs": 3.528,
+      "styleMs": 1.082
+     },
+     "writes": 20,
+     "characters": 13690
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:40:05+00:00"
+  },
+  "chromium/-/boot/blank": {
+   "engine": "chromium",
+   "mode": "-",
+   "case": "boot/blank",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "domContentLoaded": 2
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 40,
+       "rssBytes": 418025472,
+       "pssBytes": 182472704,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 566360,
+       "totalBytes": 1048576
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "domContentLoaded": 2
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 50,
+       "rssBytes": 422191104,
+       "pssBytes": 180363264,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 566360,
+       "totalBytes": 1048576
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "domContentLoaded": 2.100000023841858
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 40,
+       "rssBytes": 412446720,
+       "pssBytes": 178121728,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 566360,
+       "totalBytes": 1048576
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:40:15+00:00"
+  },
+  "chromium/main/boot/pyodide": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "boot/pyodide",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 1342.6000000238419,
+      "domContentLoaded": 8.800000011920929
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1690,
+       "rssBytes": 540811264,
+       "pssBytes": 287338496,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 8703996,
+       "totalBytes": 9289728
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1308,
+      "domContentLoaded": 8.799999952316284
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1640,
+       "rssBytes": 539594752,
+       "pssBytes": 288191488,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 8704072,
+       "totalBytes": 9289728
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1361.9000000357628,
+      "domContentLoaded": 9
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1730,
+       "rssBytes": 543784960,
+       "pssBytes": 292598784,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 8704088,
+       "totalBytes": 9289728
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:40:28+00:00"
+  },
+  "chromium/worker/boot/pyodide": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "boot/pyodide",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 1341.1000000238419,
+      "domContentLoaded": 9.199999988079071
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1700,
+       "rssBytes": 569348096,
+       "pssBytes": 319650816,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1386.8999999761581,
+      "domContentLoaded": 7.800000011920929
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1600,
+       "rssBytes": 573546496,
+       "pssBytes": 320148480,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1350.800000011921,
+      "domContentLoaded": 9.300000011920929
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1660,
+       "rssBytes": 573407232,
+       "pssBytes": 320623616,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:40:42+00:00"
+  },
+  "chromium/main/boot/textual": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "boot/textual",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2858,
+      "domContentLoaded": 8.799999952316284
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3060,
+       "rssBytes": 584847360,
+       "pssBytes": 330425344,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 9465684,
+       "totalBytes": 9814016
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2734.699999988079,
+      "domContentLoaded": 9.199999988079071
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2790,
+       "rssBytes": 587956224,
+       "pssBytes": 330698752,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 9456944,
+       "totalBytes": 10076160
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2771.2999999523163,
+      "domContentLoaded": 9.099999964237213
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2870,
+       "rssBytes": 593199104,
+       "pssBytes": 337739776,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 9464912,
+       "totalBytes": 9814016
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:41:00+00:00"
+  },
+  "chromium/worker/boot/textual": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "boot/textual",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2663.5,
+      "domContentLoaded": 10.200000047683716
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2790,
+       "rssBytes": 602054656,
+       "pssBytes": 347688960,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2565.699999988079,
+      "domContentLoaded": 8.300000011920929
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2660,
+       "rssBytes": 609173504,
+       "pssBytes": 350282752,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2657.2999999523163,
+      "domContentLoaded": 8.5
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2860,
+       "rssBytes": 605106176,
+       "pssBytes": 350401536,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:41:18+00:00"
+  },
+  "chromium/main/boot/tick": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "boot/tick",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2617.300000011921,
+      "domContentLoaded": 8.600000023841858
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2750,
+       "rssBytes": 584798208,
+       "pssBytes": 331812864,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 9479400,
+       "totalBytes": 9814016
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2569.7999999523163,
+      "domContentLoaded": 9.599999964237213
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2810,
+       "rssBytes": 584388608,
+       "pssBytes": 331596800,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 9495132,
+       "totalBytes": 10338304
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2901.5,
+      "domContentLoaded": 8.5
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2890,
+       "rssBytes": 588988416,
+       "pssBytes": 334525440,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 9493648,
+       "totalBytes": 10338304
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:41:36+00:00"
+  },
+  "chromium/worker/boot/tick": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "boot/tick",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2873.300000011921,
+      "domContentLoaded": 8.800000011920929
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2930,
+       "rssBytes": 607539200,
+       "pssBytes": 352614400,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2771.400000035763,
+      "domContentLoaded": 8.400000035762787
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2940,
+       "rssBytes": 607383552,
+       "pssBytes": 354634752,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2570.300000011921,
+      "domContentLoaded": 8.5
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2820,
+       "rssBytes": 603721728,
+       "pssBytes": 350168064,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 1128300,
+       "totalBytes": 2166784
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:41:54+00:00"
+  },
+  "chromium/main/boot/app": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "boot/app",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 252.80000001192093,
+      "packages": 1415.1000000238419,
+      "app": 2241.699999988079,
+      "ready": 2835.800000011921,
+      "domContentLoaded": 11.199999988079071
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 3170,
+       "rssBytes": 612167680,
+       "pssBytes": 349985792,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10852008,
+       "totalBytes": 11649024
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60066,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 197.10000002384186,
+      "packages": 1344.699999988079,
+      "app": 2103.199999988079,
+      "ready": 2703.399999976158,
+      "domContentLoaded": 11
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 3120,
+       "rssBytes": 604807168,
+       "pssBytes": 344598528,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10843248,
+       "totalBytes": 11649024
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 224.70000004768372,
+      "packages": 1387.9000000357628,
+      "app": 2268.400000035763,
+      "ready": 2937.600000023842,
+      "domContentLoaded": 11.300000011920929
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 3280,
+       "rssBytes": 607588352,
+       "pssBytes": 345796608,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10844492,
+       "totalBytes": 11649024
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60074,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:42:13+00:00"
+  },
+  "chromium/worker/boot/app": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "boot/app",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 210.5,
+      "packages": 1373,
+      "app": 2137.699999988079,
+      "ready": 2745.800000011921,
+      "domContentLoaded": 8.600000023841858
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3130,
+       "rssBytes": 625475584,
+       "pssBytes": 360571904,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2541540,
+       "totalBytes": 3215360
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 212.30000001192093,
+      "packages": 1437.300000011921,
+      "app": 2174.699999988079,
+      "ready": 2785.400000035763,
+      "domContentLoaded": 8.600000023841858
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3150,
+       "rssBytes": 625745920,
+       "pssBytes": 364653568,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2541288,
+       "totalBytes": 3215360
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60065,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 227.5,
+      "packages": 1457.1000000238419,
+      "app": 2225.100000023842,
+      "ready": 2827.7000000476837,
+      "domContentLoaded": 11
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3100,
+       "rssBytes": 615624704,
+       "pssBytes": 358225920,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2541288,
+       "totalBytes": 3215360
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60065,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:42:31+00:00"
+  },
+  "chromium/main/boot/input": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "boot/input",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 219.4000000357628,
+      "packages": 1362.300000011921,
+      "app": 2129.199999988079,
+      "ready": 2719.699999988079,
+      "domContentLoaded": 10.699999988079071
+     },
+     "writesAtPublish": 8,
+     "memory": {
+      "tree": {
+       "cpuMs": 3180,
+       "rssBytes": 604323840,
+       "pssBytes": 343438336,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10877264,
+       "totalBytes": 11911168
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 235.80000001192093,
+      "packages": 1360.6000000238419,
+      "app": 2181.7000000476837,
+      "ready": 2793.400000035763,
+      "domContentLoaded": 11.300000011920929
+     },
+     "writesAtPublish": 8,
+     "memory": {
+      "tree": {
+       "cpuMs": 3270,
+       "rssBytes": 603226112,
+       "pssBytes": 343165952,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10887384,
+       "totalBytes": 11911168
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 228.30000001192093,
+      "packages": 1347.300000011921,
+      "app": 2279.5,
+      "ready": 2899.399999976158,
+      "domContentLoaded": 10.599999964237213
+     },
+     "writesAtPublish": 8,
+     "memory": {
+      "tree": {
+       "cpuMs": 3430,
+       "rssBytes": 603176960,
+       "pssBytes": 346519552,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10887420,
+       "totalBytes": 11649024
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:42:49+00:00"
+  },
+  "chromium/worker/boot/input": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "boot/input",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 245.69999998807907,
+      "packages": 1398.5,
+      "app": 2180.599999964237,
+      "ready": 2782.699999988079,
+      "domContentLoaded": 11.099999964237213
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3220,
+       "rssBytes": 618541056,
+       "pssBytes": 360459264,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2586816,
+       "totalBytes": 2953216
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 269.69999998807907,
+      "packages": 1366.3999999761581,
+      "app": 2125.600000023842,
+      "ready": 2723.199999988079,
+      "domContentLoaded": 11.699999988079071
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3140,
+       "rssBytes": 626565120,
+       "pssBytes": 365059072,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2586576,
+       "totalBytes": 2953216
+      },
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 222.69999998807907,
+      "packages": 1327.300000011921,
+      "app": 2076.600000023842,
+      "ready": 2680.399999976158,
+      "domContentLoaded": 10.800000011920929
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3210,
+       "rssBytes": 617709568,
+       "pssBytes": 359366656,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2586800,
+       "totalBytes": 2953216
+      },
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:43:07+00:00"
+  },
+  "chromium/main/boot/app-warm": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "boot/app-warm",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": true
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 22.799999952316284,
+      "packages": 871.8999999761581,
+      "app": 1250,
+      "ready": 1860.199999988079,
+      "domContentLoaded": 7.799999952316284
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 5970,
+       "rssBytes": 616493056,
+       "pssBytes": 354828288,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10860124,
+       "totalBytes": 11649024
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 21.899999976158142,
+      "packages": 872,
+      "app": 1256.300000011921,
+      "ready": 1850.199999988079,
+      "domContentLoaded": 8
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 6130,
+       "rssBytes": 614133760,
+       "pssBytes": 357372928,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10858648,
+       "totalBytes": 11911168
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 26.100000023841858,
+      "packages": 902.5,
+      "app": 1282.4000000357628,
+      "ready": 1889.800000011921,
+      "domContentLoaded": 7.900000035762787
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 6180,
+       "rssBytes": 607137792,
+       "pssBytes": 349569024,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 10857904,
+       "totalBytes": 11911168
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:43:31+00:00"
+  },
+  "chromium/worker/boot/app-warm": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "boot/app-warm",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": true
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 32.80000001192093,
+      "packages": 939.7000000476837,
+      "app": 1324.800000011921,
+      "ready": 1925.2000000476837,
+      "domContentLoaded": 9.100000023841858
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 6260,
+       "rssBytes": 623730688,
+       "pssBytes": 366104576,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2541368,
+       "totalBytes": 2953216
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 31,
+      "packages": 968.3000000119209,
+      "app": 1360.9000000357628,
+      "ready": 1982.9000000357628,
+      "domContentLoaded": 9.5
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 6370,
+       "rssBytes": 623624192,
+       "pssBytes": 363305984,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2541396,
+       "totalBytes": 3215360
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 32,
+      "packages": 931.1999999880791,
+      "app": 1322.699999988079,
+      "ready": 1924.199999988079,
+      "domContentLoaded": 8.899999976158142
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 6170,
+       "rssBytes": 621596672,
+       "pssBytes": 365223936,
+       "processes": 6
+      },
+      "heap": {
+       "usedBytes": 2541356,
+       "totalBytes": 3215360
+      },
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60061,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:43:55+00:00"
+  },
+  "chromium/main/latency": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "latency",
+   "scenario": "latency",
+   "params": {
+    "n": 1000
+   },
+   "runs": [
+    {
+     "samples": [
+      0.699999988079071,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.3999999761581421,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.3999999761581421,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.30000001192092896,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.20000004768371582,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.40000003576278687,
+      0.19999998807907104,
+      0.3999999761581421,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.2999999523162842,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.8999999761581421,
+      0.6000000238418579,
+      0.19999998807907104,
+      0,
+      0.30000001192092896,
+      0.19999998807907104,
+      0.40000003576278687,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      1.300000011920929,
+      0.10000002384185791,
+      0.699999988079071,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.699999988079071,
+      4.5,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.19999998807907104,
+      0.19999998807907104,
+      0.30000001192092896,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.5,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.09999996423721313,
+      0.20000004768371582,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.30000001192092896,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.30000001192092896,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.6000000238418579,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      1.2999999523162842,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.30000001192092896,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.2999999523162842,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.5,
+      0.09999996423721313,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0,
+      0.20000004768371582,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.09999996423721313,
+      0,
+      0,
+      0,
+      0.20000004768371582,
+      0,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:43:58+00:00"
+  },
+  "chromium/worker/latency": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "latency",
+   "scenario": "latency",
+   "params": {
+    "n": 1000
+   },
+   "runs": [
+    {
+     "samples": [
+      0.699999988079071,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.19999998807907104,
+      0.20000004768371582,
+      0.19999998807907104,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.40000003576278687,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.09999996423721313,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      2.800000011920929,
+      0.19999998807907104,
+      0.30000001192092896,
+      0.19999998807907104,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.2999999523162842,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      1.100000023841858,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.40000003576278687,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.2999999523162842,
+      0.10000002384185791,
+      1,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.30000001192092896,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.20000004768371582,
+      0.19999998807907104,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.30000001192092896,
+      0.19999998807907104,
+      1.100000023841858,
+      0.19999998807907104,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.6000000238418579,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.30000001192092896,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.3999999761581421,
+      0.19999998807907104,
+      0.40000003576278687,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.30000001192092896,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.20000004768371582,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.5,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0.09999996423721313,
+      0,
+      0,
+      0.20000004768371582,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.19999998807907104,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.19999998807907104,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.20000004768371582,
+      0,
+      0,
+      0.09999996423721313,
+      0.30000001192092896,
+      0.19999998807907104,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.10000002384185791,
+      0,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0,
+      0.10000002384185791,
+      0,
+      0.09999996423721313,
+      0.10000002384185791,
+      0,
+      0,
+      0.10000002384185791,
+      0.09999996423721313,
+      0,
+      0.10000002384185791
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:01+00:00"
+  },
+  "chromium/main/drain": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "drain",
+   "scenario": "drain",
+   "params": {
+    "n": 10000,
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "count": 10000,
+     "runs": [
+      {
+       "sendMs": 24.899999976158142,
+       "totalMs": 123.09999996423721,
+       "received": 10000
+      },
+      {
+       "sendMs": 26.400000035762787,
+       "totalMs": 166.4000000357628,
+       "received": 10000
+      },
+      {
+       "sendMs": 26,
+       "totalMs": 115.39999997615814,
+       "received": 10000
+      },
+      {
+       "sendMs": 16.5,
+       "totalMs": 105.10000002384186,
+       "received": 10000
+      },
+      {
+       "sendMs": 16.5,
+       "totalMs": 105.39999997615814,
+       "received": 10000
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:05+00:00"
+  },
+  "chromium/worker/drain": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "drain",
+   "scenario": "drain",
+   "params": {
+    "n": 10000,
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "count": 10000,
+     "runs": [
+      {
+       "sendMs": 7.100000023841858,
+       "totalMs": 144.5,
+       "received": 10000
+      },
+      {
+       "sendMs": 8.300000011920929,
+       "totalMs": 155.80000001192093,
+       "received": 10000
+      },
+      {
+       "sendMs": 7.099999964237213,
+       "totalMs": 134.69999998807907,
+       "received": 10000
+      },
+      {
+       "sendMs": 7.699999988079071,
+       "totalMs": 144.30000001192093,
+       "received": 10000
+      },
+      {
+       "sendMs": 7.599999964237213,
+       "totalMs": 129.39999997615814,
+       "received": 10000
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:08+00:00"
+  },
+  "chromium/main/flood": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "flood",
+   "scenario": "drain",
+   "params": {
+    "n": 200000,
+    "repeats": 1
+   },
+   "runs": [
+    {
+     "count": 200000,
+     "runs": [
+      {
+       "sendMs": 393.69999998807907,
+       "totalMs": 2214.399999976158,
+       "received": 200000
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:14+00:00"
+  },
+  "chromium/worker/flood": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "flood",
+   "scenario": "drain",
+   "params": {
+    "n": 200000,
+    "repeats": 1
+   },
+   "runs": [
+    {
+     "count": 200000,
+     "runs": [
+      {
+       "sendMs": 136.80000001192093,
+       "totalMs": 2628.899999976158,
+       "received": 200000
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:19+00:00"
+  },
+  "chromium/main/payload": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "payload",
+   "scenario": "payload",
+   "params": {
+    "sizes": [
+     1048576,
+     8388608
+    ],
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "results": [
+      {
+       "bytes": 1048576,
+       "samples": [
+        4,
+        5,
+        3.300000011920929,
+        3.300000011920929,
+        3.600000023841858
+       ]
+      },
+      {
+       "bytes": 8388608,
+       "samples": [
+        28.5,
+        31.19999998807907,
+        24.600000023841858,
+        28.5,
+        24.30000001192093
+       ]
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:22+00:00"
+  },
+  "chromium/worker/payload": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "payload",
+   "scenario": "payload",
+   "params": {
+    "sizes": [
+     1048576,
+     8388608
+    ],
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "results": [
+      {
+       "bytes": 1048576,
+       "samples": [
+        5,
+        4.5,
+        3.699999988079071,
+        4.800000011920929,
+        3.600000023841858
+       ]
+      },
+      {
+       "bytes": 8388608,
+       "samples": [
+        32.69999998807907,
+        28.69999998807907,
+        34.69999998807907,
+        29.69999998807907,
+        30.80000001192093
+       ]
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:26+00:00"
+  },
+  "chromium/main/latest": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "latest",
+   "scenario": "latest",
+   "params": {
+    "n": 20000
+   },
+   "runs": [
+    {
+     "calls": 20000,
+     "received": 1
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:29+00:00"
+  },
+  "chromium/worker/latest": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "latest",
+   "scenario": "latest",
+   "params": {
+    "n": 20000
+   },
+   "runs": [
+    {
+     "calls": 20000,
+     "received": 1
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:32+00:00"
+  },
+  "chromium/main/stall": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "stall",
+   "scenario": "stall",
+   "params": {
+    "n": 5000,
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "count": 5000,
+     "burstGapMs": [
+      33.40000000000009,
+      33.29999999999927,
+      33.30000000000018,
+      16.799999999999272,
+      33.30000000000109
+     ],
+     "quietGapMs": [
+      16.800000000000182,
+      16.700000000000728,
+      16.800000000000182,
+      16.699999999999818,
+      16.800000000000182
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:41+00:00"
+  },
+  "chromium/worker/stall": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "stall",
+   "scenario": "stall",
+   "params": {
+    "n": 5000,
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "count": 5000,
+     "burstGapMs": [
+      16.799999999999272,
+      16.700000000000728,
+      16.799999999999272,
+      16.80000000000109,
+      16.700000000000728
+     ],
+     "quietGapMs": [
+      16.800000000000182,
+      16.799999999999272,
+      16.700000000000728,
+      16.799999999999272,
+      16.80000000000109
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:52+00:00"
+  },
+  "chromium/main/control": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "control",
+   "scenario": "control",
+   "params": {
+    "selfFlood": 10000,
+    "spin": 3000000,
+    "churn": 200,
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "selfFlood": {
+      "n": 10000,
+      "samples": [
+       151.80000000000015,
+       101.7999999999999,
+       152.69999999999985,
+       98.79999999999978,
+       105.99999999999987
+      ]
+     },
+     "spin": {
+      "n": 3000000,
+      "samples": [
+       154.59999999999985,
+       150.50000000000009,
+       147.10000000000002,
+       159.10000000000002,
+       151.79999999999973
+      ]
+     },
+     "churn": {
+      "n": 200,
+      "samples": [
+       60.79999999999952,
+       56.30000000000024,
+       57.99999999999983,
+       51.9999999999996,
+       65.10000000000016
+      ]
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:44:57+00:00"
+  },
+  "chromium/worker/control": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "control",
+   "scenario": "control",
+   "params": {
+    "selfFlood": 10000,
+    "spin": 3000000,
+    "churn": 200,
+    "repeats": 5
+   },
+   "runs": [
+    {
+     "selfFlood": {
+      "n": 10000,
+      "samples": [
+       160.69999999999985,
+       158.79999999999984,
+       105.50000000000014,
+       111.20000000000019,
+       101.89999999999966
+      ]
+     },
+     "spin": {
+      "n": 3000000,
+      "samples": [
+       153.3000000000002,
+       152.69999999999985,
+       153.0999999999998,
+       151.69999999999993,
+       151.80000000000015
+      ]
+     },
+     "churn": {
+      "n": 200,
+      "samples": [
+       58.49999999999955,
+       53.19999999999947,
+       56.49999999999977,
+       50.09999999999959,
+       62.5
+      ]
+     }
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:45:02+00:00"
+  },
+  "chromium/main/leak/bridge": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "leak/bridge",
+   "scenario": "leak",
+   "params": {
+    "rounds": 10,
+    "perRound": 5000,
+    "workload": "bridge"
+   },
+   "runs": [
+    {
+     "workload": "bridge",
+     "perRound": 5000,
+     "readings": [
+      {
+       "tree": {
+        "cpuMs": 3050,
+        "rssBytes": 605229056,
+        "pssBytes": 346445824,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10729048,
+        "totalBytes": 11386880
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60064,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3270,
+        "rssBytes": 603975680,
+        "pssBytes": 345208832,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10828940,
+        "totalBytes": 11649024
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60073,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3390,
+        "rssBytes": 603770880,
+        "pssBytes": 344999936,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10852860,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60089,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3500,
+        "rssBytes": 603828224,
+        "pssBytes": 345114624,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10854552,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60097,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3620,
+        "rssBytes": 604155904,
+        "pssBytes": 345348096,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10871380,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60105,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3740,
+        "rssBytes": 603955200,
+        "pssBytes": 345434112,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10897128,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60105,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3850,
+        "rssBytes": 604004352,
+        "pssBytes": 345380864,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10918304,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60113,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3950,
+        "rssBytes": 604041216,
+        "pssBytes": 345511936,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10923564,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60121,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4070,
+        "rssBytes": 604110848,
+        "pssBytes": 345499648,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10926960,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60137,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4190,
+        "rssBytes": 604418048,
+        "pssBytes": 345516032,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10930992,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60145,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4310,
+        "rssBytes": 604278784,
+        "pssBytes": 345536512,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10931296,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60145,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:45:06+00:00"
+  },
+  "chromium/worker/leak/bridge": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "leak/bridge",
+   "scenario": "leak",
+   "params": {
+    "rounds": 10,
+    "perRound": 5000,
+    "workload": "bridge"
+   },
+   "runs": [
+    {
+     "workload": "bridge",
+     "perRound": 5000,
+     "readings": [
+      {
+       "tree": {
+        "cpuMs": 3230,
+        "rssBytes": 614330368,
+        "pssBytes": 357289984,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2505424,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60064,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3430,
+        "rssBytes": 617762816,
+        "pssBytes": 360591360,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2570892,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60089,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3530,
+        "rssBytes": 622219264,
+        "pssBytes": 364686336,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2596628,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60089,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3640,
+        "rssBytes": 627634176,
+        "pssBytes": 370151424,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2600972,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60089,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3760,
+        "rssBytes": 636948480,
+        "pssBytes": 379408384,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2604376,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60105,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3870,
+        "rssBytes": 642510848,
+        "pssBytes": 384831488,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2635024,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60105,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3970,
+        "rssBytes": 650690560,
+        "pssBytes": 393666560,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2638200,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60121,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4060,
+        "rssBytes": 655327232,
+        "pssBytes": 398168064,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2639664,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60129,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4170,
+        "rssBytes": 661581824,
+        "pssBytes": 403886080,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2639856,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60129,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4290,
+        "rssBytes": 666095616,
+        "pssBytes": 408514560,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2643888,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60137,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4400,
+        "rssBytes": 671760384,
+        "pssBytes": 414310400,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2644192,
+        "totalBytes": 3477504
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60159,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:45:10+00:00"
+  },
+  "chromium/main/leak/churn": {
+   "engine": "chromium",
+   "mode": "main",
+   "case": "leak/churn",
+   "scenario": "leak",
+   "params": {
+    "rounds": 10,
+    "perRound": 200,
+    "workload": "churn"
+   },
+   "runs": [
+    {
+     "workload": "churn",
+     "perRound": 200,
+     "readings": [
+      {
+       "tree": {
+        "cpuMs": 3500,
+        "rssBytes": 604823552,
+        "pssBytes": 346903552,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 10786172,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60072,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3640,
+        "rssBytes": 605151232,
+        "pssBytes": 347131904,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11169668,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74504,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3780,
+        "rssBytes": 607588352,
+        "pssBytes": 349519872,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11186416,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74539,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3930,
+        "rssBytes": 608641024,
+        "pssBytes": 350060544,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11209420,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74566,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4070,
+        "rssBytes": 609599488,
+        "pssBytes": 350703616,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11213972,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74585,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4220,
+        "rssBytes": 609173504,
+        "pssBytes": 350928896,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11225644,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74603,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4350,
+        "rssBytes": 609771520,
+        "pssBytes": 351035392,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11225884,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74621,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4510,
+        "rssBytes": 609517568,
+        "pssBytes": 351379456,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11227224,
+        "totalBytes": 12173312
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74639,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4650,
+        "rssBytes": 609558528,
+        "pssBytes": 351186944,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11232848,
+        "totalBytes": 11911168
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74644,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4800,
+        "rssBytes": 609988608,
+        "pssBytes": 351436800,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11249168,
+        "totalBytes": 12173312
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74646,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4940,
+        "rssBytes": 610275328,
+        "pssBytes": 351617024,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 11262972,
+        "totalBytes": 12173312
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74640,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:45:14+00:00"
+  },
+  "chromium/worker/leak/churn": {
+   "engine": "chromium",
+   "mode": "worker",
+   "case": "leak/churn",
+   "scenario": "leak",
+   "params": {
+    "rounds": 10,
+    "perRound": 200,
+    "workload": "churn"
+   },
+   "runs": [
+    {
+     "workload": "churn",
+     "perRound": 200,
+     "readings": [
+      {
+       "tree": {
+        "cpuMs": 3160,
+        "rssBytes": 615788544,
+        "pssBytes": 358580224,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2499172,
+        "totalBytes": 2953216
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 60072,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3340,
+        "rssBytes": 620228608,
+        "pssBytes": 362233856,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2516716,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 73722,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3450,
+        "rssBytes": 627912704,
+        "pssBytes": 368967680,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2546352,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 73749,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3570,
+        "rssBytes": 636383232,
+        "pssBytes": 377507840,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2598672,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 73776,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3690,
+        "rssBytes": 644341760,
+        "pssBytes": 385380352,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2912784,
+        "totalBytes": 3739648
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74577,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3830,
+        "rssBytes": 641441792,
+        "pssBytes": 382803968,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2612912,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74595,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 3950,
+        "rssBytes": 642805760,
+        "pssBytes": 383930368,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2614120,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74613,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4070,
+        "rssBytes": 645541888,
+        "pssBytes": 386550784,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2615408,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 73841,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4180,
+        "rssBytes": 647598080,
+        "pssBytes": 389013504,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2926044,
+        "totalBytes": 3739648
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74641,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4300,
+        "rssBytes": 649154560,
+        "pssBytes": 390782976,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2623216,
+        "totalBytes": 3215360
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 73863,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      },
+      {
+       "tree": {
+        "cpuMs": 4420,
+        "rssBytes": 652034048,
+        "pssBytes": 393961472,
+        "processes": 6
+       },
+       "heap": {
+        "usedBytes": 2937940,
+        "totalBytes": 3739648
+       },
+       "interpreter": {
+        "op": "stats",
+        "gc_objects": 74648,
+        "allocated_blocks": null,
+        "wasm_bytes": 45350912
+       }
+      }
+     ]
+    }
+   ],
+   "browser_version": "156.0.8078.4",
+   "finished_at": "2026-11-12T11:45:18+00:00"
+  },
+  "firefox/-/idle/blank": {
+   "engine": "firefox",
+   "mode": "-",
+   "case": "idle/blank",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10030.727103000001,
+     "cpuMs": 60,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10030.701001000001,
+     "cpuMs": 70,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10029.042411999999,
+     "cpuMs": 70,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:46:00+00:00"
+  },
+  "firefox/main/idle/pyodide": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "idle/pyodide",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10031.024838,
+     "cpuMs": 100,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10031.145101,
+     "cpuMs": 90,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10031.668158,
+     "cpuMs": 50,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:46:46+00:00"
+  },
+  "firefox/worker/idle/pyodide": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "idle/pyodide",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10031.621249,
+     "cpuMs": 100,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10028.721944,
+     "cpuMs": 60,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10025.535628,
+     "cpuMs": 80,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:47:32+00:00"
+  },
+  "firefox/main/idle/textual": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "idle/textual",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10030.959335,
+     "cpuMs": 100,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10031.267067,
+     "cpuMs": 40,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10031.441448000001,
+     "cpuMs": 90,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:48:23+00:00"
+  },
+  "firefox/worker/idle/textual": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "idle/textual",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10030.652006,
+     "cpuMs": 40,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10029.047203000002,
+     "cpuMs": 100,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10028.770364,
+     "cpuMs": 110,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:49:13+00:00"
+  },
+  "firefox/main/idle/tick": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "idle/tick",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10028.463998,
+     "cpuMs": 200,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10033.205202,
+     "cpuMs": 200,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10022.926685999999,
+     "cpuMs": 230,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:50:03+00:00"
+  },
+  "firefox/worker/idle/tick": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "idle/tick",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10031.777251,
+     "cpuMs": 230,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10033.503643999999,
+     "cpuMs": 200,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    },
+    {
+     "windowMs": 10030.527913999998,
+     "cpuMs": 220,
+     "processes": 7,
+     "mainThread": null,
+     "writes": null,
+     "characters": null
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:50:55+00:00"
+  },
+  "firefox/main/idle/app": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "idle/app",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10029.976009000002,
+     "cpuMs": 190,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10030.407465,
+     "cpuMs": 200,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10029.373098,
+     "cpuMs": 210,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 0,
+     "characters": 0
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:51:45+00:00"
+  },
+  "firefox/worker/idle/app": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "idle/app",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10025.826771,
+     "cpuMs": 190,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10031.320304,
+     "cpuMs": 210,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 0,
+     "characters": 0
+    },
+    {
+     "windowMs": 10027.0399,
+     "cpuMs": 240,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 0,
+     "characters": 0
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:52:36+00:00"
+  },
+  "firefox/main/idle/input": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "idle/input",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10031.569269,
+     "cpuMs": 320,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10033.075030999998,
+     "cpuMs": 280,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10028.038298,
+     "cpuMs": 290,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 20,
+     "characters": 13690
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:53:27+00:00"
+  },
+  "firefox/worker/idle/input": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "idle/input",
+   "scenario": "idle",
+   "params": {
+    "windowMs": 10000,
+    "settleMs": 3000
+   },
+   "runs": [
+    {
+     "windowMs": 10031.710948,
+     "cpuMs": 290,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10031.230946,
+     "cpuMs": 340,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 20,
+     "characters": 13690
+    },
+    {
+     "windowMs": 10031.515218,
+     "cpuMs": 340,
+     "processes": 7,
+     "mainThread": null,
+     "writes": 20,
+     "characters": 13690
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:54:18+00:00"
+  },
+  "firefox/-/boot/blank": {
+   "engine": "firefox",
+   "mode": "-",
+   "case": "boot/blank",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "domContentLoaded": 5
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1000,
+       "rssBytes": 760606720,
+       "pssBytes": 439328768,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "domContentLoaded": 15
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1000,
+       "rssBytes": 761364480,
+       "pssBytes": 442121216,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "domContentLoaded": 4
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 1010,
+       "rssBytes": 762908672,
+       "pssBytes": 441902080,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:54:29+00:00"
+  },
+  "firefox/main/boot/pyodide": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "boot/pyodide",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 1311,
+      "domContentLoaded": 63
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2350,
+       "rssBytes": 904847360,
+       "pssBytes": 576131072,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1419,
+      "domContentLoaded": 63
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2330,
+       "rssBytes": 903307264,
+       "pssBytes": 578020352,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1368,
+      "domContentLoaded": 65
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2360,
+       "rssBytes": 905678848,
+       "pssBytes": 577589248,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:54:45+00:00"
+  },
+  "firefox/worker/boot/pyodide": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "boot/pyodide",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 1407,
+      "domContentLoaded": 52
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2340,
+       "rssBytes": 945766400,
+       "pssBytes": 612872192,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2024,
+      "domContentLoaded": 58
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2410,
+       "rssBytes": 934809600,
+       "pssBytes": 602141696,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 1431,
+      "domContentLoaded": 70
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 2360,
+       "rssBytes": 948330496,
+       "pssBytes": 616455168,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:55:02+00:00"
+  },
+  "firefox/main/boot/textual": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "boot/textual",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2926,
+      "domContentLoaded": 60
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3600,
+       "rssBytes": 971948032,
+       "pssBytes": 636731392,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2681,
+      "domContentLoaded": 57
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3530,
+       "rssBytes": 968114176,
+       "pssBytes": 631196672,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2795,
+      "domContentLoaded": 57
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3530,
+       "rssBytes": 971960320,
+       "pssBytes": 635358208,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:55:22+00:00"
+  },
+  "firefox/worker/boot/textual": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "boot/textual",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2800,
+      "domContentLoaded": 58
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3520,
+       "rssBytes": 988745728,
+       "pssBytes": 648400896,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2741,
+      "domContentLoaded": 59
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3530,
+       "rssBytes": 977051648,
+       "pssBytes": 640346112,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2920,
+      "domContentLoaded": 64
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3630,
+       "rssBytes": 977760256,
+       "pssBytes": 639639552,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:55:42+00:00"
+  },
+  "firefox/main/boot/tick": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "boot/tick",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2892,
+      "domContentLoaded": 64
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3520,
+       "rssBytes": 980848640,
+       "pssBytes": 646233088,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 3493,
+      "domContentLoaded": 66
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3550,
+       "rssBytes": 966053888,
+       "pssBytes": 629085184,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2825,
+      "domContentLoaded": 59
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3540,
+       "rssBytes": 978649088,
+       "pssBytes": 642179072,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:56:03+00:00"
+  },
+  "firefox/worker/boot/tick": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "boot/tick",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "ready": 2900,
+      "domContentLoaded": 62
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3570,
+       "rssBytes": 995348480,
+       "pssBytes": 657524736,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 3380,
+      "domContentLoaded": 47
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3590,
+       "rssBytes": 972922880,
+       "pssBytes": 634674176,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "ready": 2861,
+      "domContentLoaded": 59
+     },
+     "writesAtPublish": null,
+     "memory": {
+      "tree": {
+       "cpuMs": 3620,
+       "rssBytes": 991006720,
+       "pssBytes": 654496768,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:56:24+00:00"
+  },
+  "firefox/main/boot/app": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "boot/app",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 345,
+      "packages": 1500,
+      "app": 2362,
+      "ready": 3003,
+      "domContentLoaded": 63
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 3740,
+       "rssBytes": 1001553920,
+       "pssBytes": 661874688,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60066,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 349,
+      "packages": 1505,
+      "app": 2435,
+      "ready": 3070,
+      "domContentLoaded": 65
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 3740,
+       "rssBytes": 1000259584,
+       "pssBytes": 658410496,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60063,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 404,
+      "packages": 1519,
+      "app": 2500,
+      "ready": 3130,
+      "domContentLoaded": 71
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 3720,
+       "rssBytes": 999809024,
+       "pssBytes": 661339136,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60066,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:56:45+00:00"
+  },
+  "firefox/worker/boot/app": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "boot/app",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 308,
+      "packages": 1457,
+      "app": 2416,
+      "ready": 3050,
+      "domContentLoaded": 63
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3750,
+       "rssBytes": 1011175424,
+       "pssBytes": 668139520,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60063,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 338,
+      "packages": 1598,
+      "app": 2543,
+      "ready": 3190,
+      "domContentLoaded": 71
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3780,
+       "rssBytes": 1007153152,
+       "pssBytes": 663237632,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60066,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 353,
+      "packages": 1502,
+      "app": 2371,
+      "ready": 3008,
+      "domContentLoaded": 69
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3820,
+       "rssBytes": 1000046592,
+       "pssBytes": 659069952,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60066,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:57:06+00:00"
+  },
+  "firefox/main/boot/input": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "boot/input",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 311,
+      "packages": 1461,
+      "app": 2343,
+      "ready": 2985,
+      "domContentLoaded": 72
+     },
+     "writesAtPublish": 8,
+     "memory": {
+      "tree": {
+       "cpuMs": 3770,
+       "rssBytes": 1006657536,
+       "pssBytes": 666149888,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 370,
+      "packages": 1535,
+      "app": 2491,
+      "ready": 3127,
+      "domContentLoaded": 69
+     },
+     "writesAtPublish": 8,
+     "memory": {
+      "tree": {
+       "cpuMs": 3770,
+       "rssBytes": 998096896,
+       "pssBytes": 657942528,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 430,
+      "packages": 1666,
+      "app": 2529,
+      "ready": 3160,
+      "domContentLoaded": 72
+     },
+     "writesAtPublish": 8,
+     "memory": {
+      "tree": {
+       "cpuMs": 3800,
+       "rssBytes": 994009088,
+       "pssBytes": 654318592,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:57:27+00:00"
+  },
+  "firefox/worker/boot/input": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "boot/input",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": false
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 395,
+      "packages": 1506,
+      "app": 2398,
+      "ready": 3038,
+      "domContentLoaded": 76
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3830,
+       "rssBytes": 1011027968,
+       "pssBytes": 666987520,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 324,
+      "packages": 1393,
+      "app": 2294,
+      "ready": 2929,
+      "domContentLoaded": 62
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3790,
+       "rssBytes": 1003003904,
+       "pssBytes": 659124224,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 352,
+      "packages": 1456,
+      "app": 2400,
+      "ready": 3028,
+      "domContentLoaded": 59
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 3780,
+       "rssBytes": 992927744,
+       "pssBytes": 649149440,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": null
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:57:48+00:00"
+  },
+  "firefox/main/boot/app-warm": {
+   "engine": "firefox",
+   "mode": "main",
+   "case": "boot/app-warm",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": true
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 49,
+      "packages": 872,
+      "app": 1305,
+      "ready": 1935,
+      "domContentLoaded": 15
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 6280,
+       "rssBytes": 1180180480,
+       "pssBytes": 838035456,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 50,
+      "packages": 873,
+      "app": 1308,
+      "ready": 1952,
+      "domContentLoaded": 14
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 6250,
+       "rssBytes": 1166004224,
+       "pssBytes": 824097792,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 47,
+      "packages": 886,
+      "app": 1323,
+      "ready": 1962,
+      "domContentLoaded": 15
+     },
+     "writesAtPublish": 7,
+     "memory": {
+      "tree": {
+       "cpuMs": 6320,
+       "rssBytes": 1160065024,
+       "pssBytes": 818269184,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60061,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:58:15+00:00"
+  },
+  "firefox/worker/boot/app-warm": {
+   "engine": "firefox",
+   "mode": "worker",
+   "case": "boot/app-warm",
+   "scenario": "boot",
+   "params": {
+    "settleMs": 3000,
+    "warm": true
+   },
+   "runs": [
+    {
+     "marks": {
+      "interpreter": 60,
+      "packages": 930,
+      "app": 1379,
+      "ready": 2046,
+      "domContentLoaded": 19
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 6400,
+       "rssBytes": 1061404672,
+       "pssBytes": 717232128,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60064,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 60,
+      "packages": 932,
+      "app": 1378,
+      "ready": 2016,
+      "domContentLoaded": 18
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 6420,
+       "rssBytes": 1069490176,
+       "pssBytes": 724958208,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60065,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    },
+    {
+     "marks": {
+      "interpreter": 56,
+      "packages": 911,
+      "app": 1352,
+      "ready": 1992,
+      "domContentLoaded": 17
+     },
+     "writesAtPublish": 1,
+     "memory": {
+      "tree": {
+       "cpuMs": 6310,
+       "rssBytes": 1070891008,
+       "pssBytes": 724258816,
+       "processes": 7
+      },
+      "heap": null,
+      "interpreter": {
+       "op": "stats",
+       "gc_objects": 60074,
+       "allocated_blocks": null,
+       "wasm_bytes": 45350912
+      }
+     }
+    }
+   ],
+   "browser_version": "157.0",
+   "finished_at": "2026-11-12T11:58:42+00:00"
+  }
+ }
+}
