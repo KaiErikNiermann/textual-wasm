@@ -22,8 +22,9 @@ jobs:
   changes:
     # Which jobs this change can affect, so a docs edit does not boot three browsers. Every
     # job below is gated on its own filter with `if:` rather than the workflow on `paths:`,
-    # because a job skipped by `if:` still reports, and a required check that never reports
-    # leaves a pull request waiting forever.
+    # so the run always exists and `result` at the end always reports. A skipped matrix job
+    # leaves no check of its own behind (measured: a docs-only push listed only `changes`
+    # and `docs`), so `result` is the one check to require if branch protection is added.
     #
     # Each filter lists what its job reads, including what it reads indirectly - the docs
     # site bundles the library and the examples, the examples install the package by path -
@@ -362,3 +363,21 @@ jobs:
           size=$(du -sm docs/_build/html | cut -f1)
           echo "site: ${size} MB"
           test "${size}" -lt 200
+
+  result:
+    # The run's verdict, as one check that always reports: success when every job either
+    # passed or was skipped as irrelevant, failure when any job that ran did not pass.
+    needs: [changes, gates, check, example, docs]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: every job that ran passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for outcome in ${RESULTS}; do
+            case "${outcome}" in
+              success | skipped) ;;
+              *) echo "a job ended ${outcome}" >&2; exit 1 ;;
+            esac
+          done
