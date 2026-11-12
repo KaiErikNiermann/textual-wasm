@@ -200,13 +200,23 @@ export async function openReady(page, url, readyText) {
     }
     return;
   }
+  // Ready, or failed: a page that has reported failure is never going to draw, and waiting
+  // out the timeout on it turned one failed wheel fetch into five silent minutes.
   await page.waitForFunction(
     (text) =>
-      globalThis.textualWasm !== undefined &&
-      globalThis.textualWasm.screen().lines.some((line) => line.includes(text)),
+      document.querySelector("#status")?.dataset.state === "failed" ||
+      (globalThis.textualWasm !== undefined &&
+        globalThis.textualWasm.screen().lines.some((line) => line.includes(text))),
     readyText,
     { timeout: READY_TIMEOUT_MS },
   );
+  const failure = await page.evaluate(() => {
+    const status = document.querySelector("#status");
+    return status?.dataset.state === "failed" ? status.textContent : null;
+  });
+  if (failure !== null) {
+    throw new Error(`the page failed to boot: ${failure}`);
+  }
 }
 
 /**
