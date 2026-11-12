@@ -55,7 +55,8 @@ def test_native_controls_lose_nothing() -> None:
     assert [run["received"] for run in measured["drain"]["runs"]] == [SMOKE.drain_messages] * (
         SMOKE.repeats
     )
-    assert len(measured["leakChurn"]["interpreter"]) == SMOKE.leak_rounds + 1
+    for workload in ("leakChurn", "leakBridge"):
+        assert len(measured[workload]["interpreter"]) == SMOKE.native_leak_rounds + 1
 
 
 # --- through a real browser ------------------------------------------------------------
