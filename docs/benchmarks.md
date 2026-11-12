@@ -20,6 +20,13 @@ The tables on this page are **generated** from `bench/results/latest.json` by `j
 
 **No leaks in textual-wasm.** Over 50,000 messages the WebAssembly memory is flat, and so is the browser's memory in Chromium, where every JavaScript realm can be collected before a reading. The page heap grows by 3-7 KiB per 5,000 messages - about a byte a message, too little for ten rounds to tell from settling - and the nine or so Python objects added per round are Textual's bounded render caches filling: run natively for 400,000 messages, the count stays flat. Mounting and removing widgets natively does grow, towards a bound of 1,024 entries, because a cache in Textual keeps removed widgets' render caches alive ([Textualize/textual#6665](https://github.com/Textualize/textual/issues/6665)). That is Textual's, and it happens on a terminal too.
 
+## Results
+
+The layers the tables are split by (`blank`, `pyodide`, `textual`, `tick`, `app`, `input`) and how each number is read are described in [How it is measured](#how-it-is-measured) below.
+
+```{include} benchmark-results.md
+```
+
 ## How it is measured
 
 ### Attribution: one layer at a time
@@ -60,11 +67,6 @@ Three workloads run inside Python, timed from inside Python, identically in ever
 - mounting and removing widgets, which is Textual's DOM and compositor.
 
 The loop's native-to-browser ratio is the cost of running CPython as WebAssembly. A workload with the same ratio is slow because of the interpreter, not because of anything built on it. The data channel's throughput is compared the same way, against the bridge fed directly under CPython, with the page, the transport and the browser removed.
-
-## Results
-
-```{include} benchmark-results.md
-```
 
 ## Reproducing
 
