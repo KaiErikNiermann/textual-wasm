@@ -57,7 +57,12 @@ export async function launch(config) {
   const { pidtree } = loadFrom(config.resolveFrom, "pidtree");
   const pidusage = loadFrom(config.resolveFrom, "pidusage");
   const type = playwright[config.engine];
-  const server = await type.launchServer();
+  // Chromium exposes `gc()` in every isolate, the worker's included, so the interpreter can
+  // collect the JavaScript realm it runs in before a memory reading. CDP's collection
+  // reaches only the page; without this a worker build's uncollected garbage reads as growth.
+  const server = await type.launchServer(
+    config.engine === "chromium" ? { args: ["--js-flags=--expose-gc"] } : {},
+  );
   const pid = server.process().pid;
   const browser = await type.connect(server.wsEndpoint());
   return {

@@ -32,6 +32,9 @@ class InterpreterMemory:
     This is the interpreter's whole heap as the browser sees it. It only ever grows - linear
     memory cannot shrink - so it reads as a high-water mark rather than current use."""
 
+    javascript_collected: bool
+    """Whether the JavaScript realm around the interpreter was collected first, too."""
+
 
 def wasm_memory_bytes() -> int | None:
     """The WebAssembly memory size, read through Pyodide's own module object.
@@ -48,13 +51,37 @@ def wasm_memory_bytes() -> int | None:
     return length if isinstance(length, int) else None
 
 
+def collect_javascript() -> bool:
+    """Run a full collection of the JavaScript realm this interpreter lives in, if allowed.
+
+    Only possible where the engine exposes `gc()` - Chromium started with `--expose-gc`,
+    which the benchmark harness does. In a worker build that realm is the worker, which the
+    page's own collection never reaches, so without this the worker's garbage would read as
+    growth in every reading taken from outside.
+
+    Returns:
+        Whether a collection ran.
+    """
+    try:
+        js = importlib.import_module("js")
+    except ImportError:
+        return False
+    collect: object = getattr(js, "gc", None)
+    if not callable(collect):
+        return False
+    collect()
+    return True
+
+
 def interpreter_memory() -> InterpreterMemory:
     """Collect, then read every counter."""
     gc.collect()
+    collected = collect_javascript()
     return InterpreterMemory(
         gc_objects=len(gc.get_objects()),
         allocated_blocks=sys.getallocatedblocks() or None,
         wasm_bytes=wasm_memory_bytes(),
+        javascript_collected=collected,
     )
 
 
