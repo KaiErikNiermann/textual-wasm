@@ -128,12 +128,13 @@ is a property of the font file, not of the emulator, so the render equivalence r
 covers box drawing, CJK, combining marks, astral characters, variation selectors and ZWJ
 emoji — does not extend to them.
 
-**The data channel has no backpressure, and Python sets the ceiling.** `send` returns as soon
-as the value is queued, and nothing tells a fast sender to slow down. Measured in Chromium: a
-page pushes 200,000 messages in 162 ms and the application takes 2.7 seconds to consume them,
-so the cost of a burst is the backlog afterwards. The receiving ceiling is about 75,000
-messages a second, and it belongs to the interpreter — the same burst takes the same time on a
-terminal, and `--worker` moves the work without reducing it. A control a person operates sits
+**The data channel has no backpressure, and Textual's queue sets the ceiling.** `send`
+returns as soon as the value is queued, and nothing tells a fast sender to slow down. Measured
+in Chromium: a page pushes 200,000 messages in 124 ms and the application takes 2.6 seconds to
+consume them, so the cost of a burst is the backlog afterwards. The receiving ceiling is
+55,000 to 87,000 messages a second, and it belongs to Textual's message queue under Pyodide -
+an app posting to itself is as slow - and `--worker` moves the work without reducing it (see
+{doc}`benchmarks`). A control a person operates sits
 three orders of magnitude below that ceiling. A kHz sample stream does not. See {doc}`bridge`.
 
 **A bound reactive is not type-checked at runtime.** Textual's reactives do not validate, so a

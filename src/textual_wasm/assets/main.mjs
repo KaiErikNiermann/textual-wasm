@@ -148,9 +148,10 @@ function createBridge() {
    * Send at most one value per channel per frame, keeping the newest.
    *
    * There is no backpressure anywhere in this channel - `send` returns as soon as the value
-   * is queued, and the queue lives in the receiving runtime. Measured in Chromium: a page
-   * can push 200,000 messages in 162ms and the application needs 2.7 seconds to consume
-   * them, so a burst builds a backlog roughly seventeen times longer than it took to send.
+   * is queued, and the queue lives in the receiving runtime. Measured in Chromium (see
+   * docs/benchmarks.md): a page can push 200,000 messages in 0.1-0.4 seconds and the
+   * application needs 2.2-2.6 seconds to consume them, so a burst builds a backlog several
+   * times longer than it took to send.
    *
    * For a channel carrying *state* that is the wrong trade entirely - the application will
    * render the last value and every earlier one was work nobody sees. Coalescing keeps the

@@ -359,16 +359,16 @@ codec in front of the channel; this layer will not do it for them.
 
 ## Cost and limits
 
-Measured on a desktop machine through Playwright's Chromium 153 and Firefox 155, against a
-build with the interpreter in a Web Worker. Absolute numbers vary by machine. The ratios
-below do not.
+Measured by `just bench` through Playwright's Chromium 156 and Firefox 157, against a build
+with the interpreter in a Web Worker; {doc}`benchmarks` has every number for both builds and
+how each is taken. Absolute numbers vary by machine. The ratios below do not.
 
 | | Chromium | Firefox |
 |---|---|---|
-| Round trip, page → app → page | 0.1 ms median, 0.2 ms p95 | under 1 ms |
-| 10,000 small messages, app drains | 148 ms | 193 ms |
-| 1 MB payload, round trip | 4 ms | similar |
-| 8 MB payload, round trip | 32 ms | similar |
+| Round trip, page → app → page | 0.1 ms median, 0.2 ms p95 | under 1 ms (Firefox's clock resolution) |
+| 10,000 small messages, app drains | 138 ms | 184 ms |
+| 1 MiB payload, round trip | 4.7 ms | 4 ms |
+| 8 MiB payload, round trip | 28 ms | 19 ms |
 | 200,000 messages, all received | yes | yes |
 
 A single value crossing costs about a tenth of a millisecond. A slider dragged at 60 Hz uses
@@ -380,21 +380,24 @@ negligible.** The rest of this section is about the cases where it is not.
 `send` returns as soon as the value is queued. The queue lives in the receiving runtime, and
 nothing anywhere tells a fast sender to slow down.
 
-The gap between the two sides is large. Measured: a page pushes **200,000 messages in
-162 ms**, and the application takes **2.7 seconds** to consume them. Sending is seventeen
-times faster than receiving, so the cost of a burst is not the time spent sending it. The cost
-is the backlog afterwards, during which the application drains the queue and its own work
-waits.
+The gap between the two sides is large. Measured in Chromium: a page pushes **200,000
+messages in 124 ms**, and the application takes **2.6 seconds** to consume them. Sending is
+about twenty times faster than receiving, so the cost of a burst is not the time spent sending
+it. The cost is the backlog afterwards, during which the application drains the queue and its
+own work waits.
 
 ```text
-page:  |==| 162ms of sending
-app:   |==============================| 2.7s of draining
+page:  |=| 124ms of sending
+app:   |==============================| 2.6s of draining
 ```
 
-The ceiling is about **75,000 messages a second** into the application. That ceiling belongs
-to Python, not to the channel: the same burst takes the same time on a terminal. `--worker`
-does not raise it, because moving the work to another thread does not reduce how much there
-is.
+The ceiling is **55,000 to 87,000 messages a second** into the application, depending on the
+engine and the build. That ceiling belongs to Textual's message queue running under Pyodide,
+not to the channel: an app posting the same number of messages to itself, with no page
+involved, takes 106-143 ms per 10,000 - almost exactly what the channel takes on the main
+thread. A worker build adds about 30%, the `postMessage` hop each message makes. `--worker`
+does not raise the ceiling, because moving the work to another thread does not reduce how much
+there is. On a terminal the same queue is two to three times faster.
 
 Three cases, in order of concern:
 
@@ -410,7 +413,7 @@ bridge.sendLatest("gain", Number(slider.value));
 ```
 
 At most one value per channel per frame, keeping the newest and dropping the rest. Measured:
-20,000 calls in a synchronous loop arrive as **one** message.
+20,000 calls in a synchronous loop arrive as **one** message, in both engines and both builds.
 
 Dropping is wrong for an event stream and right for a value that is only ever rendered, since
 the application would have drawn the last one and discarded the rest. The two are separate
@@ -422,17 +425,19 @@ than a queue.
 
 ### Large payloads are fine, and are copied
 
-About 3.5 ms per megabyte, round trip, in both engines. Every payload is copied at each
-boundary — `JSON.stringify`, the structured clone into the worker, `json.loads` — so an 8 MB
-message costs several 8 MB allocations before it is a Python object. One per frame is far too
-many. One when a file is dropped costs nothing worth measuring.
+About 2.5 to 3.5 ms per mebibyte, round trip. Every payload is copied at each boundary —
+`JSON.stringify`, the structured clone into the worker, `json.loads` — so an 8 MiB message
+costs several 8 MiB allocations before it is a Python object. One per frame is far too many.
+One when a file is dropped costs nothing worth measuring.
 
 ### Nothing accumulates
 
-Checked with forced collection between rounds, in both modes: after 25,000 messages the
-page's heap is where it started — 27,000 KB to 27,004 KB on the main thread, 3,045 KB to
-3,047 KB in a worker. Neither side retains anything per message. The startup queue described
-above holds at most 128 messages, and only until something subscribes.
+Checked over 50,000 messages in rounds, with a full collection of Python, the page and the
+worker before each reading: the interpreter's WebAssembly memory does not move, and in
+Chromium neither does the browser's. The page heap grows by a few KiB per 5,000 messages,
+about a byte a message, and the handful of Python objects each round adds are Textual's
+bounded render caches filling, which stop growing when run for longer. The startup queue
+described above holds at most 128 messages, and only until something subscribes.
 
 ### The main thread still stalls
 
