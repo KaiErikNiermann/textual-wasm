@@ -11,14 +11,16 @@ MINIMUM_POINTS: Final[int] = 2
 
 
 def median(samples: Sequence[float]) -> float | None:
-    return statistics.median(samples) if samples else None
+    # A float always: Firefox's whole-millisecond timings arrive as ints, and an int is a
+    # count to the report.
+    return float(statistics.median(samples)) if samples else None
 
 
 def p95(samples: Sequence[float]) -> float | None:
     """The 95th percentile, or the single sample when there is only one."""
     if len(samples) < MINIMUM_POINTS:
-        return samples[0] if samples else None
-    return statistics.quantiles(samples, n=20, method="inclusive")[18]
+        return float(samples[0]) if samples else None
+    return float(statistics.quantiles(samples, n=20, method="inclusive")[18])
 
 
 def slope(values: Sequence[float]) -> float | None:

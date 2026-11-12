@@ -10,8 +10,9 @@ workload on CPython - wherever there is a native counterpart. Rows that are laye
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Final
 
 from textual_wasm_bench import results
@@ -55,7 +56,9 @@ def _record(data: results.ResultFile, column: Column, case: str) -> results.Reco
 def _format(value: float | None, digits: int = 1) -> str:
     if value is None:
         return "-"
-    if abs(value) >= WHOLE_NUMBERS_FROM or float(value).is_integer():
+    # A count is an int all the way from the harness's JSON; a measurement is a float. The type
+    # says which, where the value cannot: a median of 1.0 ms is not the count 1.
+    if isinstance(value, int) or abs(value) >= WHOLE_NUMBERS_FROM:
         return f"{value:,.0f}"
     return f"{value:.{digits}f}"
 
@@ -73,7 +76,9 @@ def _signed(value: float | None, digits: int) -> str:
     if value is None:
         return ""
     rounded = round(value, digits) or 0.0
-    return f"{'+' if rounded >= 0 else ''}{_format(rounded, digits)}"
+    if abs(rounded) >= WHOLE_NUMBERS_FROM:
+        return f"{rounded:+,.0f}"
+    return f"{rounded:+.{digits}f}"
 
 
 def _header(first: str, columns: Sequence[Column]) -> list[str]:
@@ -143,26 +148,42 @@ def _main_thread(key: str) -> Cell:
     return cell
 
 
+BUILT_ON: Final[Mapping[Layer, Layer]] = MappingProxyType(
+    {
+        Layer.PYODIDE: Layer.BLANK,
+        Layer.TEXTUAL: Layer.PYODIDE,
+        Layer.TICK: Layer.TEXTUAL,
+        Layer.APP: Layer.TEXTUAL,
+        Layer.INPUT: Layer.APP,
+    }
+)
+"""What each layer adds to, for its `+` column.
+
+The tick is a side branch, not a rung under the app: the driver stopped running it while
+idle, so it is measured against the same floor as the app - what the timer would cost - and
+the app is measured against Textual alone. The input is the app plus a blinking cursor."""
+
+
 def _layered(
     data: results.ResultFile, scenario: str, columns: Sequence[Column], cell: Cell, digits: int
 ) -> list[str]:
-    """A layer table's rows: each layer's value and what it adds over the one below."""
+    """A layer table's rows: each layer's value and what it adds over the one it builds on."""
     lines: list[str] = []
-    previous: dict[Column, float | None] = {}
     for layer in Layer:
         values: list[str] = []
         for column in columns:
-            record = _record(data, column, f"{scenario}/{layer}")
-            value = None if record is None else cell(record)
-            below = previous.get(column)
-            added = (
-                None if value is None or below is None or layer is Layer.INPUT else value - below
-            )
+            value = _value(data, column, f"{scenario}/{layer}", cell)
+            base = BUILT_ON.get(layer)
+            below = None if base is None else _value(data, column, f"{scenario}/{base}", cell)
+            added = None if value is None or below is None else value - below
             values.extend((_format(value, digits), _signed(added, digits)))
-            if layer is not Layer.INPUT:
-                previous[column] = value
         lines.append(f"| {layer} | {' | '.join(values)} |")
     return lines
+
+
+def _value(data: results.ResultFile, column: Column, case: str, cell: Cell) -> float | None:
+    record = _record(data, column, case)
+    return None if record is None else cell(record)
 
 
 def _layer_header(columns: Sequence[Column]) -> list[str]:
@@ -186,9 +207,11 @@ def _idle(data: results.ResultFile, columns: list[Column]) -> list[str]:
         "### Idle CPU",
         "",
         (
-            "Percent of one core used by the whole browser (every process it runs) while the page "
-            "sits untouched, median of the runs. `+` is what the layer adds over the one above it; "
-            "`input` is measured against the same floor as `app` and has no `+`."
+            "Percent of one core used by the whole browser (every process it runs) while the "
+            "page sits untouched, median of the runs. `+` is what the layer adds to the one it "
+            "builds on: each rung adds to the one above, except that `tick` and `app` both "
+            "build on `textual` (the app no longer runs the tick while idle) and `input` builds "
+            "on `app`. Readings are in steps of 0.1 (10ms of CPU over a 10s window)."
         ),
         "",
         *_layer_table(data, "idle", columns, _cpu_percent, 2),
@@ -319,7 +342,7 @@ def _memory(data: results.ResultFile, columns: list[Column]) -> list[str]:
         (
             "Proportional set size of the whole browser in MiB once each layer is up and settled - "
             "shared pages divided between the processes sharing them, so the column sums to what "
-            "the browser holds. `+` is what each layer adds."
+            "the browser holds. `+` is what each layer adds to the one it builds on, as above."
         ),
         "",
         *_layer_table(data, "boot", columns, _memory_cell(_pss), 0),
@@ -383,12 +406,12 @@ def _channel(data: results.ResultFile, columns: list[Column]) -> list[str]:
         (
             f"{flood_params.get('n', 0):,} messages: sending (ms)",
             "flood",
-            lambda r: r["runs"][0]["runs"][0]["sendMs"],
+            lambda r: float(r["runs"][0]["runs"][0]["sendMs"]),
         ),
         (
             f"{flood_params.get('n', 0):,} messages: until all handled (ms)",
             "flood",
-            lambda r: r["runs"][0]["runs"][0]["totalMs"],
+            lambda r: float(r["runs"][0]["runs"][0]["totalMs"]),
         ),
         (
             f"{flood_params.get('n', 0):,} messages: received",
@@ -412,7 +435,8 @@ def _channel(data: results.ResultFile, columns: list[Column]) -> list[str]:
             "Timed inside the page, median of the repeats. The burst row is the longest gap "
             "between two animation frames while the page sends a burst and the app handles it; "
             "the row under it is the same measurement with no burst, which is what one frame is "
-            "on this machine."
+            "on this machine. Firefox rounds `performance.now()` to whole milliseconds on a page "
+            "that is not cross-origin isolated, so its sub-millisecond rows read 0 or 1."
         ),
         "",
         *_table(data, rows, columns, 2),
@@ -552,7 +576,7 @@ def _last(values: list[float]) -> float | None:
 
 
 def _rounds(values: list[float]) -> float | None:
-    return float(len(values) - 1) if values else None
+    return len(values) - 1 if values else None
 
 
 def _native_leak_rows() -> list[tuple[str, str, Cell]]:
