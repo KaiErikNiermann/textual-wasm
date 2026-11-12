@@ -154,4 +154,6 @@ def test_the_page_mounts_before_it_installs_packages() -> None:
     """Ordering matters and is invisible: a package whose import reads a config file needs
     the filesystem to already be there."""
     source = BOOT_ASSET.read_text(encoding="utf-8")
-    assert source.index("mountStorage(pyodide)") < source.index('pyimport("micropip").install')
+    assert source.index("mountStorage(pyodide)") < source.index(
+        "installRequirements(pyodide, manifest"
+    )
