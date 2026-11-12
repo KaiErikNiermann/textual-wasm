@@ -1,0 +1,70 @@
+# The timed benchmark, on a shared runner: on demand and weekly, never on push.
+#
+# Not a gate. A shared runner's CPU and memory readings move with whatever else the host is
+# doing, so a threshold here would flake, and the numbers in docs/benchmarks.md come from a
+# committed run on a known machine instead. This exists so the harness keeps working against
+# current browsers and so a regression large enough to see through the noise is seen: the
+# rendered tables land in the job summary and the raw results are kept as an artifact.
+#
+# The counted assertions (no idle redraws, nothing dropped, ready means drawn) run on every
+# push in `ci.yml` through tests/test_bench.py.
+name: bench
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "full or smoke"
+        default: full
+        type: choice
+        options: [full, smoke]
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pipx install poetry
+      - run: poetry install
+      - name: install the Pyodide runtime and the browser engines
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium firefox
+      - name: run the benchmarks
+        env:
+          PROFILE: ${{ inputs.profile || 'full' }}
+        run: |
+          PYTHONPATH=bench poetry run python -m textual_wasm_bench run \
+            --profile "${PROFILE}" --out results.json
+      - name: render the tables
+        if: always()
+        run: |
+          if [[ -f results.json ]]; then
+            PYTHONPATH=bench poetry run python -m textual_wasm_bench report results.json \
+              -o tables.md
+            cat tables.md >> "${GITHUB_STEP_SUMMARY}"
+          fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: bench-results
+          path: |
+            results.json
+            tables.md
+          if-no-files-found: ignore

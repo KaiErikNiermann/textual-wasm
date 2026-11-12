@@ -43,9 +43,9 @@ jobs:
         # the registry could drift with CI green.
         run: pnpm install --frozen-lockfile
       - name: ruff (lint)
-        run: poetry run ruff check src tests playground/runner
+        run: poetry run ruff check src tests playground/runner bench
       - name: ruff (format)
-        run: poetry run ruff format --check src tests playground/runner
+        run: poetry run ruff format --check src tests playground/runner bench
       - name: pyright (strict)
         run: poetry run pyright
       - name: radon (nothing above grade B)
@@ -75,6 +75,12 @@ jobs:
 
       - name: the library support table is a rendering of the registry
         run: poetry run textual-wasm libraries --check -o docs/library-table.md
+
+      - name: the benchmark tables are a rendering of the committed results
+        run: |
+          PYTHONPATH=bench poetry run python -m textual_wasm_bench report \
+            bench/results/latest.json -o docs/benchmark-results.md --check \
+            --baseline bench/results/before-input-only-tick.json
 
       - name: the example page's declarations are a rendering of its channels
         # `lint:all` type-checks the page against this file; this checks the file itself is
@@ -173,6 +179,12 @@ jobs:
         # times rather than measuring three things.
         if: matrix.browser == 'chromium'
         run: poetry run pytest tests/test_responsiveness.py -v
+      - name: the benchmark harness runs, and its counted results hold
+        # Counts only - frames written while idle, messages received, the order of boot
+        # marks - because a shared runner's timings are noise. The timed benchmark is
+        # `bench.yml`, run on demand and weekly.
+        if: matrix.browser == 'chromium'
+        run: poetry run pytest tests/test_bench.py -v
       - name: the registry's claims, re-measured under Pyodide
         # Pyodide is the same build in every leg of this matrix, so this is measured once.
         if: matrix.browser == 'chromium'
