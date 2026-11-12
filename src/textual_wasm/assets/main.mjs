@@ -339,8 +339,12 @@ function createTerminal({ Terminal, FitAddon }) {
   // cannot blur: a stray redraw loop is a number that is not zero, not a percentage that
   // might be the machine.
   const output = { writes: 0, characters: 0 };
+  const { promise: drawn, resolve: onDrawn } = Promise.withResolvers();
   const host = {
     write: (data) => {
+      if (output.writes === 0) {
+        onDrawn();
+      }
       output.writes += 1;
       output.characters += data.length;
       terminal.write(data);
@@ -367,7 +371,7 @@ function createTerminal({ Terminal, FitAddon }) {
     container.dataset.fitted = "true";
   };
 
-  return { terminal, host, fit, output };
+  return { terminal, host, fit, output, drawn };
 }
 
 /**
@@ -572,7 +576,7 @@ async function main() {
     document.title = manifest.title;
   }
 
-  const { terminal, host, fit, output } = createTerminal(await loadTerminalDependencies(manifest));
+  const { terminal, host, fit, output, drawn } = createTerminal(await loadTerminalDependencies(manifest));
   await layoutSettled();
   fit();
 
@@ -580,6 +584,20 @@ async function main() {
   const { finished } = await (
     manifest.worker ? bootInWorker(manifest, host, bridge) : bootHere(manifest, host, bridge)
   );
+  // "Running" means "has drawn", in both modes. On this thread `start()` only schedules the
+  // app on Pyodide's event loop and returns, so without this wait the page announced itself
+  // ready - and published `textualWasm` - before the app had imported, composed or written
+  // anything: measured at 2ms from "starting the app" to "ready", against ~600ms in a
+  // worker, which already waited for its first output. An app that exits or crashes before
+  // drawing settles it too, so this cannot hang; the crash itself is reported below.
+  const ended = (async () => {
+    try {
+      await finished;
+    } catch {
+      // Reported by `onCrash` below; here it only means "stop waiting for a first frame".
+    }
+  })();
+  await Promise.race([drawn, ended]);
 
   setStatus("ready", `running at ${host.cols}x${host.rows}`, "ready");
 

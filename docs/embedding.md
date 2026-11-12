@@ -99,7 +99,7 @@ API on the app's side, no protocol, and no awareness that a page is involved.
 That covers control and stops at data. A slider has no keyboard spelling, and an application
 has no keystroke to send back. {doc}`bridge` covers those.
 
-`globalThis.textualWasm` appears once the app is driving the terminal and carries:
+`globalThis.textualWasm` appears once the app has drawn its first output (or exited without any), in both the main-thread and the worker build, and carries:
 
 | Member | |
 |---|---|
