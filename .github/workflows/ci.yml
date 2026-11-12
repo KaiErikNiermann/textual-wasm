@@ -10,6 +10,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
 
 env:
   # Without it semgrep-core fails intermittently with `Unix_error: Cannot allocate memory
@@ -18,7 +19,94 @@ env:
   EIO_BACKEND: posix
 
 jobs:
+  changes:
+    # Which jobs this change can affect, so a docs edit does not boot three browsers. Every
+    # job below is gated on its own filter with `if:` rather than the workflow on `paths:`,
+    # because a job skipped by `if:` still reports, and a required check that never reports
+    # leaves a pull request waiting forever.
+    #
+    # Each filter lists what its job reads, including what it reads indirectly - the docs
+    # site bundles the library and the examples, the examples install the package by path -
+    # and everything any job reads at all (this file, the manifests, the lockfiles, the pinned
+    # WASM requirements) is in every filter. A missed trigger lands a broken change green; an
+    # extra one costs minutes, so when a path's effect is unclear it is included.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      gates: ${{ steps.everything.outputs.run == 'true' || steps.filter.outputs.gates == 'true' }}
+      check: ${{ steps.everything.outputs.run == 'true' || steps.filter.outputs.check == 'true' }}
+      example: ${{ steps.everything.outputs.run == 'true' || steps.filter.outputs.example == 'true' }}
+      docs: ${{ steps.everything.outputs.run == 'true' || steps.filter.outputs.docs == 'true' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: manual runs and the first push of a branch run everything
+        id: everything
+        env:
+          EVENT: ${{ github.event_name }}
+          CREATED: ${{ github.event.created }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "${EVENT}" == "workflow_dispatch" || "${CREATED}" == "true" \
+                || "${BEFORE}" == "0000000000000000000000000000000000000000" ]]; then
+            echo "run=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "run=false" >> "${GITHUB_OUTPUT}"
+          fi
+      - uses: dorny/paths-filter@v4
+        id: filter
+        if: steps.everything.outputs.run != 'true'
+        with:
+          filters: |
+            shared: &shared
+              - '.github/workflows/ci.yml'
+              - 'pyproject.toml'
+              - 'poetry.lock'
+              - 'poetry.toml'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'wasm-requirements.txt'
+            gates:
+              - *shared
+              - 'src/**'
+              - 'tests/**'
+              - 'bench/**'
+              - 'playground/**'
+              - 'examples/**'
+              - 'scripts/**'
+              - 'typings/**'
+              - '.semgrep/**'
+              - '.semgrepignore'
+              - 'eslint.config.js'
+              - '.stylelintrc.json'
+              - '.stylelintignore'
+              # Generated from the code; the gates check they are still its rendering.
+              - 'docs/porting-matrix.md'
+              - 'docs/library-table.md'
+              - 'docs/benchmark-results.md'
+            check:
+              - *shared
+              - 'src/**'
+              - 'tests/**'
+              - 'bench/**'
+              - 'scripts/**'
+            example:
+              - *shared
+              - 'src/**'
+              - 'examples/**'
+            docs:
+              - *shared
+              - 'docs/**'
+              - 'src/**'
+              - 'examples/**'
+              - 'playground/**'
+              - 'scripts/build-docs.sh'
+              - 'textual-wasm-feasability-study.md'
+
   gates:
+    needs: changes
+    if: needs.changes.outputs.gates == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -100,6 +188,8 @@ jobs:
     # Chromium with the same xterm.js on top, so running them would measure the same
     # renderer twice. Real Safari is not here either - Playwright's WebKit is a different
     # port with a different font stack - and is covered weekly by `safari.yml` instead.
+    needs: changes
+    if: needs.changes.outputs.check == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -198,6 +288,8 @@ jobs:
   example:
     # The examples are code people copy, so they are held to the same standard as the package
     # - each in its own environment, which is also a check that it really is self-contained.
+    needs: changes
+    if: needs.changes.outputs.example == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -247,6 +339,8 @@ jobs:
   docs:
     # Built on every push, published only from the default branch by `pages.yml`. A docs build
     # that only runs at release time is a docs build that is broken at release time.
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
