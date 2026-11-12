@@ -25,7 +25,7 @@ import logging
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Final
 
-from textual import events
+from textual import constants, events
 from textual._xterm_parser import XTermParser
 from textual.driver import Driver
 from textual.geometry import Size
@@ -44,6 +44,18 @@ _TICK_INTERVAL: Final[float] = 0.05
 Half of Textual's 100 ms `ESCDELAY` default, which is what distinguishes a bare `Escape`
 keypress from the start of a CSI sequence. The native drivers get this from a `select`
 timeout; without a blocking read there has to be a timer instead.
+"""
+
+_TICK_WINDOW: Final[float] = constants.ESCAPE_DELAY + 2 * _TICK_INTERVAL
+"""How long after the last input to keep ticking.
+
+The parser only ever times out on input it is holding, and it holds input for at most
+`ESCAPE_DELAY` after it arrived, so a tick later than this has nothing to resolve. Two
+intervals of margin so the tick that lands just past the deadline is inside the window.
+
+Ticking only inside it is what lets an idle page cost nothing: a timer that always ran was
+measured as the whole of a static app's idle CPU - about half a percent of a core in both
+Chromium and Firefox, where Pyodide booted and Textual imported cost nothing at all.
 """
 
 ENTER_APPLICATION_MODE: Final[tuple[str, ...]] = (
@@ -85,6 +97,8 @@ class WasmDriverBase(Driver):
         # a pointless write under an in-memory filesystem.
         self._parser = XTermParser(debug=False)
         self._tick_task: asyncio.Task[None] | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._last_input = 0.0
         self._input_enabled = False
         _register_active(self)
 
@@ -93,6 +107,14 @@ class WasmDriverBase(Driver):
         """Report as a web driver so app code can branch the same way it does under
         textual-serve."""
         return True
+
+    @property
+    def parser_timer_running(self) -> bool:
+        """Whether the escape-timeout timer is live.
+
+        True only for a moment after input; an app nobody is typing into has no timer.
+        """
+        return self._tick_task is not None and not self._tick_task.done()
 
     @property
     def can_suspend(self) -> bool:
@@ -125,6 +147,7 @@ class WasmDriverBase(Driver):
             return
         for message in self._parser.feed(data):
             self.process_message(message)
+        self._arm_parser_timeouts()
 
     def on_resize(self, width: int, height: int) -> None:
         """Report a new grid size, e.g. from an `xterm.js` `onResize` or a window resize."""
@@ -143,7 +166,7 @@ class WasmDriverBase(Driver):
         for sequence in ENTER_APPLICATION_MODE:
             self.write(sequence)
         self._input_enabled = True
-        self._tick_task = asyncio.get_running_loop().create_task(self._pump_parser_timeouts())
+        self._loop = asyncio.get_running_loop()
         width, height = self._size or DEFAULT_SIZE
         self.on_resize(width, height)
         # The page owns keyboard focus for as long as the app is mounted; the terminal
@@ -169,14 +192,29 @@ class WasmDriverBase(Driver):
         """
         _log.info("open_url requested url=%s new_tab=%s", url, new_tab)
 
-    async def _pump_parser_timeouts(self) -> None:
+    def _arm_parser_timeouts(self) -> None:
+        """Keep the parser ticking for one `_TICK_WINDOW` after the latest input.
+
+        Started from input rather than from `start_application_mode`, because input is the
+        only thing that can leave the parser holding something to time out. With no input
+        there is no task and no timer, so an idle app wakes the interpreter not at all.
+        """
+        loop = self._loop
+        if loop is None:
+            return
+        self._last_input = loop.time()
+        if self._tick_task is None or self._tick_task.done():
+            self._tick_task = loop.create_task(self._pump_parser_timeouts(loop))
+
+    async def _pump_parser_timeouts(self, loop: asyncio.AbstractEventLoop) -> None:
         """Drive `XTermParser.tick()` so a lone `Escape` resolves without a following byte.
 
-        Cancellation is the normal way this ends - `disable_input` cancels it and never
-        awaits it - so suppressing it is the intent rather than a swallowed error.
+        Runs until `_TICK_WINDOW` has passed with no new input, then returns; the next input
+        starts it again. Cancellation is the other way it ends - `disable_input` cancels it
+        and never awaits it - so suppressing it is the intent rather than a swallowed error.
         """
         with contextlib.suppress(asyncio.CancelledError):
-            while True:
+            while loop.time() - self._last_input < _TICK_WINDOW:
                 await asyncio.sleep(_TICK_INTERVAL)
                 for message in self._parser.tick():
                     self.process_message(message)
