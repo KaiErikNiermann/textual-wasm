@@ -55,7 +55,7 @@ def _record(data: results.ResultFile, column: Column, case: str) -> results.Reco
 def _format(value: float | None, digits: int = 1) -> str:
     if value is None:
         return "-"
-    if abs(value) >= WHOLE_NUMBERS_FROM:
+    if abs(value) >= WHOLE_NUMBERS_FROM or float(value).is_integer():
         return f"{value:,.0f}"
     return f"{value:.{digits}f}"
 
@@ -397,7 +397,7 @@ def _channel(data: results.ResultFile, columns: list[Column]) -> list[str]:
         ),
         *[(f"{size / MIB:g} MiB round trip (ms)", "payload", _payload(size)) for size in sizes],
         ("`sendLatest` calls in one frame", "latest", lambda r: r["runs"][0]["calls"]),
-        ("... messages the app received", "latest", lambda r: r["runs"][0]["received"]),
+        ("messages the app received from them", "latest", lambda r: r["runs"][0]["received"]),
         (
             "longest frame gap during a burst (ms)",
             "stall",
