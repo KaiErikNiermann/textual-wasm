@@ -174,10 +174,14 @@ async def _controls(sizes: Sizes) -> dict[str, Any]:
         spin = [app.spin(sizes.spin) for _ in repeats]
         churn = [await app.churn(sizes.churn) for _ in repeats]
         drains = [await host.flood(sizes.drain_messages) for _ in repeats]
-        leak = [dataclasses.asdict(interpreter_memory())]
-        for _ in range(sizes.leak_rounds):
+        leak_churn = [dataclasses.asdict(interpreter_memory())]
+        for _ in range(sizes.native_leak_rounds):
             await app.churn(sizes.leak_widgets)
-            leak.append(dataclasses.asdict(interpreter_memory()))
+            leak_churn.append(dataclasses.asdict(interpreter_memory()))
+        leak_bridge = [dataclasses.asdict(interpreter_memory())]
+        for _ in range(sizes.native_leak_rounds):
+            await host.flood(sizes.leak_messages)
+            leak_bridge.append(dataclasses.asdict(interpreter_memory()))
     return {
         "selfFlood": {"n": sizes.self_flood, "samples": self_flood},
         "spin": {"n": sizes.spin, "samples": spin},
@@ -186,7 +190,8 @@ async def _controls(sizes: Sizes) -> dict[str, Any]:
             "count": sizes.drain_messages,
             "runs": [{"totalMs": ms, "received": received} for ms, received in drains],
         },
-        "leakChurn": {"perRound": sizes.leak_widgets, "interpreter": leak},
+        "leakChurn": {"perRound": sizes.leak_widgets, "interpreter": leak_churn},
+        "leakBridge": {"perRound": sizes.leak_messages, "interpreter": leak_bridge},
     }
 
 

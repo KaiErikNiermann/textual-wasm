@@ -23,6 +23,8 @@ Column = tuple[str, str]
 
 Cell = Callable[[results.Record], float | None]
 
+Summary = Callable[[list[float]], float | None]
+
 NATIVE: Final[Column] = ("native", str(Mode.NONE))
 
 MIB: Final[float] = float(1 << 20)
@@ -526,22 +528,50 @@ def _leak_rows(case: str) -> list[tuple[str, str, Cell]]:
     ]
 
 
-def _native_leak(record: results.Record) -> list[float]:
-    return [reading["gc_objects"] for reading in record["runs"][0]["leakChurn"]["interpreter"]]
+def _native_leak(key: str) -> Callable[[results.Record], list[float]]:
+    """The native control's object counts for one workload, empty if the run predates it."""
+
+    def series(record: results.Record) -> list[float]:
+        workload = record["runs"][0].get(key)
+        return [] if workload is None else [r["gc_objects"] for r in workload["interpreter"]]
+
+    return series
+
+
+def _over(series: Callable[[results.Record], list[float]], pick: Summary) -> Cell:
+    """A cell that summarises a series read from the record."""
+    return lambda record: pick(series(record))
+
+
+def _first(values: list[float]) -> float | None:
+    return values[0] if values else None
+
+
+def _last(values: list[float]) -> float | None:
+    return values[-1] if values else None
+
+
+def _rounds(values: list[float]) -> float | None:
+    return float(len(values) - 1) if values else None
+
+
+def _native_leak_rows() -> list[tuple[str, str, Cell]]:
+    picks: tuple[tuple[str, Summary], ...] = (
+        ("rounds", _rounds),
+        ("Python objects before", _first),
+        ("Python objects after", _last),
+        ("Python objects per round, second half", _late_slope),
+    )
+    return [
+        (f"{label}: {name}", "control", _over(_native_leak(key), pick))
+        for label, key in (("messages", "leakBridge"), ("widgets", "leakChurn"))
+        for name, pick in picks
+    ]
 
 
 def _leaks(data: results.ResultFile, columns: list[Column]) -> list[str]:
     bridge = _params(data, "leak/bridge")
     churn = _params(data, "leak/churn")
-    native_rows: list[tuple[str, str, Cell]] = [
-        ("Python objects: before", "control", lambda r: _native_leak(r)[0]),
-        ("Python objects: after", "control", lambda r: _native_leak(r)[-1]),
-        (
-            "Python objects per round, second half",
-            "control",
-            lambda r: _late_slope(_native_leak(r)),
-        ),
-    ]
     return [
         "### Leaks",
         "",
@@ -566,9 +596,12 @@ def _leaks(data: results.ResultFile, columns: list[Column]) -> list[str]:
         "",
         *_table(data, _leak_rows("leak/churn"), columns, 2),
         "",
-        "The widget rounds natively, under `App.run_test`:",
+        (
+            "Both workloads natively, under `App.run_test`, for more rounds - each costs "
+            "milliseconds there - so that caches filling can be told apart from a leak:"
+        ),
         "",
-        *_table(data, native_rows, [NATIVE], 2),
+        *_table(data, _native_leak_rows(), [NATIVE], 2),
     ]
 
 
@@ -585,6 +618,15 @@ def _environment(data: results.ResultFile) -> list[str]:
         }
     )
     commit = f"{env['commit']}{' (with uncommitted changes)' if env['dirty'] else ''}"
+    later = sorted(
+        {
+            stamp
+            for record in data["records"].values()
+            if (stamp := record.get("commit")) is not None and stamp != env["commit"]
+        }
+    )
+    if later:
+        commit += f"`; some records re-measured at `{'`, `'.join(later)}"
     return [
         "### The machine",
         "",

@@ -33,6 +33,7 @@ class Selection:
     """Run only cases whose name contains one of these; everything when empty."""
     force: bool = False
     include_native: bool = True
+    include_browser: bool = True
 
     def wants(self, name: str) -> bool:
         return not self.only or any(fragment in name for fragment in self.only)
@@ -53,16 +54,20 @@ def run(profile: str, out: Path, selection: Selection) -> results.ResultFile:
     sizes = PROFILES[profile]
     available = browser.require_node()
     data = results.load(out, profile)
-    pending = [
-        (case, engine, mode)
-        for case, engine, mode in selection.jobs(cases(sizes))
-        if selection.force or record_key(engine, mode, case.name) not in data["records"]
-    ]
+    pending = (
+        []
+        if not selection.include_browser
+        else [
+            (case, engine, mode)
+            for case, engine, mode in selection.jobs(cases(sizes))
+            if selection.force or record_key(engine, mode, case.name) not in data["records"]
+        ]
+    )
 
     from textual_wasm_bench.sites import serve  # noqa: PLC0415 - imports the bundler
 
     modes = selection.modes
-    with serve(modes) as urls, Progress() as progress:
+    with serve(modes if pending else ()) as urls, Progress() as progress:
         task = progress.add_task("benchmarks", total=len(pending))
         for case, engine, mode in pending:
             key = record_key(engine, mode, case.name)
@@ -81,6 +86,7 @@ def run(profile: str, out: Path, selection: Selection) -> results.ResultFile:
                 "params": dict(case.params),
                 "runs": [outcome.data for outcome in outcomes],
                 "browser_version": outcomes[0].browser_version,
+                "commit": results.stamp(),
                 "finished_at": results.now(),
             }
             results.save(out, data)
@@ -120,5 +126,6 @@ def _native_record(name: str, scenario: str, runs: list[dict[str, object]]) -> r
         "scenario": scenario,
         "params": {},
         "runs": runs,
+        "commit": results.stamp(),
         "finished_at": results.now(),
     }

@@ -34,6 +34,8 @@ class Record(TypedDict):
     params: dict[str, Any]
     runs: list[dict[str, Any]]
     browser_version: NotRequired[str]
+    commit: NotRequired[str]
+    """The revision this record was measured at, which a resumed run can change."""
     finished_at: str
 
 
@@ -92,15 +94,27 @@ def _cpu_model() -> str:
     return platform.processor() or platform.machine()
 
 
+def revision() -> tuple[str | None, bool]:
+    """The commit being measured, and whether anything a number depends on differs from it."""
+    dirty = _command_output(["git", "status", "--porcelain", "--", *MEASURED_PATHS])
+    return _command_output(["git", "rev-parse", "--short", "HEAD"]), bool(dirty)
+
+
+def stamp() -> str:
+    """The revision as one string, for a record: the commit, marked when it is dirty."""
+    commit, dirty = revision()
+    return f"{commit}{'+dirty' if dirty else ''}"
+
+
 def environment() -> dict[str, Any]:
     """Everything about this machine and checkout a number depends on."""
     from textual import __version__ as textual_version  # noqa: PLC0415 - after bootstrap
 
-    dirty = _command_output(["git", "status", "--porcelain", "--", *MEASURED_PATHS])
+    commit, dirty = revision()
     return {
         "date": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
-        "commit": _command_output(["git", "rev-parse", "--short", "HEAD"]),
-        "dirty": bool(dirty),
+        "commit": commit,
+        "dirty": dirty,
         "os": platform.platform(),
         "cpu": _cpu_model(),
         "cores": os.cpu_count(),

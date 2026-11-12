@@ -26,6 +26,7 @@ def run(
     only: Annotated[list[str] | None, typer.Option(help="Cases whose name contains this.")] = None,
     force: Annotated[bool, typer.Option(help="Rerun cases the file already has.")] = False,
     native: Annotated[bool, typer.Option(help="Also run the CPython controls.")] = True,
+    browser: Annotated[bool, typer.Option(help="Run the browser cases.")] = True,
 ) -> None:
     """Run every selected case and write the results, resuming an interrupted run."""
     from textual_wasm_bench.runner import Selection  # noqa: PLC0415 - heavy imports
@@ -42,6 +43,7 @@ def run(
             only=tuple(only or ()),
             force=force,
             include_native=native,
+            include_browser=browser,
         ),
     )
     typer.echo(f"wrote {out}")

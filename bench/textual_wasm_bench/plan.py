@@ -147,6 +147,8 @@ class Sizes:
     spin: int
     churn: int
     leak_rounds: int
+    native_leak_rounds: int
+    """Natively a round costs milliseconds, so the control runs long enough to see caches settle."""
     leak_messages: int
     leak_widgets: int
 
@@ -169,6 +171,7 @@ FULL: Final[Sizes] = Sizes(
     spin=3_000_000,
     churn=200,
     leak_rounds=10,
+    native_leak_rounds=80,
     leak_messages=5_000,
     leak_widgets=200,
 )
@@ -189,6 +192,7 @@ SMOKE: Final[Sizes] = Sizes(
     spin=100_000,
     churn=20,
     leak_rounds=4,
+    native_leak_rounds=8,
     leak_messages=500,
     leak_widgets=50,
 )
