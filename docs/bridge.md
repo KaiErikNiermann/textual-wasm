@@ -392,12 +392,12 @@ app:   |==============================| 2.6s of draining
 ```
 
 The ceiling is **55,000 to 87,000 messages a second** into the application, depending on the
-engine and the build. That ceiling belongs to Textual's message queue running under Pyodide,
-not to the channel: an app posting the same number of messages to itself, with no page
-involved, takes 106-143 ms per 10,000 - almost exactly what the channel takes on the main
-thread. A worker build adds about 30%, the `postMessage` hop each message makes. `--worker`
-does not raise the ceiling, because moving the work to another thread does not reduce how much
-there is. On a terminal the same queue is two to three times faster.
+engine and the build. In these measurements that ceiling was set by Textual's message queue
+running under Pyodide rather than by the channel: an app posting the same number of messages
+to itself, with no page involved, took 106-143 ms per 10,000 - almost exactly what the channel
+took on the main thread. A worker build added about 30%, the `postMessage` hop each message
+makes. `--worker` did not raise the ceiling, because moving the work to another thread does
+not reduce how much there is. On a terminal the same queue ran two to three times faster.
 
 Three cases, in order of concern:
 
@@ -430,13 +430,14 @@ About 2.5 to 3.5 ms per mebibyte, round trip. Every payload is copied at each bo
 costs several 8 MiB allocations before it is a Python object. One per frame is far too many.
 One when a file is dropped costs nothing worth measuring.
 
-### Nothing accumulates
+### Nothing accumulated in the leak runs
 
 Checked over 50,000 messages in rounds, with a full collection of Python, the page and the
-worker before each reading: the interpreter's WebAssembly memory does not move, and in
-Chromium neither does the browser's. The page heap grows by a few KiB per 5,000 messages,
-about a byte a message, and the handful of Python objects each round adds are Textual's
-bounded render caches filling, which stop growing when run for longer. The startup queue
+worker before each reading: the interpreter's WebAssembly memory did not move, and in
+Chromium neither did the browser's. The page heap grew by a few KiB per 5,000 messages,
+about a byte a message, and the handful of Python objects each round added look like
+Textual's bounded render caches filling, which stopped growing when run for longer. Firefox
+cannot be made to collect before a reading, so its memory numbers are less conclusive. The startup queue
 described above holds at most 128 messages, and only until something subscribes.
 
 ### The main thread still stalls
