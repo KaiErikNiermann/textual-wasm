@@ -57,6 +57,20 @@ def is_result_file(value: object) -> TypeIs[ResultFile]:
     )
 
 
+MEASURED_PATHS: tuple[str, ...] = (
+    "src",
+    "bench/bench_apps",
+    "bench/harness",
+    "bench/textual_wasm_bench",
+    "pyproject.toml",
+    "poetry.lock",
+    "package.json",
+    "pnpm-lock.yaml",
+)
+"""What a measurement depends on. A result is marked dirty only when one of these differs
+from the recorded commit; an edited stylesheet in the docs changes no number."""
+
+
 def _command_output(argv: list[str]) -> str | None:
     try:
         completed = subprocess.run(  # noqa: S603 - argv is ours, no shell
@@ -82,7 +96,7 @@ def environment() -> dict[str, Any]:
     """Everything about this machine and checkout a number depends on."""
     from textual import __version__ as textual_version  # noqa: PLC0415 - after bootstrap
 
-    dirty = _command_output(["git", "status", "--porcelain", "--untracked-files=no"])
+    dirty = _command_output(["git", "status", "--porcelain", "--", *MEASURED_PATHS])
     return {
         "date": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
         "commit": _command_output(["git", "rev-parse", "--short", "HEAD"]),
