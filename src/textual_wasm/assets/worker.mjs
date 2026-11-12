@@ -166,10 +166,10 @@ function createBridge() {
 }
 
 /**
-@param {string} state @param {string} message
+@param {string} state @param {string} message @param {string} phase
 */
-function report(state, message) {
-  postMessage({ type: "status", state, message });
+function report(state, message, phase) {
+  postMessage({ type: "status", state, message, phase });
 }
 
 /**

@@ -302,13 +302,14 @@ export async function importPyodide(manifest) {
  * @param {object} options.host an object satisfying `textual_wasm.browser.TerminalHost`
  * @param {object} options.bridge an object satisfying `textual_wasm.bridge.BridgeHost`
  * @param {Function} options.loadPyodide from `importPyodide`
- * @param {(state: string, message: string) => void} options.onStatus progress reporting
+ * @param {(state: string, message: string, phase: string) => void} options.onStatus progress
+ *   reporting. `phase` names the boot step that is starting, for `performance.mark`.
  * @returns {Promise<{pyodide: object, finished: Promise<unknown>}>} `finished` settles when
  *   the application exits. It is deliberately not awaited here: a module whose top-level
  *   evaluation waits for the application to exit never finishes evaluating.
  */
 export async function boot({ manifest, host, bridge, loadPyodide, onStatus }) {
-  onStatus("booting", "starting Python…");
+  onStatus("booting", "starting Python…", "interpreter");
   const pyodide = await loadPyodide({
     indexURL: manifest.pyodideIndexUrl,
     // COLUMNS and LINES because os.get_terminal_size() raises here and
@@ -321,11 +322,11 @@ export async function boot({ manifest, host, bridge, loadPyodide, onStatus }) {
 
   // Before the packages, so that a package whose import reads a config file finds one.
   if (manifest.storage) {
-    onStatus("booting", "opening persistent storage…");
+    onStatus("booting", "opening persistent storage…", "storage");
     await mountStorage(pyodide);
   }
 
-  onStatus("booting", `installing ${manifest.requirements.length} package(s)…`);
+  onStatus("booting", `installing ${manifest.requirements.length} package(s)…`, "packages");
   await pyodide.loadPackage("micropip");
   try {
     await pyodide.pyimport("micropip").install(manifest.requirements);
@@ -348,7 +349,7 @@ export async function boot({ manifest, host, bridge, loadPyodide, onStatus }) {
     pyodide.registerJsModule(BRIDGE_MODULE, bridge);
   }
 
-  onStatus("booting", "starting the app…");
+  onStatus("booting", "starting the app…", "app");
   const entry = await fetch(manifest.entryUrl);
   await pyodide.runPythonAsync(await entry.text());
 

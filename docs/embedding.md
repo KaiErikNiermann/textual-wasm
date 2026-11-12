@@ -108,6 +108,9 @@ has no keystroke to send back. {doc}`bridge` covers those.
 | `columns`, `rows` | The grid size chosen at boot. |
 | `finished` | A promise that resolves when the app exits. |
 | `bridge` | The two-way data channel. See {doc}`bridge`. |
+| `output()` | What the app has written so far: `{ writes, characters }`. An idle app should leave both unchanged. |
+
+The page also leaves a `performance.mark` named `textual-wasm:<phase>` as each boot step starts (`interpreter`, `storage` when enabled, `packages`, `app`, and `ready`), all on the page's own timeline, so `performance.getEntriesByType("mark")` splits a boot into its parts. {doc}`benchmarks` uses both.
 
 It appears *seconds* after your page does — Pyodide has to boot a CPython interpreter — so
 poll for it:

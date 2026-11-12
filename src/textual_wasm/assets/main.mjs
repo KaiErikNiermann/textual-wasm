@@ -267,10 +267,20 @@ const statusElement = document.querySelector("#status");
  * missing one falls back to the console rather than throwing - a page that renders the app
  * perfectly should not fail because it declined to show a boot message.
  *
+ * Each boot step also leaves a `textual-wasm:<phase>` performance mark on the page's own
+ * timeline. Marked here rather than where the step runs, because in a worker build that is
+ * another thread with another time origin, and a boot split into phases is only readable
+ * when every phase is measured against the same clock. The few microseconds a status
+ * message spends crossing from the worker are far below anything a phase costs.
+ *
  * @param {"booting" | "ready" | "failed"} state
  * @param {string} message
+ * @param {string} [phase] the boot step that is starting, if this reports one
  */
-function setStatus(state, message) {
+function setStatus(state, message, phase) {
+  if (phase !== undefined) {
+    performance.mark(`textual-wasm:${phase}`);
+  }
   if (statusElement === null) {
     console.info(`[textual-wasm] ${state}: ${message}`);
     return;
@@ -324,8 +334,17 @@ function createTerminal({ Terminal, FitAddon }) {
     new ResizeObserver(() => fitAddon.fit()).observe(container);
   }
 
+  // Counted at the one place every frame passes through, in both modes. An app with nothing
+  // to do should write nothing, and a count is the measure of that which timing noise
+  // cannot blur: a stray redraw loop is a number that is not zero, not a percentage that
+  // might be the machine.
+  const output = { writes: 0, characters: 0 };
   const host = {
-    write: (data) => terminal.write(data),
+    write: (data) => {
+      output.writes += 1;
+      output.characters += data.length;
+      terminal.write(data);
+    },
     onData: (callback) => terminal.onData(callback),
     onResize: (callback) => terminal.onResize(({ cols, rows }) => callback(cols, rows)),
     get cols() {
@@ -348,7 +367,7 @@ function createTerminal({ Terminal, FitAddon }) {
     container.dataset.fitted = "true";
   };
 
-  return { terminal, host, fit };
+  return { terminal, host, fit, output };
 }
 
 /**
@@ -444,7 +463,7 @@ async function bootInWorker(manifest, host, bridge) {
         break;
       }
       case "status": {
-        setStatus(data.state, data.message);
+        setStatus(data.state, data.message, data.phase);
         break;
       }
       case "running": {
@@ -553,7 +572,7 @@ async function main() {
     document.title = manifest.title;
   }
 
-  const { terminal, host, fit } = createTerminal(await loadTerminalDependencies(manifest));
+  const { terminal, host, fit, output } = createTerminal(await loadTerminalDependencies(manifest));
   await layoutSettled();
   fit();
 
@@ -562,7 +581,7 @@ async function main() {
     manifest.worker ? bootInWorker(manifest, host, bridge) : bootHere(manifest, host, bridge)
   );
 
-  setStatus("ready", `running at ${host.cols}x${host.rows}`);
+  setStatus("ready", `running at ${host.cols}x${host.rows}`, "ready");
 
   // Published only once the app is actually driving the terminal, so a harness that waits
   // for it cannot read a half-booted screen.
@@ -579,6 +598,9 @@ async function main() {
     input: (data) => terminal.input(data),
     finished,
     worker: Boolean(manifest.worker),
+    // What the application has written to the terminal so far: frames and their length.
+    // A copy, so a reader cannot reset the count for everyone else.
+    output: () => ({ ...output }),
     // The data channel, for everything the keyboard is the wrong shape for. Published
     // beside `input` rather than instead of it: a button that means "press 2" is still
     // better served by sending the keystroke, and this is for the values that have no
