@@ -10,8 +10,6 @@ The tables on this page are **generated** from `bench/results/latest.json` by `j
 
 **An idle app costs nothing measurable.** A static textual-wasm app sitting in a Chromium tab uses 0.00% of a core, the same as `about:blank`, in both the main-thread and the worker build, and writes nothing to its terminal. In Firefox the empty browser itself idles at about 0.8% and the app reads within a few tenths of that, which is the resolution of the measurement. The common case above the floor is a focused input: Textual blinks its cursor twice a second, and each blink is a redraw - about 1% of a core in Chromium and 2% in Firefox, against 0.2% for the same app on a native terminal.
 
-**That was not true before these benchmarks existed.** The driver used to tick its escape-sequence parser every 50ms for the app's whole life, and the layer table caught it: Pyodide booted and Textual imported cost nothing, and the tick alone cost 0.5% of a core in Chromium and about 1% in Firefox - all of a static app's idle CPU. The driver now ticks only for a moment after input; the before-and-after table below is the same app on both versions.
-
 **Memory is mostly the interpreter.** Of what a running app adds to an empty browser tab - 160-175 MiB in Chromium, about 205 MiB in Firefox - Pyodide itself is 106-168 MiB, importing Textual 23-58 MiB, and the app 10-22 MiB. The interpreter's WebAssembly memory is 43 MiB and does not grow while the app runs.
 
 **Boot is about three seconds on a first visit and two when cached**, most of it booting the interpreter (0.8-1.2 s) and installing packages (0.4-1 s, depending on the cache). Starting the app itself - importing it, composing it and drawing the first frame under Pyodide - takes about 0.6 s, in both builds and both engines.
