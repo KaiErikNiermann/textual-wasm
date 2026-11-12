@@ -18,22 +18,22 @@ install-browsers *engines="chromium firefox webkit":
 # --- Lint -------------------------------------------------------------------
 
 # Every gate a push has to satisfy, in the order the pre-push hook runs them
-gates: lint fmt-check types complexity policy lint-web test matrix-check libraries-check channels-check
+gates: lint fmt-check types complexity policy lint-web test matrix-check libraries-check channels-check bench-report-check
 
 # Ruff
-lint *paths="src tests playground/runner":
+lint *paths="src tests playground/runner bench":
   poetry run ruff check {{paths}}
 
 # Ruff, fixing what it can
-lint-fix *paths="src tests playground/runner":
+lint-fix *paths="src tests playground/runner bench":
   poetry run ruff check --fix {{paths}}
 
 # Format
-fmt *paths="src tests playground/runner":
+fmt *paths="src tests playground/runner bench":
   poetry run ruff format {{paths}}
 
 # Formatting is already applied
-fmt-check *paths="src tests playground/runner":
+fmt-check *paths="src tests playground/runner bench":
   poetry run ruff format --check {{paths}}
 
 # Pyright, strict
@@ -118,6 +118,34 @@ channels:
 # Regenerate the add-on support table from the registry
 libraries:
   poetry run textual-wasm libraries -o docs/library-table.md
+
+# --- Benchmarks -------------------------------------------------------------
+
+# Strictly one browser at a time: the idle and memory readings are of the whole browser, so
+# anything else heavy running on the machine shows up in them. A run resumes where it stopped;
+# pass `--force` to redo cases the file already has, `--only NAME` to pick cases.
+
+# The full benchmark run behind docs/benchmarks.md (about an hour, needs the network)
+bench *args:
+  PYTHONPATH=bench poetry run python -m textual_wasm_bench run --profile full \
+    --out bench/results/latest.json {{args}}
+
+# Every case at toy sizes, to check the harness works (a few minutes)
+bench-smoke *args:
+  PYTHONPATH=bench poetry run python -m textual_wasm_bench run --profile smoke \
+    --out .scratch/bench/smoke.json {{args}}
+
+# Render the committed results as the tables the benchmarks page includes
+bench-report:
+  PYTHONPATH=bench poetry run python -m textual_wasm_bench report bench/results/latest.json \
+    -o docs/benchmark-results.md \
+    --baseline bench/results/before-input-only-tick.json
+
+# The benchmark tables are still a faithful rendering of the committed results
+bench-report-check:
+  PYTHONPATH=bench poetry run python -m textual_wasm_bench report bench/results/latest.json \
+    -o docs/benchmark-results.md \
+    --baseline bench/results/before-input-only-tick.json --check
 
 # --- Build ------------------------------------------------------------------
 

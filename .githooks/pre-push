@@ -51,10 +51,10 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
 done
 
 step "ruff (lint)"
-poetry run ruff check src tests playground/runner
+poetry run ruff check src tests playground/runner bench
 
 step "ruff (format)"
-poetry run ruff format --check src tests playground/runner
+poetry run ruff format --check src tests playground/runner bench
 
 step "pyright (strict)"
 poetry run pyright
@@ -88,5 +88,9 @@ fi
 
 step "pytest"
 poetry run pytest
+
+step "the benchmark tables are a rendering of the committed results"
+PYTHONPATH=bench poetry run python -m textual_wasm_bench report bench/results/latest.json \
+  -o docs/benchmark-results.md --check --baseline bench/results/before-input-only-tick.json
 
 printf '\nall gates passed\n'
