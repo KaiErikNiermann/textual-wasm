@@ -54,11 +54,14 @@ def report(
     check: Annotated[
         bool, typer.Option(help="Fail if `out` is not already this rendering.")
     ] = False,
+    baseline: Annotated[
+        Path | None, typer.Option(help="An earlier result file to compare idle CPU against.")
+    ] = None,
 ) -> None:
     """Render a result file as the tables the documentation includes."""
     from textual_wasm_bench.report import render  # noqa: PLC0415 - heavy imports
 
-    rendered = render(results)
+    rendered = render(results, baseline)
     if check:
         current = out.read_text(encoding="utf-8") if out.exists() else ""
         if current != rendered:
