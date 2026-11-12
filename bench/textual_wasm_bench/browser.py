@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import subprocess
 from typing import Any, Final, cast
 
 from textual_wasm import node
@@ -50,10 +51,33 @@ def run_case(
     Raises:
         BenchmarkError: If the harness failed, with everything it said on stderr.
     """
+    try:
+        result = _run_harness(
+            case, engine=engine, mode=mode, base_url=base_url, available=available
+        )
+    except (node.HarnessError, subprocess.TimeoutExpired) as error:
+        raise BenchmarkError(f"{case.name} on {engine}/{mode}: {error}") from error
+    if not result.ok:
+        raise BenchmarkError(f"{case.name} on {engine}/{mode} failed:\n{result.stderr}")
+    version = result.payload.get("browserVersion")
+    data = result.payload.get("data")
+    if not isinstance(version, str) or not isinstance(data, dict):
+        raise BenchmarkError(f"{case.name}: the harness returned an unexpected shape")
+    return Outcome(browser_version=version, data=cast("dict[str, Any]", data))
+
+
+def _run_harness(
+    case: Case,
+    *,
+    engine: Engine,
+    mode: Mode,
+    base_url: str,
+    available: node.NodeAvailability,
+) -> node.HarnessResult:
     page = PAGES[case.layer]
     if available.node is None:
         raise BenchmarkError("no Node binary; call require_node() first")
-    result = node.run_harness(
+    return node.run_harness(
         HARNESS,
         {
             "resolveFrom": str(available.resolve_from),
@@ -68,10 +92,3 @@ def run_case(
         timeout=TIMEOUT_SECONDS,
         directory=paths.HARNESS,
     )
-    if not result.ok:
-        raise BenchmarkError(f"{case.name} on {engine}/{mode} failed:\n{result.stderr}")
-    version = result.payload.get("browserVersion")
-    data = result.payload.get("data")
-    if not isinstance(version, str) or not isinstance(data, dict):
-        raise BenchmarkError(f"{case.name}: the harness returned an unexpected shape")
-    return Outcome(browser_version=version, data=cast("dict[str, Any]", data))

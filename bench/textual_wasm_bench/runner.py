@@ -69,15 +69,27 @@ def run(profile: str, out: Path, selection: Selection) -> results.ResultFile:
     modes = selection.modes
     with serve(modes if pending else ()) as urls, Progress() as progress:
         task = progress.add_task("benchmarks", total=len(pending))
+        failed: list[str] = []
         for case, engine, mode in pending:
             key = record_key(engine, mode, case.name)
             progress.update(task, description=key)
             site = browser.PAGES[case.layer].site
             base = "" if site is None else urls[site, mode if mode is not Mode.NONE else modes[0]]
-            outcomes = [
-                browser.run_case(case, engine=engine, mode=mode, base_url=base, available=available)
-                for _ in range(case.repeats)
-            ]
+            try:
+                outcomes = [
+                    browser.run_case(
+                        case, engine=engine, mode=mode, base_url=base, available=available
+                    )
+                    for _ in range(case.repeats)
+                ]
+            except browser.BenchmarkError as error:
+                # One case that dies - a wheel fetch lost on the network, a browser crash -
+                # must not cost the rest of an hour-long run. It is left out of the file, so
+                # rerunning the same command fills in exactly the gaps.
+                _log.error("%s failed: %s", key, error)
+                failed.append(key)
+                progress.advance(task)
+                continue
             data["records"][key] = {
                 "engine": str(engine),
                 "mode": str(mode),
@@ -94,6 +106,11 @@ def run(profile: str, out: Path, selection: Selection) -> results.ResultFile:
 
     if selection.include_native:
         _run_native(data, out, profile=profile, selection=selection)
+    if failed:
+        raise browser.BenchmarkError(
+            f"{len(failed)} case(s) failed and were left out: {', '.join(failed)}. "
+            "Run the same command again to fill them in."
+        )
     return data
 
 
