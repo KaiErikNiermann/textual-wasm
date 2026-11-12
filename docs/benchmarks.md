@@ -76,6 +76,6 @@ just bench           # about an hour; resumes where it stopped if interrupted
 just bench-report    # regenerate the tables on this page
 ```
 
-`just bench-smoke` runs every case at toy sizes in a few minutes, to check the harness works. The harness itself is in [`bench/`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/bench): the apps it measures, the scenario runner and the baseline pages. A first visit fetches Pyodide and the wheels from jsDelivr, so the first-visit boot rows depend on the network; everything else is local.
+`just bench-smoke` runs every case at toy sizes in a few minutes, to check the harness works. Chromium and Firefox are the default engines; `just bench --engine webkit` adds Playwright's WebKit where it is installed, and `--only NAME` reruns the cases whose name contains `NAME`. The harness itself is in [`bench/`](https://github.com/KaiErikNiermann/textual-wasm/tree/main/bench): the apps it measures, the scenario runner and the baseline pages. A first visit fetches Pyodide and the wheels from jsDelivr, so the first-visit boot rows depend on the network; everything else is local.
 
 The benchmark also runs weekly on a GitHub runner (`bench.yml`), with the tables in the job summary. Those numbers are noisier than a quiet machine's and are not the ones on this page. What runs on every push is the part that cannot be noisy: `tests/test_bench.py` asserts the counted results - an idle app writes nothing, no message is dropped, the page is published only once the app has drawn - in a real browser, in both builds.
