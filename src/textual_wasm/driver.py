@@ -97,7 +97,7 @@ class WasmDriverBase(Driver):
         # a pointless write under an in-memory filesystem.
         self._parser = XTermParser(debug=False)
         self._tick_task: asyncio.Task[None] | None = None
-        self._loop: asyncio.AbstractEventLoop | None = None
+        self._event_loop: asyncio.AbstractEventLoop | None = None
         self._last_input = 0.0
         self._input_enabled = False
         _register_active(self)
@@ -166,7 +166,7 @@ class WasmDriverBase(Driver):
         for sequence in ENTER_APPLICATION_MODE:
             self.write(sequence)
         self._input_enabled = True
-        self._loop = asyncio.get_running_loop()
+        self._event_loop = asyncio.get_running_loop()
         width, height = self._size or DEFAULT_SIZE
         self.on_resize(width, height)
         # The page owns keyboard focus for as long as the app is mounted; the terminal
@@ -199,7 +199,7 @@ class WasmDriverBase(Driver):
         only thing that can leave the parser holding something to time out. With no input
         there is no task and no timer, so an idle app wakes the interpreter not at all.
         """
-        loop = self._loop
+        loop = self._event_loop
         if loop is None:
             return
         self._last_input = loop.time()
