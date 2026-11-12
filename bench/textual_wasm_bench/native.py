@@ -33,7 +33,7 @@ import psutil
 from bench_apps.probe import FLOOD, FLOOD_END, FLOOD_REPLY, BenchProbe
 from bench_apps.runtime import interpreter_memory
 from textual_wasm_bench import paths
-from textual_wasm_bench.plan import SITE_ENTRIES, Layer, Site, Sizes
+from textual_wasm_bench.plan import PAGES, SITE_ENTRIES, Layer, Sizes
 
 GRID: Final[tuple[int, int]] = (80, 24)
 
@@ -97,8 +97,10 @@ def _wait_for(predicate: Callable[[], bool], timeout: float) -> None:
 
 def idle(layer: Layer, *, window_ms: int, settle_ms: int) -> dict[str, Any]:
     """CPU and output of an idle app on a real terminal, over the same window as a browser."""
-    site = Site.IDLE if layer is Layer.INPUT else Site.PROBE
-    ready = "idle ready" if layer is Layer.INPUT else "bench ready"
+    page = PAGES[layer]
+    if page.site is None or page.ready_text is None:
+        raise ValueError(f"{layer} is not an app layer")
+    site, ready = page.site, page.ready_text
     leader, follower = pty.openpty()
     columns, rows = GRID
     fcntl.ioctl(follower, termios.TIOCSWINSZ, struct.pack("HHHH", rows, columns, 0, 0))
