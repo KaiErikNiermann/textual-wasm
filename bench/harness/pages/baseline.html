@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>baseline</title>
+  </head>
+  <body>
+    <p>baseline</p>
+    <script type="module">
+      // `?level=` picks how far up to go, `?worker=1` runs it off the main thread. Ready is
+      // published the same way the real page publishes `textualWasm`, as a global the
+      // harness waits for, with a mark on the same timeline the real page marks.
+      import { bringUp } from "./baseline.mjs";
+
+      const query = new URLSearchParams(location.search);
+      const level = query.get("level") ?? "pyodide";
+      const manifestUrl = new URL("app.json", location.href).href;
+
+      const done = (error) => {
+        performance.mark("textual-wasm:ready");
+        globalThis.baselineReady = error === undefined ? true : String(error);
+      };
+
+      if (query.get("worker") === "1") {
+        const worker = new Worker(new URL("baseline-worker.mjs", location.href), {
+          type: "module",
+        });
+        globalThis.baselineWorker = worker;
+        worker.addEventListener("message", ({ data }) => done(data.error));
+        worker.postMessage({ level, manifestUrl });
+      } else {
+        try {
+          await bringUp(level, manifestUrl);
+          done();
+        } catch (error) {
+          done(error);
+        }
+      }
+    </script>
+  </body>
+</html>

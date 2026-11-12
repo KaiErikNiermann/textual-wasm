@@ -23,22 +23,28 @@ importers:
         version: 2.0.1
       '@eslint/js':
         specifier: ^10.0.1
-        version: 10.0.1(eslint@10.14.0(supports-color@10.2.2))
+        version: 10.0.1(eslint@10.14.0)
       eslint:
         specifier: ^10.14.0
-        version: 10.14.0(supports-color@10.2.2)
+        version: 10.14.0
       eslint-plugin-security:
         specifier: ^4.2.1
         version: 4.2.1
       eslint-plugin-sonarjs:
         specifier: ^4.2.2
-        version: 4.2.2(eslint@10.14.0(supports-color@10.2.2))
+        version: 4.2.2(eslint@10.14.0)
       eslint-plugin-unicorn:
         specifier: ^79.0.0
-        version: 79.0.0(eslint@10.14.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@7.0.2)
+        version: 79.0.0(eslint@10.14.0)(typescript@7.0.2)
       globals:
         specifier: ^17.14.0
         version: 17.14.0
+      pidtree:
+        specifier: 1.0.0
+        version: 1.0.0
+      pidusage:
+        specifier: 4.1.0
+        version: 4.1.0
       playwright:
         specifier: ^1.64.1
         version: 1.64.1
@@ -53,16 +59,16 @@ importers:
         version: 4.52.0
       stylelint:
         specifier: ^17.16.0
-        version: 17.16.0(supports-color@10.2.2)(typescript@7.0.2)
+        version: 17.16.0(typescript@7.0.2)
       stylelint-config-standard:
         specifier: ^40.0.0
-        version: 40.0.0(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2))
+        version: 40.0.0(stylelint@17.16.0(typescript@7.0.2))
       stylelint-declaration-strict-value:
         specifier: ^1.12.1
-        version: 1.12.1(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2))
+        version: 1.12.1(stylelint@17.16.0(typescript@7.0.2))
       stylelint-order:
         specifier: ^8.1.2
-        version: 8.1.2(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2))
+        version: 8.1.2(stylelint@17.16.0(typescript@7.0.2))
       tailwind-csstree:
         specifier: ^0.4.2
         version: 0.4.2(@eslint/css@2.0.1)
@@ -1608,6 +1614,15 @@ packages:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
 
+  pidtree@1.0.0:
+    resolution: {integrity: sha512-avfAvjB9Dd0wdj3rjJX//yS+G79OO0KrS5pJHFJENjYGX6N4SMgEDBBI/yFy0lloOYSaC6XQxzpOAMPfSYFV/Q==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  pidusage@4.1.0:
+    resolution: {integrity: sha512-0hHaTY71M63oQQw1F41jvSIbHZQ+qnhUGGtctVsKgw4rO3p6ECUEC7Fry3c8RzuZeMugtLttg+bAEb9lmliGyw==}
+    engines: {node: '>=18'}
+
   playwright-core@1.64.1:
     resolution: {integrity: sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==}
     engines: {node: '>=20'}
@@ -2293,17 +2308,17 @@ snapshots:
     dependencies:
       postcss-selector-parser: 7.1.6
 
-  '@eslint-community/eslint-utils@4.10.1(eslint@10.14.0(supports-color@10.2.2))':
+  '@eslint-community/eslint-utils@4.10.1(eslint@10.14.0)':
     dependencies:
-      eslint: 10.14.0(supports-color@10.2.2)
+      eslint: 10.14.0
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.2': {}
 
-  '@eslint/config-array@0.23.5(supports-color@10.2.2)':
+  '@eslint/config-array@0.23.5':
     dependencies:
       '@eslint/object-schema': 3.0.5
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       minimatch: 10.2.6
     transitivePeerDependencies:
       - supports-color
@@ -2327,9 +2342,9 @@ snapshots:
       '@eslint/css-tree': 4.1.1
       '@eslint/plugin-kit': 0.7.3
 
-  '@eslint/js@10.0.1(eslint@10.14.0(supports-color@10.2.2))':
+  '@eslint/js@10.0.1(eslint@10.14.0)':
     optionalDependencies:
-      eslint: 10.14.0(supports-color@10.2.2)
+      eslint: 10.14.0
 
   '@eslint/object-schema@3.0.5': {}
 
@@ -2743,11 +2758,9 @@ snapshots:
       es-errors: 1.3.0
       is-data-view: 1.0.2
 
-  debug@4.4.3(supports-color@10.2.2):
+  debug@4.4.3:
     dependencies:
       ms: 2.1.3
-    optionalDependencies:
-      supports-color: 10.2.2
 
   decode-named-character-reference@1.3.0:
     dependencies:
@@ -2895,13 +2908,13 @@ snapshots:
     dependencies:
       safe-regex: 2.1.1
 
-  eslint-plugin-sonarjs@4.2.2(eslint@10.14.0(supports-color@10.2.2)):
+  eslint-plugin-sonarjs@4.2.2(eslint@10.14.0):
     dependencies:
       '@eslint-community/regexpp': 4.12.2
       '@sonarsource/analyzer-commons-configurations': 2.31.0-5284
       builtin-modules: 3.3.0
       bytes: 3.1.2
-      eslint: 10.14.0(supports-color@10.2.2)
+      eslint: 10.14.0
       functional-red-black-tree: 1.0.1
       globals: 17.14.0
       jsx-ast-utils-x: 0.1.0
@@ -2913,9 +2926,9 @@ snapshots:
       typescript: 5.9.3
       yaml: 2.9.1
 
-  eslint-plugin-unicorn@79.0.0(eslint@10.14.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@7.0.2):
+  eslint-plugin-unicorn@79.0.0(eslint@10.14.0)(typescript@7.0.2):
     dependencies:
-      '@eslint-community/eslint-utils': 4.10.1(eslint@10.14.0(supports-color@10.2.2))
+      '@eslint-community/eslint-utils': 4.10.1(eslint@10.14.0)
       '@eslint/css-tree': 4.1.1
       browserslist: 4.29.3
       change-case: 5.4.4
@@ -2923,13 +2936,13 @@ snapshots:
       core-js-compat: 3.50.0
       detect-indent: 7.0.2
       entities: 8.1.0
-      eslint: 10.14.0(supports-color@10.2.2)
+      eslint: 10.14.0
       find-up-simple: 1.0.1
       globals: 17.14.0
       identifier-regex: 1.1.0
       indent-string: 5.0.0
       is-builtin-module: 5.0.0
-      micromark: 4.0.3(supports-color@10.2.2)
+      micromark: 4.0.3
       parse5: 8.0.1
       pluralize: 8.0.0
       quote-js-string: 0.1.0
@@ -2954,11 +2967,11 @@ snapshots:
 
   eslint-visitor-keys@5.0.1: {}
 
-  eslint@10.14.0(supports-color@10.2.2):
+  eslint@10.14.0:
     dependencies:
-      '@eslint-community/eslint-utils': 4.10.1(eslint@10.14.0(supports-color@10.2.2))
+      '@eslint-community/eslint-utils': 4.10.1(eslint@10.14.0)
       '@eslint-community/regexpp': 4.12.2
-      '@eslint/config-array': 0.23.5(supports-color@10.2.2)
+      '@eslint/config-array': 0.23.5
       '@eslint/config-helpers': 0.7.0
       '@eslint/core': 1.2.1
       '@eslint/plugin-kit': 0.7.3
@@ -2968,7 +2981,7 @@ snapshots:
       '@types/estree': 1.0.9
       ajv: 6.15.0
       cross-spawn: 7.0.6
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       escape-string-regexp: 4.0.0
       eslint-scope: 9.1.2
       eslint-visitor-keys: 5.0.1
@@ -3575,10 +3588,10 @@ snapshots:
 
   micromark-util-types@2.0.3: {}
 
-  micromark@4.0.3(supports-color@10.2.2):
+  micromark@4.0.3:
     dependencies:
       '@types/debug': 4.1.13
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       decode-named-character-reference: 1.3.0
       devlop: 1.1.0
       micromark-core-commonmark: 2.0.4
@@ -3684,6 +3697,10 @@ snapshots:
   picomatch@2.3.2: {}
 
   picomatch@4.0.7: {}
+
+  pidtree@1.0.0: {}
+
+  pidusage@4.1.0: {}
 
   playwright-core@1.64.1: {}
 
@@ -4014,27 +4031,27 @@ snapshots:
 
   style-mod@4.1.4: {}
 
-  stylelint-config-recommended@18.0.0(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2)):
+  stylelint-config-recommended@18.0.0(stylelint@17.16.0(typescript@7.0.2)):
     dependencies:
-      stylelint: 17.16.0(supports-color@10.2.2)(typescript@7.0.2)
+      stylelint: 17.16.0(typescript@7.0.2)
 
-  stylelint-config-standard@40.0.0(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2)):
+  stylelint-config-standard@40.0.0(stylelint@17.16.0(typescript@7.0.2)):
     dependencies:
-      stylelint: 17.16.0(supports-color@10.2.2)(typescript@7.0.2)
-      stylelint-config-recommended: 18.0.0(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2))
+      stylelint: 17.16.0(typescript@7.0.2)
+      stylelint-config-recommended: 18.0.0(stylelint@17.16.0(typescript@7.0.2))
 
-  stylelint-declaration-strict-value@1.12.1(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2)):
+  stylelint-declaration-strict-value@1.12.1(stylelint@17.16.0(typescript@7.0.2)):
     dependencies:
       regexp.escape: 2.0.1
-      stylelint: 17.16.0(supports-color@10.2.2)(typescript@7.0.2)
+      stylelint: 17.16.0(typescript@7.0.2)
 
-  stylelint-order@8.1.2(stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2)):
+  stylelint-order@8.1.2(stylelint@17.16.0(typescript@7.0.2)):
     dependencies:
       postcss: 8.5.28
       postcss-sorting: 10.0.0(postcss@8.5.28)
-      stylelint: 17.16.0(supports-color@10.2.2)(typescript@7.0.2)
+      stylelint: 17.16.0(typescript@7.0.2)
 
-  stylelint@17.16.0(supports-color@10.2.2)(typescript@7.0.2):
+  stylelint@17.16.0(typescript@7.0.2):
     dependencies:
       '@csstools/css-calc': 3.3.0(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)
       '@csstools/css-parser-algorithms': 4.0.0(@csstools/css-tokenizer@4.0.0)
@@ -4047,7 +4064,7 @@ snapshots:
       cosmiconfig: 9.0.2(typescript@7.0.2)
       css-functions-list: 3.3.3
       css-tree: 3.2.1
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3
       fast-glob: 3.3.3
       fastest-levenshtein: 1.0.16
       file-entry-cache: 11.1.5

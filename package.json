@@ -8,7 +8,7 @@
     "check": "poetry run textual-wasm check",
     "lint:all": "pnpm lint:css && pnpm lint:js && pnpm lint:style && pnpm lint:ts",
     "lint:css": "eslint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" \"playground/src/**/*.css\" && stylelint \"src/textual_wasm/assets/**/*.css\" \"examples/**/*.css\" \"playground/src/**/*.css\"",
-    "lint:js": "eslint \"playground/src/**/*.mjs\" playground/vite.config.js",
+    "lint:js": "eslint \"playground/src/**/*.mjs\" playground/vite.config.js \"bench/harness/**/*.mjs\"",
     "lint:style": "EIO_BACKEND=posix poetry run semgrep --config .semgrep/vendor/principled-css.yml --metrics=off --error --quiet src/textual_wasm/assets examples playground/src playground/index.html",
     "lint:ts": "tsc --noEmit -p examples/page-bridge"
   },
@@ -25,6 +25,8 @@
     "eslint-plugin-sonarjs": "^4.2.2",
     "eslint-plugin-unicorn": "^79.0.0",
     "globals": "^17.14.0",
+    "pidtree": "1.0.0",
+    "pidusage": "4.1.0",
     "playwright": "^1.64.1",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",

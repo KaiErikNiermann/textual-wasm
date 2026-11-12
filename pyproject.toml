@@ -60,6 +60,7 @@ radon = "^6.0"
 semgrep = "^1.183"
 pyyaml = "^6.0.3"
 types-pyyaml = "^6.0.12.20260906"
+psutil = "^7.2.2"
 
 
 [tool.poetry.group.docs.dependencies]
@@ -75,7 +76,7 @@ build-backend = "poetry.core.masonry.api"
 
 # --- Ruff -------------------------------------------------------------------
 [tool.ruff]
-src = ["src", "tests", "playground/runner"]
+src = ["src", "tests", "playground/runner", "bench"]
 # Deliberately non-compliant code that exists to prove the semgrep rules still fire.
 extend-exclude = ["tests/semgrep/positive", "tests/doctor"]
 line-length = 100
@@ -118,16 +119,17 @@ ignore = [
 # and a command with four ways to name an application and two to size a grid is not that.
 # PLR0917 is the same judgement for the positional-only count, stabilised in ruff 0.16.
 "src/textual_wasm/cli/*" = ["PLR0913", "PLR0917"]
+"bench/textual_wasm_bench/__main__.py" = ["PLR0913", "PLR0917"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
 # --- Pyright ----------------------------------------------------------------
 [tool.pyright]
-include = ["src", "tests", "scripts", "playground/runner"]
-# The playground's runner is a package of its own rather than part of the distribution, so
-# the tests that import it need it on the path.
-extraPaths = ["playground/runner"]
+include = ["src", "tests", "scripts", "playground/runner", "bench"]
+# The playground's runner and the benchmarks are packages of their own rather than part of
+# the distribution, so the tests that import them need them on the path.
+extraPaths = ["playground/runner", "bench"]
 exclude = ["tests/semgrep/positive", "tests/doctor"]
 # Hand-written stubs for the Pyodide `js` module, which exists only inside the runtime.
 stubPath = "typings"
@@ -143,7 +145,7 @@ venv = ".venv"
 # --- Pytest -----------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["playground/runner"]
+pythonpath = ["playground/runner", "bench"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "-q --strict-markers"
