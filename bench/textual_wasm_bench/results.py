@@ -68,9 +68,15 @@ MEASURED_PATHS: tuple[str, ...] = (
     "poetry.lock",
     "package.json",
     "pnpm-lock.yaml",
+    # Rendering and arithmetic over finished results; they change how a number is shown,
+    # never the number.
+    ":(exclude)bench/textual_wasm_bench/report.py",
+    ":(exclude)bench/textual_wasm_bench/summary.py",
 )
-"""What a measurement depends on. A result is marked dirty only when one of these differs
-from the recorded commit; an edited stylesheet in the docs changes no number."""
+"""What a measurement depends on, as git pathspecs. The recorded commit is the latest one
+that touched these, and a result is dirty only when one of them differs from it - so an
+edited docs stylesheet, or a commit that only changes how the tables are rendered, made
+while a run is going, does not make its later records look re-measured."""
 
 
 def _command_output(argv: list[str]) -> str | None:
@@ -97,7 +103,8 @@ def _cpu_model() -> str:
 def revision() -> tuple[str | None, bool]:
     """The commit being measured, and whether anything a number depends on differs from it."""
     dirty = _command_output(["git", "status", "--porcelain", "--", *MEASURED_PATHS])
-    return _command_output(["git", "rev-parse", "--short", "HEAD"]), bool(dirty)
+    commit = _command_output(["git", "log", "-1", "--format=%h", "--", *MEASURED_PATHS])
+    return commit, bool(dirty)
 
 
 def stamp() -> str:
