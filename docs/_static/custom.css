@@ -256,6 +256,69 @@ body {
   }
 }
 
+/* ── Inline code: click to copy (wired up by inline-copy.js) ──── */
+
+/* On body, not :root: Furo defines its colour variables on body. */
+body {
+  --tw-copy-hover-background: color-mix(in srgb, var(--color-inline-code-background) 70%,
+                                        var(--color-brand-primary) 30%);
+  --tw-copy-focus-ring:       var(--color-brand-primary);
+  --tw-copy-toast-background: var(--color-foreground-primary);
+  --tw-copy-toast-text:       var(--color-background-primary);
+  --tw-copy-toast-pad-inline: 0.5rem;
+  --tw-copy-toast-pad-block:  0.2rem;
+  --tw-copy-toast-radius:     0.25rem;
+  --tw-copy-toast-font-size:  0.75rem;
+  --tw-copy-toast-line-height: 1.3;
+  --tw-copy-toast-rise:       4px;
+  --tw-copy-toast-layer:      100;
+}
+
+.content code.literal[data-copyable] {
+  cursor: copy;
+  transition: background-color 120ms ease;
+}
+
+.content code.literal[data-copyable]:hover,
+.content code.literal[data-copyable]:focus-visible {
+  background-color: var(--tw-copy-hover-background);
+}
+
+.content code.literal[data-copyable]:focus-visible {
+  outline: 2px solid var(--tw-copy-focus-ring);
+  outline-offset: 1px;
+}
+
+/* Fixed and placed by the script above or below the code that was copied. */
+.inline-copy-toast {
+  background: var(--tw-copy-toast-background);
+  border-radius: var(--tw-copy-toast-radius);
+  color: var(--tw-copy-toast-text);
+  font-family: var(--font-stack);
+  font-size: var(--tw-copy-toast-font-size);
+  line-height: var(--tw-copy-toast-line-height);
+  opacity: 0;
+  padding-block: var(--tw-copy-toast-pad-block);
+  padding-inline: var(--tw-copy-toast-pad-inline);
+  pointer-events: none;
+  position: fixed;
+  transition: opacity 120ms ease, translate 120ms ease;
+  translate: -50% var(--tw-copy-toast-rise);
+  z-index: var(--tw-copy-toast-layer);
+}
+
+.inline-copy-toast[data-shown] {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content code.literal[data-copyable],
+  .inline-copy-toast {
+    transition: none;
+  }
+}
+
 /* ── Page-specific ────────────────────────────────────────────── */
 
 /* Live demos are embedded as iframes and need a real block size - a character grid

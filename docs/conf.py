@@ -77,6 +77,8 @@ html_static_path = ["_static"]
 # in every page-error check run against this site.
 html_favicon = "_static/favicon.svg"
 html_css_files = ["custom.css"]
+# Deferred, since it looks up the page's inline code when it runs.
+html_js_files = [("inline-copy.js", {"defer": "defer"})]
 html_theme_options = {
     "source_repository": f"{repo_url}/",
     "source_branch": "main",
