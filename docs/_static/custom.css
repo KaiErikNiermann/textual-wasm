@@ -59,6 +59,7 @@ body {
 }
 
 .content table th {
+  padding-block: 0.45em;
   font-weight: 600;
   text-align: start;
 }
