@@ -182,6 +182,14 @@ clean:
   rm -rf dist docs/_build artifacts .pytest_cache .ruff_cache
   find . -name __pycache__ -type d -prune -not -path './.venv/*' -exec rm -rf {} +
 
+# --- Git --------------------------------------------------------------------
+
+# Rebase main onto origin/main, show what will go out, then push (runs the pre-push gates)
+rebase-push:
+  git pull --rebase origin main
+  git log --oneline origin/main..main
+  pm run -t 20m -- git push origin main
+
 # --- Release ----------------------------------------------------------------
 
 # Bump version, commit, tag, push, and create GitHub release
