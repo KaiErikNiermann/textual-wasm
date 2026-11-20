@@ -61,6 +61,7 @@ semgrep = "^1.184"
 pyyaml = "^6.0.3"
 types-pyyaml = "^6.0.12.20260906"
 psutil = "^7.2.2"
+zstandard = "^0.25.0"
 
 
 [tool.poetry.group.docs.dependencies]

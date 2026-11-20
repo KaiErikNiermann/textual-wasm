@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import zlib
 from pathlib import Path
 
@@ -43,14 +44,26 @@ def test_the_payload_is_url_safe() -> None:
 
 
 def test_what_the_page_writes_is_readable() -> None:
-    """Raw DEFLATE, unpadded base64url: what `CompressionStream("deflate-raw")` emits."""
+    """Written by `encode` in `share.mjs`: fflate's level 9 against the same dictionary."""
+    assert share.decode("v2.wxOOJJ3MDF5khr5gCsPLuO6yhC2cBgA") == HELLO
+
+
+def test_an_older_link_without_the_dictionary_is_still_readable() -> None:
+    """Raw DEFLATE, unpadded base64url: what `CompressionStream("deflate-raw")` emitted."""
     compressor = zlib.compressobj(wbits=-15)
     packed = compressor.compress(b"print('hi')") + compressor.flush()
     fragment = "v1." + base64.urlsafe_b64encode(packed).decode().rstrip("=")
     assert share.decode(fragment) == "print('hi')"
 
 
-@pytest.mark.parametrize("fragment", ["", "#", "#v2.abc", "#code=abc", "#v1.!!!!", "#v1.AAAA"])
+def test_the_dictionary_is_the_one_links_were_written_with() -> None:
+    """Every `v2.` link decodes only against these exact bytes. A new dictionary needs a new
+    prefix, with this one kept for reading old links."""
+    digest = hashlib.sha256(share.DICTIONARY).hexdigest()
+    assert digest == "f6ccd37fed905913a8962c52da34e22e02d93848aac97a657c4d3b96994975a6"
+
+
+@pytest.mark.parametrize("fragment", ["", "#", "#v3.abc", "#code=abc", "#v1.!!!!", "#v2.AAAA"])
 def test_a_fragment_that_is_not_a_program_is_refused(fragment: str) -> None:
     with pytest.raises(share.ShareError):
         share.decode(fragment)

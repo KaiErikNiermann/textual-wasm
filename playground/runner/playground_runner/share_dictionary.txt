@@ -1,0 +1,1392 @@
+d(
+            Label("1"),
+  
+
+if __name__ == "__main__":
+    app = GridApp()
+     yield Static("Grid cell 6", id="static6")
+      height: auto;
+    width: 100%;
+    align-horizonclass DockAllApp(App):
+    CSS_PATH = "dock_all.tc("Widget 1")
+        yield Static("Widget 2", clas content-align: left middle;
+}
+#center-middle {
+         yield Label("left top", id="left-top")
+     height: 1fr;
+    padding: 1;
+    color: white;
+}
+Label("...[b]Easily align content[/]...", id="box2er(id="p6"),
+            Placeholder(id="p7"),
+   r the lazy dog!", id="lbl3")
+  g!", id="lbl1")
+        yield Label("The quick broass BoxSizingApp(App):
+    CSS_PATH = "box_sizing.        label.border_title = "Textual Rocks"
+     y;
+    border-title-align: right;
+}
+
+Screen > Labelbl
+
+        lbl = Label("My title is centered", irderSubtitleAlignApp()
+    app.run()
+#label1 {
+      lbl = Label("My subtitle is on the left.", id="cess;
+}
+
+#lbl7 {  /* (6)! */
+    border-top: solid}
+
+#lbl5 {  /* (4)! */
+    /* No border = no (sub)(  # (10)!
+                "that were too long.",
+           "and ended up redoing it",
+          "nine labels", "lbl5", "Title", "Subtitle"
+       "This is the story of",
+                "lbl # (11)!
+    text: str, id: str, border_title: strt;
+}
+
+#round {
+    border: round $accent;
+}
+
+#soli#ascii {
+    border: ascii $accent;
+}
+
+#blank {
+  , id="inner"),
+            Label("outer", id="oute Grid(
+            Label("ascii", id="ascii"),
+   abel("My border is dashed green", id="label2")
+   ;
+}
+
+#t20 {
+    background: red 20%;
+}
+
+#t30 {
+   kgroundTransparencyApp()
+    app.run()
+#t10 {
+    app to exemplify different transparency settings."Label("0%")
+        with Vertical(id="tint2"):
+   
+class BackgroundApp(App):
+    CSS_PATH = "backgroenter top;
+}
+
+#right-top {
+    align: right top;
+}ntainer(Label("left middle"), id="left-middle")
+   AlignAllApp(App):
+    """App that illustrates allent(time() * 90, STOPS)  # (3)!
+
+
+class SplashApp(
+    "#44dd88",
+    "#22ccbb",
+    "#00bbcc",
+    tual.renderables.gradient import LinearGradient
+fr1fr;
+        width: 32;
+        margin: 0 2;
+    }ULT_CSS = """
+    Tweet {
+        height: 5;
+     der):
+    pass
+
+
+class Column(VerticalScroll):
+   m textual.containers import HorizontalScroll, Vert border: solid white;
+    }
+    """  # (1)!
+
+
+clas     yield Footer(id="Footer")
+
+
+class LayoutApp(APlaceholder):
+    DEFAULT_CSS = """
+    Footer {
+ holder
+
+
+class Header(Placeholder):  # (1)!
+    paeResult:
+        for tweet_no in range(1, 20):
+   Placeholder):
+    DEFAULT_CSS = """
+    Header {
+   self.query_one(Digits).update(f"{clock:%T}")
+
+
+i app.run(inline=True)  #  (1)!
+     align: center middle;
+    }
+    #clock {
+    Box("Box 2.")
+            yield Box("Box 3.")
+
+
+if      yield Box("Box 2")
+        with Right(classe Box {
+        width: 16;
+        height: 5;       .with-border {
+        border: heavy green;
+    }ith-border"):
+            for n in range(10):
+    ComposeResult:
+        with HorizontalGroup(classeom textual.containers import HorizontalGroup
+from o play with containers."""
+
+    CSS = """
+    .wit
+    Box {
+        width: 16;
+        height: 8;  orizontal():  # (1)!
+            yield Box()  # (2e(self) -> ComposeResult:
+        with Center():
+ eResult
+from textual.containers import Center
+fromreen {
+        align: center middle;
+    }
+
+    .w center things."""
+
+    CSS = """
+    .words {
+         width: 40;
+        text-align: center;
+    }      border: wide white;
+        width: 40;
+    }eResult:
+        yield Static("Hello, World!", id=d!")
+
+
+if __name__ == "__main__":
+    app = Centerther
+            if not worker.is_cancelled:
+          request.add_header("User-agent", "CURL")
+    textual.worker import Worker, get_current_worker
+
+t quote
+from urllib.request import Request, urlopencClient() as client:
+                response = arom textual.worker import Worker
+
+
+cltext)
+                weather_widget.update(weathevalue)
+
+    @work(exclusive=True)
+    async def uplass WeatherApp(App):
+    """App to display the cu   url = f"https://wttr.in/{city}"
+            asyner"):
+            yield Static(id="weather")
+
+   ("")
+
+
+if __name__ == "__main__":
+    app = Weatheeather(self, city: str) -> None:
+        """Update
+        yield Input(placeholder="Enter a City")
+   yield Button("Click me", variant="success")
+
+         self.query_one(Button).tooltip = TEXT
+
+
+if _OWS[1:])
+        data_table.loading = False  # (3)      self.load_data(data_table)
+
+    @work
+    as,
+    (10, "Darren Burns", "Scotland", 51.84),
+]
+
+om import randint
+
+from textual import work
+from tck for next hello"  # (2)!
+
+    def action_next_wo()
+    app.run()
+from itertools import cycle
+
+fromHola",
+        "Bonjour",
+        "Guten tag",
+   self.update(f"{hello}, [b]World[/b]!")
+
+
+class Cusa",
+        "Anyoung haseyo",
+        "Zdravstvuyt  app = CustomApp()
+    app.run()
+from itertools i     "Salve",
+        "Nn ho",
+        "Ol",self) -> ComposeResult:
+        yield Hello()
+
+
+if
+from textual.app import App, ComposeResult, Rende range(1, 16):
+            fizz = not n % 3
+            "fizz" if fizz else "",
+                "buz    table = Table("Number", "Fizz?", "Buzz?")
+    ion_change_count(self, amount: int) -> None:  # (2
+        yield Counter()
+        yield Footer()
+
+
+o that is covers the visible area
+      .board_size * 8)
+        # Crop the strip so that _odd = row_index % 2
+
+        def get_square_stylerevious_square))
+
+        # Refresh the new cursor_square_region(square_offset: Offset) -> Region:
+ _size = Size(board_size * 8, board_size * 4)
+
+    oard(ScrollView):
+    COMPONENT_CLASSES = {
+    egment
+from rich.style import Style
+
+
+class Checke   strip = strip.crop(scroll_x, scroll_x + self.si`, not zero!
+        row_index = y // 4  # four liare is 4 rows and 8 columns
+        self.virtual_srip(segments, 8 * 8)
+        return strip
+
+
+clas-square")
+
+        segments = [
+            Segmen"""Render a line of the widget. y is relative to t % 2 else white)
+            for column in range(8kground
+        black = Style.parse("on black")  # checkerboard."""
+
+    def render_line(self, y: inparse("green")
+
+        # Test clicking the "blue"ait pilot.press("x")
+        # No binding (so no c    """Test pressing keys has the desired result."ent.button.id is not None
+        self.action_switetApp()
+    app.run()
+from textual import on
+from textual.widgets import Static
+
+
+class WidgetApp(Ap= 30
+        self.widget.styles.padding = 2
+
+
+if _f.widget.styles.outline = ("heavy", "yellow")
+
+
+ifif __name__ == "__main__":
+    app = MarginApp()
+ thing. Only I will remain."""
+
+
+class MarginApp(Ap"
+        self.widget2.styles.height = "1fr"
+
+
+if 0
+        self.widget.styles.height = "auto"
+
+
+if 10
+
+
+if __name__ == "__main__":
+    app = Dimensh = 30
+        self.widget.styles.height = 10
+
+
+ifles.background = Color(191, 78, 96, a=alpha)
+
+
+if .styles.color = "blue"
+        self.widget3.stylest:
+        self.widget1 = Static("Textual One")
+  lf.widget2.styles.box_sizing = "content-box"
+
+
+if TEXT)
+        yield self.widget2
+
+    d    yield self.widget1
+        self.widget2 = Stat.widget.border_title = "Litany Against Fear"
+      ComposeResult:
+        self.widget = Label(TEXT)
+turn datetime.now().strftime("%c")
+
+
+class ClockApDINGS = [("b", "push_screen('bsod')", "BSOD")]
+
+   your computer. If you do this,
+you will lose any T = """
+An error has occurred. To continue:
+
+Pressreturn to Windows, or
+
+Press CTRL+ALT+DEL to resta         self.notify(":-(", severity="error")
+
+
+if(Button.Pressed, "#yes")
+    def handle_yes(self)       "settings": SettingsScreen,
+        "help": , "switch_mode('dashboard')", "Dashboard"),  # (1)  """Action to display the quit dia        else:
+            self.dismiss(False)
+
+
+cllass QuitScreen(ModalScreen[bool]):  # (1)!
+    ""uit dialog."""
+        self.push_screen(QuitScreen yield Footer()
+
+    def action_request_quit(self)ton("Cancel", variant="primary", id="cancel"),
+   $surface;
+}
+
+#question {
+    column-span: 2;
+    h   BINDINGS = [("q", "request_quit", "Quit")]
+
+          self.app.pop_screen()
+
+
+class ModalApp(AppScreen):
+    """Screen with a dialog to quit."""
+
+yield WorldClock("Europe/Paris").data_bind(clock_t).update(localized_time.strftime("%H:%M:%S"))
+
+
+cletime.now)
+
+    def __init__(self, timezone: str) ock("Asia/Tokyo").data_bind(WorldClockApp.time)
+
+ ime(self, time: datetime) -> None:
+        localiz reactive[datetime] = reactive(datetime.now)
+
+    dClockApp(App):
+    CSS_PATH = "world_clock01.tcssed_time = time.astimezone(timezone(self.timezone))(Input).value = ""
+            self.color = input_background = new_color
+
+    def on_input_submittedbutton.id == "plus":
+            self.count += 1
+ 
+        if count < 0:
+            count = 0
+     elf.mutate_reactive(MultiGreet.names)  # (2)!
+
+
+ifing_no = (self.greeting_no + 1) % len(GREETINGS)
+ update(greeting)
+
+    def watch_who(self, who: str 1;
+        & Label {
+            margin: 0 1;
+   ",
+    "",
+    "Hello",
+]
+
+
+cla    }
+    """
+    greeting_no: var[int] = var(0)
+ eting: reactive[str] = reactive("")
+    who: react,
+    "",
+    "",
+    "lass WatchApp(App):
+    CSS_PATH = "refresh02.tcss
+if __name__ == "__main__":
+    app = WatchApp()
+      self.query_one(Name).who = event.value
+
+
+if _active("name")
+
+    def render(self) -> str:
+     class Clock(App):
+
+    CSS = """
+    Screen {alignpdate_time(self) -> None:
+        self.time = dateiddle}
+    Digits {width: auto}
+    """
+
+    time:.query_one(Label).update(str(counter_value))
+
+
+cla        elif event.input.id == "green":
+    en, self.blue).clamped
+
+    def watch_color(self,  0-255", id="red"),
+            Input("0", placehoATH = "vertical_layout_scrolled.tcss"
+lLayoutExample(App):
+    CSS_PATH = "vertical_layomple(App):
+    CSS_PATH = "utility_containers.tcss               classes="column",
+            ),
+  idgets import Static
+
+
+class UtilityContainersExam
+from textual.widgets import Static
+
+
+class Horizo_name__ == "__main__":
+    app = HorizontalLayoutEmple(App):
+    CSS_PATH = "grid_layout_auto.tcss"
+mple(App):
+    CSS_PATH = "grid_layout7_gutter.tcs classes="box")
+
+
+app = GridLayoutExample()
+if __n classes="box")
+        yield Static("Two [b](coluutExample(App):
+    CSS_PATH = "grid_layout5_col_stExample(App):
+    CSS_PATH = "grid_layout4_row_co
+    CSS_PATH = "grid_layout3_row_col_adjust.tcss"ox")
+
+
+if __name__ == "__main__":
+    app = GridLa        yield Static("Sidebar1", id="sidebar")
+    headers, footers, and sidebars.
+
+"""
+
+
+class Docktion, aligned to either the top, right, bottom, orroll out of view, making them ideal for sticky hea it from the layout and fixes its position, alignes: 1fr;
+    grid-rows: 1fr;
+}
+
+#left-pane > Statatic("grid layout!", id="bottom-right-final")
+
+
+ifll(id="left-pane"):
+                for number in on_mouse_move(self, event: events.MouseMove) -> Nosplay key events."""
+
+    CSS_PATH = "key03.tcss"
+()
+    app.run()
+from textual import events
+from teResult
+from textual.widgets import RichLog
+
+
+clas self.call_after_refresh(self.screen.scroll_end, ale;
+}
+
+/* Matches the button container */
+.buttons 8;
+    background: $panel;
+    color: $text;
+    t to learn about Textual CSS?"
+
+
+class ExampleApp(Button, Footer, Header, Static
+
+QUESTION = "Do youle;
+
+    /* Style all buttons */
+    .button {
+   p with nested CSS."""
+
+    CSS_PATH = "nesting02.tYes button */
+#questions .button.affirmative {
+   class NestingDemo(App):
+    """App that doesn't ha is a Rich renderable that displays syntax highligatic(TEXT2, id="text2", markup=False)  # (1)!
+
+
+if       #text2 { background: $error-muted; }
+    }
+ield Label(self.input_label)
+        yield Input(): horizontal;
+        height: auto;
+    }
+    Inpu
+        for switch in self.query(BitSwitch):
+               value |= switch.value << switch.bit
+   ef validate_value(self, value: int) -> int:  # (2)r middle;
+    }
+    ByteEditor > Container.top {
+ ""When the switch changes, notify the parent via a
+
+    class BitChanged(Message):
+        """Sent wContainer
+from textual.geometry import clamp
+from     """When a switch changes, update the value."""    yield BitSwitch(bit)
+
+
+class ByteEditor(Widgetelf.post_message(self.BitChanged(self.bit, event.vt = bit
+            self.value = value
+
+    value ""
+    BitSwitch {
+        layout: vertical;
+     th Container():
+            yield ByteInput()
+
+
+clesult:
+        for bit in reversed(range(8)):
+    
+
+class ByteInput(Widget):
+    """A compound widgeWidget
+from textual.widgets import Input, Label, S   str(path),
+            line_numbers=True,
+               matcher.highlight(command),  # (5)!
+          worker = self.app.run_worker(self.read_files
+from functools import partial
+from pathlib importp(App):
+    """An app with a 'bell' command."""
+
+ tyles.opacity = 1 - ease(0.25)
+
+    def key_2(selfstyles.animate("opacity", value=0.0, duration=2.0)  def check_action(self, action: str, parameters:            for page_no in range(PAGES_COUNT):
+           ("n", "next", "Next"),
+        ("p", "previ_one(f"#page-{self.page_no}").scroll_visible()
+
+  one:
+        self.page_no += 1
+        self.refres ComposeResult:
+        yield ColorSwitcher(TEXT)
+ellow')]Yellow[/]
+"""
+
+
+class ColorSwitcher(Staticset_background('red')", "Red"),
+        ("g", "set      self.screen.styles.background = color
+
+
+if _green')]Green[/]
+[@click=app.set_background('blue'f __name__ == "__main__":
+    app = ActionsApp()
+ hanged):  # (1)!
+            input.value = ""
+
+       """Demonstrates `prevent` context manager."""
+ark")
+        yield Button("Quit", id="quit")
+
+   extual-dark" if self.theme == "textual-light" elseutton("Bell", id="bell")
+        yield Button("Tog f"https://api.dictionaryapi.dev/api/v2/entries/en coroutine to handle a text changed message."""
+  Error:
+    raise ImportError("Please install httpxdef on_color_button_selected(self, message: ColorBnit__()
+
+    def __init__(self, color: Color) -> Nrt Color
+from textual.message import Message
+from __name__ == "__main__":
+    SuspendingApp().run()
+itle = event.key
+        self.sub_title = f"You jun App"
+    SUB_TITLE = "The most important questioATH = "question02.tcss"
+    TITLE = "A Question ApButton.Pressed) -> None:
+        self.exit(event.bwidgets import Label, Button
+
+
+class QuestionApp(Ad Label("Do you love Textual?", id="question")
+   eld Button("Yes", id="yes", variant="primary")
+   import events
+
+
+class EventApp(App):
+
+    COLORS =   Horizontal(
+                Placeholder(),
+    es.tint = color.with_alpha(tint_alpha / 100)  # (1c1")
+        yield Static(TEXT, id="static2")
+
+
+ife: bold italic;
+}
+
+#lbl8 {
+    text-style: reverse  Label("reverse strike\n" + TEXT, id="lbl8"),
+   lass AllTextStyleApp(App):
+    CSS_PATH = "text_st__name__ == "__main__":
+    app = TextStyleApp()
+  text-overflow: ellipsis;  # Overflowing text is t WrapApp(App):
+    CSS_PATH = "text_overflow.tcss"opacity {
+    text-opacity: 50%;
+}
+
+#three-quarterLabel("text-opacity: 50%", id="half-opacity")
+     left;
+    background: lightblue;
+}
+
+#two {
+    te Label("[b]Left aligned[/]\n" + TEXT, id="one"),
+ rollbar2App(App):
+    CSS_PATH = "scrollbars2.tcsscrollbarApp(App):
+    CSS_PATH = "scrollbars.tcss"   VerticalScroll(Label(TEXT * 10), classes="right(App):
+    CSS_PATH = "scrollbar_visibility.tcss"
+iner(Label(TEXT * 5), id="v1"),
+            Scroll __name__ == "__main__":
+    app = ScrollbarApp()
+p
+from textual.containers import ScrollableContainrollbarGutterApp(App):
+    CSS_PATH = "scrollbar_g I will remain.
+"""
+
+
+class ScrollbarCornerColorAp-span: 1;  /* Didn't need to be set explicitly. */)
+#p1 {
+    row-span: 4;
+}
+#p2 {
+    row-span: 3;
+adding-bottom: 4;
+}
+
+#p8 {
+    padding-left: 3;
+}
+dding: 1;
+}
+
+#p3 {
+    padding: 1 5;
+}
+
+#p4 {
+            Placeholder("padding-top: 4", id="p5"),
+  ss PaddingApp(App):
+    CSS_PATH = "padding.tcss"
+TEXT), Static(TEXT), Static(TEXT), id="right"),
+  name__ == "__main__":
+    app = OutlineBorderApp():
+        yield Label(TEXT, classes="outline")
+   one $accent;
+}
+
+#outer {
+    outline: outer $accen hidden $accent;
+}
+
+#hkey {
+    outline: hkey $acchkey", id="hkey"),
+            Label("inner", id="tlinesApp(App):
+    CSS_PATH = "outline_all.tcss"
+pacity: 75%;
+}
+
+#full-opacity {
+    opacity: 100%;zero-opacity {
+    opacity: 0%;
+}
+
+#quarter-opacit: blue 20%;
+    border: outer blue;
+    color: bluLabel("Duncan (offset 4 10)", classes="duncan")
+   compose(self):
+        yield VerticalScroll(
+           Placeholder("min-height: 75%", id="p2"),
+           Placeholder("max-width: 30", id="p4"),
+         Placeholder("max-height: 50%", id="p3"),
+  gin: 1 1 2 6;
+}
+
+#p5 {
+    margin-top: 4;
+}
+
+#p6 {tainer(Placeholder("margin-bottom: 4", id="p7"), colder("margin: 1", id="p2"), classes="bordered"),
+mport App
+from textual.widgets import Label
+
+TEXT ic(TEXT)
+        yield Static(TEXT, id="custom")
+
+or the bell sound.",
+            id="lbl2",  # (2)is application.[/]",
+            id="lbl4",  # (4)class LinkStyleApp(App):
+    CSS_PATH = "link_styl       yield Label(
+            "Visit the [link='   yield Label(
+            "You can also click [@"[@click=app.quit]Exit this application.[/]",
+    ://textualize.io']Textualize[/link] website.",
+   l]here[/] for the bell sound.",
+            id="lb Label(
+            "Click [@click=app.bell]here[/  yield Container(
+            Label("Layout"),
+  ult
+from textual.containers import Horizontal
+from    layers: ruler;
+    overflow: hidden;
+}
+
+Ruler ight: 12.5%;   /* (2)! */
+}
+#w {
+    height: 5w;  d Label(ruler_text)
+
+
+class HeightComparisonApp(Aporder: solid $secondary;
+
+    &.cross {
+        hantal", "custom", "left", "right")
+
+
+class HatchAppApp(App):
+    CSS_PATH = "grid_size_columns.tcss"
+           Label("4"),
+            Label("5"),
+   Label("height = 6"),
+            Label("25%"),
+              Label("2"),
+            Label("3"),
+   Label("1fr"),
+            Label("width = 16"),
+   yield Static("Grid cell 1\n\nrow-span: 3;\ncolumn-izontal: center;
+}
+#right {
+    dock: right;
+    h          Container(Label("left"), id="left"),
+   0%;
+    height: 100%;
+    background: $primary;
+}
+the default implied value. */
+}
+#center-top {
+    ield Label("right bottom", id="right-bottom")
+
+
+ifalign-vertical: middle;
+    background: green;
+}
+
+an: 3;
+}
+
+Grid {
+    grid-size: 4 4;
+    g}
+#p6 {
+    /* Default value is 1. */
+}
+#p7 {
+     yield Grid(
+            Placeholder(id="p1"),
+   ick brown fox jumps over the lazy dog!", id="lbl1" Static("I'm using border-box!", id="static1")
+   ual.widgets import Label
+
+
+class BorderTitleApp(Aplign: center;
+}
+
+#label3 {
+    border: tall $seconlignApp(App):
+    CSS_PATH = "border_title_align.tn the right", id="label3")
+        lbl.border yield lbl
+
+        lbl = Label("My subtitle is on   border-bottom: solid $error;
+    border-title-a* (3)! */
+    border-subtitle-align: left;
+}
+
+#lbl    app = BorderSubTitleAlignAll()
+    app.run()
+G       "Subtitle, but really loooooooooong!",
+      "[link='https://textual.textualize.io']Left[/]",      "[b red]Left, but it's loooooooooooong",
+   d():
+            yield make_label_container(  # (1 grid-gutter: 1 2;
+}
+
+Label {
+    width: 20;
+    hhed {
+    border: dashed $accent;
+}
+
+#double {
+   , id="dashed"),
+            Label("double", id="doite;
+    margin: 1;
+    box-sizing: border-box;
+}
+ Label("My border is solid red", id="label1")
+    kground: red 100%;
+}
+
+Screen {
+    layout: horizon, id="t90")
+        yield Static("100%", id="t100"me__ == "__main__":
+    app = BackgroundTintApp()
+c2")
+        yield Label("Widget 3", id="static3")ze: 3 3;
+    grid-gutter: 1;
+}
+
+Container {
+    ba {
+    align: right middle;
+}
+
+#left-bottom {
+    ield Container(Label("center bottom"), id="center-e(self):
+        yield Label("Vertical alignment w
+
+class AlignApp(App):
+    CSS_PATH = "align.tcss"olor) for i, color in enumerate(COLORS)]
+
+
+class S
+    "#aa3355",
+    "#cc6666",
+    "#ee9944",
+    yield Tweet(id=f"Tweet{tweet_no}")
+
+
+class TweetScidth: 1fr;
+        border: tall $background;
+    } HorizontalScroll():
+            yield Column()
+  
+class Tweet(Placeholder):
+    pass
+
+
+class Columnd="Footer")
+        yield HorizontalScroll()  # (1if __name__ == "__main__":
+    app = LayoutApp()
+ ):
+    DEFAULT_CSS = """
+    ColumnsContainer {
+  Header(id="Header")
+        yield Footer(id="Foote    dock: top;
+    }
+    """
+
+
+class Footer(Placehone:
+        self.push_screen(TweetScreen())
+
+
+if mn()
+            yield Column()
+
+
+class LayoutApp(r {
+        height: 3;
+        dock: bottom;
+    }update_clock(self) -> None:
+        clock = dateti            Digits {
+                color: $succeld Digits("", id="clock")
+
+    def on_ready(self) seResult
+from textual.widgets import Digits
+
+
+clasder"):  # (3)!
+            yield Box("Box 3")
+
+
+ifield Box("Box 1")  # (1)!
+        with Center(clasf __name__ == "__main__":
+    app = ContainerApp()                yield Box(label=f"Box {n+1}")
+
+
+ifder
+
+
+class Box(Placeholder):
+    """Example widge"
+    Box {
+        width: 16;
+        height: 8; 
+        with Horizontal(classes="with-border"):
+      yield Box()
+            yield Box()
+
+
+if  .with-border {
+        border: heavy green;
+    t: 8;        
+    }
+    """
+
+
+class ContainerApp(A):
+    """Simple app to play with containers."""
+
+ import Placeholder
+
+
+class Box(Placeholder):
+       yield Static("of chess?", classes="words")
+
+
+ifatic("How about a nice game", classes="words")
+   sult:
+        yield Static(QUOTE, id="hello")
+
+
+if    align: center middle;
+    }
+
+    #hello {
+    white;
+        width: 40;
+        height: 9;
+     ou in Seattle and no terminal is in operation at yon at your classified address."
+
+
+class Centertatic
+
+QUOTE = "Could not find you in Seattle and ground: blue 50%;
+        border: wide white;
+     CenterApp(App):
+    """How to center things."""
+
+_from_thread(weather_widget.update, weather)
+     f city:
+            # Query the network API
+       current weather."""
+
+    CSS_PATH = "weather.tcss_widget.update("")
+
+    def on_worker_state_change    async with httpx.AsyncClient() as client:
+     when the input changes"""
+        self.update_weanse = await client.get(url)
+     ery_one("#weather", Static)
+        if city:
+     class WeatherApp(App):
+    """App to display the c      weather = Text.from_ansi(response.text)
+    ate_weather(message.value), exclusive=True)
+
+    a     # No city, so just blank out the weather
+    ther for the given city."""
+        weather_widget  with VerticalScroll(id="weather-container"):
+   n()
+import httpx
+from rich.text import Text
+
+from "
+    Screen {
+        align: center middle;
+    }on.
+I will face my fear."""
+
+
+class TooltipApp(App in self.query(DataTable):
+            data_table., "Michael Phelps", "United States", 51.14),
+    (click='next_word']{hello}[/], [b]World[/b]!")
+
+
+clself.border_subtitle = "Click for next hello"  # (ontent area."""
+        hello = next(hellos)
+           "Asalaam alaikum",
+        "Konnichiwa",
+   
+        self.next_word()
+
+    def next_word(self)Static
+
+hellos = cycle(
+    [
+        "Hola",
+      """Get a new hello and update the content area."vstvuyte",
+        "Hello",
+    ]
+)
+
+
+class Hello(ass CustomApp(App):
+    CSS_PATH = "hello02.tcss"
+Result:
+        return "Hello, [b]World[/b]!"
+
+
+cl      buzz = not n % 5
+            table.add_row(
+        self.update(table)
+
+
+class FizzBuzzApp(App app = CounterApp()
+    app.run()
+from rich.table   """A counter that can be incremented and decrementerApp(App[None]):
+    CSS_PATH = "counter.tcss"
+mposeResult:
+        yield CheckerBoard(100)
+
+
+if )
+        ]
+        strip = Strip(segments, self.bfour lines per row
+
+        white = self.get_comporent scroll position
+        y += scroll_y  # The  cursor square changes."""
+
+        def get_square + self.scroll_offset
+        self.cursor_square =       "checkerboard--cursor-square",
+    }
+
+    Dxtual.strip import Strip
+from textual.scroll_view Segment(" " * 8, black if (column + is_odd) % 2 el y: int) -> Strip:
+        """Render a line of theself.board_size = board_size
+        # Each squareort ScrollView
+
+from rich.segment import Segment
+
+_component_rich_style("checkerboard--black-square"   CheckerBoard .checkerboard--white-square {
+    class BoardApp(App):
+    """A simple app to show oreturn Strip.blank(self.size.width)
+
+        is_ode to the top of the widget."""
+
+        row_index  app = RGBApp()
+    async with app.run_test() as p      assert app.screen.styles.background == Color       # Test pressing the R key
+        await pilvent: Button.Pressed) -> None:
+        assert even"
+
+    BINDINGS = [
+        ("r", "switch_color('rf __name__ == "__main__":
+    app = PaddingApp()
+ eResult
+from textual.widgets import Static
+
+
+TEXT ing. Only I will remain."""
+
+
+class PaddingApp(Appidth = "50%"
+        self.widget.styles.outline = hing. Only I will remain."""
+
+
+class OutlineApp(Apavy", "white")
+        self.widget1.styles.margin  """I must not fear.
+Fear is the mind-killer.
+Fearckground = "darkgreen"
+        self.widget1.styleset.styles.height = "80%"
+
+
+if _et = Static(TEXT)
+        yield self.widget
+
+    d     self.widget.styles.background = "purple"
+    . Only I will remain."""
+
+
+class DimensionsApp(App my fear.
+I will permit it to pass over me and thr  alpha = index * 0.1
+            widget.update(f"tatic("") for n in range(10)]
+        yield from sComposeResult
+from textual.color import Color
+from  self.widget.styles.background = "darkblue"
+     .widget2.styles.width = 30
+        self.widget1.ste inner eye to see its path.
+Where the fear has golf.widget.styles.border = ("heavy", "yellow")
+       self.widget = Static(TEXT)
+        yield self.ws gone there will be nothing. Only I will remain."little-death that brings total obliteration.
+I wilmport App
+from textual.widget import Widget
+
+
+clas key to continue [blink]_[/]", id="any-key")
+
+
+clad="title")
+        yield Static(ERROR_TEXT)
+     se any unsaved information in all open application      if await self.push_screen_wait(  # (4)!
+    t="success")
+        yield Button("No", id="no")
+
+      self.switch_mode("dashboard")  # (3)!
+
+
+if _
+        yield Placeholder("Settings Screen")
+     Placeholder
+
+
+class DashboardScreen(Screen):
+    l dialog."""
+
+    CSS_PATH = "modal01.tcss"
+    BII will turn the inner eye to see its path.
+Where tT = """I must not fear.
+Fear is the mind-killer.
+F event.button.id == "quit":
+            self.app.eand through me.
+And when it has gone past, I will I will face my fear.
+I will permit it to pass over yield Header()
+        yield Label(TEXT * 8)
+     Grid(
+            Label("Are you sure you want tor.
+Fear is the little-death that brings total obliport Grid
+from textual.screen import Screen
+from ta_bind(
+            clock_time=WorldClockApp.time ) -> None:
+        self.timezone = timezone
+       yield WorldClock("Europe/London").data_bind(Worldry_one(Digits).update(localized_time.strftime("%H:   app = WorldClockApp()
+    app.run()
+from datetitetime.now()
+
+    def watch_time(self, time: datetimport Digits, Label
+
+
+class WorldClock(Widget):
+
+atetime import datetime
+
+from pytz import timezoneATH = "watch01.tcss"
+
+    color = reactive(Color.prseError
+from textual.containers import Grid
+from ", variant="error"),
+            id="buttons",
+     self.names.append(event.value)
+        self.mutaone(Greeter).greeting = GREETINGS[self.greeting_no, Label).update(who)
+
+
+class NameApp(App):
+
+    CS    yield Label(self.greeting, id="greeting")
+    
+
+class Greeter(Horizontal):
+    """Display a greear(0)
+    BINDINGS = [("space", "greeting")]
+
+       def __init__(self, greeting: str = "Hello", whoimport Label
+
+GREETINGS = [
+    "Bonjour",
+    "Ho = reactive("name", recompose=True)  # (1)!
+
+    dolder="Enter your name")
+        yield Name()
+
+    return f"Hello, {self.who}!"
+
+
+class WatchApp(Appt):
+    """Generates a greeting."""
+
+    who = rea  yield Digits(f"{self.time:%X}")
+
+    def update_ self.set_interval(1, self.update_time)  # (2)!
+
+
+  time: reactive[datetime] = reactive(datetime.nowld Button("+10")
+
+    def on_button_pressed(self) import Button, Label, ProgressBar
+
+
+class Counter( self.bell()
+        else:
+            if event.inlor-inputs",
+        )
+        yield Static(id="co reactive
+from textual.widgets import Input, Statimport Static
+
+
+class VerticalLayoutScrolledExamplezontal():
+            with Vertical(classes="colum       Vertical(
+                Static("One"),
+  xtual.containers import Horizontal, Vertical
+from 
+
+
+class LayersExample(App):
+    CSS_PATH = "layerple(App):
+    CSS_PATH = "horizontal_layout.tcss"
+n", classes="box")
+        yield Static("Two", cla", classes="box")
+        yield Static("Five", claApp):
+    CSS_PATH = "grid_layout6_row_span.tcss"
+b](column-span: 2)", classes="box", id="two")
+    , classes="box")
+        yield Static("Four", clas")
+        yield Static("Six", classes="box")
+
+
+if     yield Static("Three", clalass GridLayoutExample(App):
+    CSS_PATH = "grid_ic("One", classes="box")
+        yield Static("Twotatic
+
+TEXT = """\
+Docking a widget removes it frotom, or left edges of a container.
+
+Docked widgets == "__main__":
+    app = DockLayoutExample()
+    w;
+}
+
+#bottom-right-final {
+    column-span: 2;
+}
+oletred;
+}
+
+#top-right > Static {
+    width: auto;#app-grid {
+    layout: grid;
+    grid-size: 2;  /der, Static
+
+
+class CombiningLayoutsExample(App):
+ yield RichLog()
+        yield Ball("Textual")
+
+   yield KeyLogger()
+        yield KeyLogger()
+
+
+if   self.query_one(RichLog).write(event)
+
+    def ke
+class InputApp(App):
+    """App to display key ev("b", "add_bar('blue')", "Add Blue"),
+    ]
+
+    dt-style: bold;
+    height: 100%;
+    content-alignialog {
+    height: 100%;
+    margin: 4 8;
+    bac  ),
+            id="dialog",
+        )
+
+
+if zontal(
+                Button("Yes", variant="suceavy $success;
+        }
+
+        /* Style the No ield Static("No", classes="button negative")
+
+
+if ;
+    margin: 1 2;
+    text-align: center;
+    borsult:
+        with Horizontal(id="questions"):
+   tive("")
+
+    def render(self) -> RenderResult:, RenderResult
+from textual.reactive import reacti will be left in the output.
+
+"""
+
+
+class ContentAs CompoundApp(App):
+    CSS = """
+    Screen {
+      InputWithLabel Label {
+        padding: 1;
+    e changes, update switches."""
+        for switch    def on_input_changed(self, event: Input.Changedesult:
+        with Container(classes="top"):
+    us-within {
+        border: heavy $secondary;
+       def watch_value(self, value: bool) -> None:  #       super().__init__()
+            self.bit = bitSwitch(Widget):
+    """A Switch with a numeric lat_changed(self, event: BitSwitch.BitChanged) -> No      background: $boost;
+    }
+    ByteEditor Inpeight: auto;
+        border: blank;
+        layout yield Label(str(self.bit))
+        yield Switch() BitSwitch > Label {
+        text-align: center;
+ p.run()
+from __future__ import annotations
+
+from t     height: 1fr;
+        align: center middle;
+  es."""
+
+    DEFAULT_CSS = """
+    ByteInput {
+    import Container
+from textual.widget import Widget       from rich.syntax import Syntax
+
+        syn        help="Open this file in the viewer",
+     s, thread=True)
+        self.python_paths = await thon file in the current working directory."""
+
+  ommand
+from textual.screen import Screen
+
+
+class Bstyles.padding = (1, 2)
+        yield self.box
+
+   = Static("Hello, World!")
+        self.box.styles  # (2)!
+        if action == "previous" and self.id=f"page-{page_no}")
+        yield Footer()
+
+    ctive
+from textual.widgets import Footer, Placehollf.page_no == PAGES_COUNT - 1:
+            return  "actions06.tcss"
+
+    page_no = reactive(0)
+
+    import HorizontalScroll
+from textual.reactive impoic
+
+TEXT = """
+[b]Set your background[/b]
+[@click=ground('green')", "Green"),
+        ("b", "set_bacposeResult:
+        yield Static(TEXT)
+
+    def ac
+
+    async def on_key(self, event: events.Key) -> def action_set_background(self, color: str) -> Nout."""
+        input = self.query_one(Input)
+            )
+
+    @on(Button.Pressed, "#quit")  # (3)!(self):
+        """Called when the bell button is OnDecoratorApp()
+    app.run()
+from textual import", classes="toggle dark")
+        yield Button("Qu       """Looks up a word."""
+        url = f"http yield Input(placeholder="Search for a word")
+    om textual.containers import VerticalScroll
+from tturn str(self.color)
+
+
+class ColorApp(App):
+    dee")
+        self.styles.background = Color.parse(" import Static
+
+
+class ColorButton(Static):
+    ""     with self.suspend():  # (1)!
+            systain__":
+    app = MyApp()
+    reply = app.run()
+  un()
+    print(reply)
+from textual.app import App,r, Label
+
+
+class MyApp(App[str]):
+    CSS_PATH = " {
+        width: 100%;
+    }
+    """
+
+    def combutton.id)
+
+
+if __name__ == "__main__":
+    app = def compose(self) -> ComposeResult:
+        yield rt App, ComposeResult
+from textual.widgets import 
+
+    def on_mount(self) -> None:
+        self.scr
