@@ -18,6 +18,9 @@ body {
   margin-block-start: 2em;
   padding-block-end: 0.3em;
   border-block-end: 1px solid var(--color-background-border);
+  /* Furo gives every heading border-radius: .5rem, which curls the ends of
+     the divider upward */
+  border-radius: 0;
 }
 
 .content h3 {
