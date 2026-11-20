@@ -1,11 +1,11 @@
-/* ── Font: IBM Plex Sans via Google Fonts ─────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+/* ── Fonts: Inter and Fira Code via Google Fonts ──────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600;700&display=swap');
 
 body {
-  --font-stack: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --font-stack: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
                 Helvetica, Arial, sans-serif;
   --font-stack--headings: var(--font-stack);
-  --font-stack--monospace: "JetBrains Mono", monospace;
+  --font-stack--monospace: "Fira Code", monospace;
 }
 
 /* ── Typography & spacing ─────────────────────────────────────── */
@@ -179,6 +179,64 @@ dl dd {
   font-size: 0.8em;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* Sidebar surface and links: same background as the page, gray link text,
+   and a rounded rectangle on hover. The variables are rebound on the drawer
+   so they win in light, dark and auto modes alike. */
+.sidebar-drawer {
+  --tw-sidebar-radius: 6px;
+  --color-sidebar-background: var(--color-background-primary);
+  --color-sidebar-link-text: var(--color-foreground-secondary);
+  --color-sidebar-link-text--top-level: var(--color-foreground-secondary);
+  --color-sidebar-item-background--hover: var(--color-background-hover);
+  --color-sidebar-item-background--current: transparent;
+
+  /* Furo's hover/focus fill is the page color, which makes the search bar
+     vanish into the page. Lift it a little from its resting fill instead. */
+  --color-sidebar-search-background--focus: color-mix(
+    in srgb,
+    var(--color-sidebar-search-background),
+    var(--color-foreground-primary) 6%
+  );
+
+  /* No divider between the nav and the content. */
+  border-inline-end: none;
+}
+
+/* The z-index lifts the search bar above the scroll area that follows it. */
+.sidebar-search-container {
+  border-radius: var(--tw-sidebar-radius);
+  z-index: 1;
+}
+
+/* sidebar-shadow.js sets data-scrolled once nav content sits under the bar. */
+.sidebar-drawer[data-scrolled] .sidebar-search-container {
+  box-shadow: 0 4px 8px -2px color-mix(in srgb, black 35%, transparent);
+
+  /* Clip everything but the strip below the bar, so the shadow does not
+     bleed out of its sides or top. */
+  clip-path: inset(0 0 -1rem);
+}
+
+/* Furo draws a line above and below the input; the rounded container
+   replaces it. */
+.sidebar-search {
+  border-block: none;
+  border-radius: var(--tw-sidebar-radius);
+}
+
+.sidebar-tree .reference {
+  border-radius: var(--tw-sidebar-radius);
+}
+
+.sidebar-tree .reference:hover {
+  color: var(--color-foreground-primary);
+}
+
+.sidebar-tree .current > .reference {
+  color: var(--color-foreground-primary);
+  font-weight: 500;
 }
 
 /* ── Sidebar brand (name + release/source row) ────────────────── */
