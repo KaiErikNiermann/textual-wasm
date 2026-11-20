@@ -68,10 +68,9 @@ body {
   border-block-end: none;
 }
 
-/* ── Admonitions (GitHub markdown-alert style) ────────────────── */
+/* ── Admonitions (flat tinted boxes, GitHub accent colours) ──── */
 
-/* Furo paints a filled bar behind each title. GitHub does not: it keeps the
-   coloured rule on the inline edge and colours the title text to match. */
+/* Override Furo's CSS variables to remove title backgrounds (the box carries the tint) */
 body {
   --color-admonition-title-background:                  transparent;
   --color-admonition-title-background--note:            transparent;
@@ -86,7 +85,7 @@ body {
   --color-admonition-title-background--seealso:         transparent;
   --color-admonition-title-background--admonition-todo: transparent;
 
-  /* GitHub accent colours for border + icon + title text */
+  /* GitHub accent colors for tint + icon + title text */
   --color-admonition-title--note:      #4493f8;
   --color-admonition-title--tip:       #3fb950;
   --color-admonition-title--hint:      #3fb950;
@@ -99,40 +98,64 @@ body {
   --color-admonition-title--seealso:   #4493f8;
   --color-admonition-title:            #ab7df8;
 
-  /* Match surrounding body text size (Furo defaults to 0.8125rem) */
-  --admonition-font-size:       1rem;
-  --admonition-title-font-size: 1rem;
+  /* A step below body text (Furo defaults to 0.8125rem) */
+  --admonition-font-size:       0.9375rem;
+  --admonition-title-font-size: 0.9375rem;
 }
 
+/* One rule drives every type: each type only sets --tw-admonition-accent. */
 .admonition {
-  margin-block: 1em;
-  padding: 0.5em 1em;
-  border-radius: 0;
-  border-inline-start-width: 0.25em;
-  background: none;
-  box-shadow: none;
+  --tw-admonition-accent: var(--color-admonition-title);
+  --tw-admonition-tint: 11%;
+  --tw-admonition-title-pad: 0.15rem;
+  --tw-admonition-title-line: 1.3;
+  --tw-admonition-icon: 1rem;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(
+    in srgb,
+    var(--tw-admonition-accent) var(--tw-admonition-tint),
+    transparent
+  );
+  margin: 1em 0;
+  padding: 0.6em 1em 0.6em;
   color: inherit;
+  box-shadow: none;
   font-size: var(--admonition-font-size);
 }
 
-.admonition > .admonition-title {
-  margin: 0 0 0.3em 0;
-  padding: 0.4rem 0.5rem 0.4rem 2rem;
-  background-color: transparent;
+.admonition.note { --tw-admonition-accent: var(--color-admonition-title--note); }
+.admonition.tip { --tw-admonition-accent: var(--color-admonition-title--tip); }
+.admonition.hint { --tw-admonition-accent: var(--color-admonition-title--hint); }
+.admonition.important { --tw-admonition-accent: var(--color-admonition-title--important); }
+.admonition.warning { --tw-admonition-accent: var(--color-admonition-title--warning); }
+.admonition.attention { --tw-admonition-accent: var(--color-admonition-title--attention); }
+.admonition.caution { --tw-admonition-accent: var(--color-admonition-title--caution); }
+.admonition.danger { --tw-admonition-accent: var(--color-admonition-title--danger); }
+.admonition.error { --tw-admonition-accent: var(--color-admonition-title--error); }
+.admonition.seealso { --tw-admonition-accent: var(--color-admonition-title--seealso); }
+
+/* Title: accent-coloured text; Furo's ::before icon takes the same accent */
+.admonition > p.admonition-title {
+  padding: var(--tw-admonition-title-pad) 0.5rem var(--tw-admonition-title-pad)
+    2rem;
+  margin: 0.2em 0 0.2em 0;
   font-size: var(--admonition-title-font-size);
+  line-height: var(--tw-admonition-title-line);
   font-weight: 600;
+  color: var(--tw-admonition-accent);
 }
 
-.admonition.note > .admonition-title      { color: var(--color-admonition-title--note); }
-.admonition.tip > .admonition-title       { color: var(--color-admonition-title--tip); }
-.admonition.hint > .admonition-title      { color: var(--color-admonition-title--hint); }
-.admonition.important > .admonition-title { color: var(--color-admonition-title--important); }
-.admonition.warning > .admonition-title   { color: var(--color-admonition-title--warning); }
-.admonition.attention > .admonition-title { color: var(--color-admonition-title--attention); }
-.admonition.caution > .admonition-title   { color: var(--color-admonition-title--caution); }
-.admonition.danger > .admonition-title    { color: var(--color-admonition-title--danger); }
-.admonition.error > .admonition-title     { color: var(--color-admonition-title--error); }
-.admonition.seealso > .admonition-title   { color: var(--color-admonition-title--seealso); }
+/* Centre the icon on the title's first line (Furo leaves it at the top) */
+.admonition > p.admonition-title::before {
+  top: calc(
+    var(--tw-admonition-title-pad) +
+      (
+        var(--tw-admonition-title-line) * var(--admonition-title-font-size) -
+          var(--tw-admonition-icon)
+      ) / 2
+  );
+}
 
 /* ── Definition lists ─────────────────────────────────────────── */
 
