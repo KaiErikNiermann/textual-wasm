@@ -3,8 +3,8 @@
 # two runtimes load identical code.
 textual==8.2.8
 pyte==0.8.2
-markdown-it-py==4.2.0
-mdit-py-plugins==0.6.1
+markdown-it-py==4.3.0
+mdit-py-plugins==0.7.0
 platformdirs==4.14.5
 pygments==2.21.0
 rich==15.0.0
